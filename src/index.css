@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Baseline Readability and High Contrast Tokens */
+:root {
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-bg-base: #f8fafc;
+  --color-card-bg: #ffffff;
+  --color-border: #cbd5e1;
+}
+
+.dark {
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #e2e8f0;
+  --color-text-muted: #94a3b8;
+  --color-bg-base: #020617;
+  --color-card-bg: #0f172a;
+  --color-border: #334155;
+}
+
+body {
+  color: #0f172a;
+  background-color: #f8fafc;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.dark body {
+  color: #f8fafc;
+  background-color: #020617;
+}
+
+/* =========================================================================
+   UNIVERSAL CONTRAST & VISIBILITY SAFEGUARDS (LIGHT & DARK MODES)
+   ========================================================================= */
+
+/* Ensure all input, select, textarea elements have guaranteed text visibility in light & dark modes */
+input, select, textarea {
+  color: inherit;
+}
+
+/* Form input contrast safeguard */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+select,
+textarea {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+  border-color: #cbd5e1;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.dark select,
+.dark textarea {
+  color: #f8fafc !important;
+  background-color: #0b1329 !important;
+  border-color: #334155;
+}
+
+/* Tables text contrast guarantee */
+table th {
+  color: #334155;
+}
+.dark table th {
+  color: #94a3b8;
+}
+
+table td {
+  color: #0f172a;
+}
+.dark table td {
+  color: #f1f5f9;
+}
+
+/* Status Badges & Pills High-Contrast Safety */
+.badge-emerald {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+.dark .badge-emerald {
+  background-color: #064e3b;
+  color: #a7f3d0;
+}
+
+.badge-rose {
+  background-color: #ffe4e6;
+  color: #9f1239;
+}
+.dark .badge-rose {
+  background-color: #881337;
+  color: #fecdd3;
+}
+
+.badge-amber {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+.dark .badge-amber {
+  background-color: #78350f;
+  color: #fde68a;
+}
+
+.badge-blue {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+.dark .badge-blue {
+  background-color: #1e3a8a;
+  color: #bfdbfe;
+}
+
+/* Readonly and Disabled input contrast */
+input:disabled, select:disabled, textarea:disabled,
+input[readonly], select[readonly], textarea[readonly] {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  cursor: not-allowed;
+}
+
+.dark input:disabled, .dark select:disabled, .dark textarea:disabled,
+.dark input[readonly], .dark select[readonly], .dark textarea[readonly] {
+  background-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}

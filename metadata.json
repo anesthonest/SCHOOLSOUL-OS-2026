@@ -1,0 +1,6 @@
+{
+  "name": "SchoolSoul OS",
+  "description": "Global, multi-country offline-first digital operating system and commercial ecosystem for schools featuring Modular Country Frameworks (Uganda, Kenya, Tanzania, Rwanda, Ghana, Nigeria, South Africa, International), Cross-Border Student Transfers, Multi-Curriculum Support, Complete School Operations, Sponsorship & Student Opportunity Bridge, Opportunity & Achievement Engine, Live Learning with WebRTC video/audio, Digital Whiteboard, Interactive Polls, Skills Passport, Multi-Tier Subscriptions, and Immutable Safeguarding Auditing.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,56 @@
+# ============================================================
+# SCHOOLSOUL PRODUCTION INFRASTRUCTURE BLUEPRINT (RENDER CLOUD)
+# Version: 2026.1.0-render-prod
+# ============================================================
+
+services:
+  # 1. Main SchoolSoul Web Application Service (Full-Stack Express + React Vite)
+  - type: web
+    name: schoolsoul-web
+    runtime: node
+    region: frankfurt # Low-latency EU/East Africa routing
+    plan: starter
+    buildCommand: npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: schoolsoul-postgres
+          property: connectionString
+      - key: APP_URL
+        value: https://schoolsoul-web.onrender.com
+      - key: API_URL
+        value: https://schoolsoul-web.onrender.com
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REFRESH_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      # Pesapal API 3.0 Commercial Payment Gateway Variables
+      - key: PESAPAL_ENVIRONMENT
+        value: sandbox # Switch to 'production' after verifying Sandbox IPN & checkout
+      - key: PESAPAL_CONSUMER_KEY
+        sync: false # Set securely in Render dashboard
+      - key: PESAPAL_CONSUMER_SECRET
+        sync: false # Set securely in Render dashboard
+      - key: PESAPAL_IPN_ID
+        sync: false # Captured from /api/billing/pesapal/register-ipn
+      - key: PAYMENTS_ENABLED
+        value: "false" # Set to "true" only after production readiness checks pass
+      # AI Intelligence Integration
+      - key: GEMINI_API_KEY
+        sync: false
+
+# 2. Managed PostgreSQL Production Database
+databases:
+  - name: schoolsoul-postgres
+    databaseName: schoolsouldb
+    user: schoolsoul_admin
+    region: frankfurt
+    plan: starter
+    postgresMajorVersion: "16"
