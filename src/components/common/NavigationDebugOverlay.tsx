@@ -14,8 +14,33 @@ export const NavigationDebugOverlay: React.FC<NavigationDebugOverlayProps> = ({
   knownViews,
 }) => {
   const { activeRole, user } = useAuth();
+  const [isVisible, setIsVisible] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return (
+      window.location.search.includes('debug=true') ||
+      localStorage.getItem('schoolsoul_dev_debug') === 'true'
+    );
+  });
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Toggle debug overlay via Ctrl+Shift+D keyboard shortcut
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') {
+        e.preventDefault();
+        setIsVisible((prev) => {
+          const next = !prev;
+          localStorage.setItem('schoolsoul_dev_debug', String(next));
+          return next;
+        });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  if (!isVisible) return null;
 
   const isMatched = knownViews.has(currentView);
 

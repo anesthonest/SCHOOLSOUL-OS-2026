@@ -8,9 +8,13 @@ const router = Router();
 // Get school profile & setup status
 router.get('/profile', (req, res) => {
   const db = readServerDB();
+  const profile = db.schoolProfile;
+  const isConfigured = Boolean(
+    profile && (profile.isConfigured || profile.status === 'ACTIVE' || profile.name || profile.schoolName)
+  );
   res.json({
-    schoolProfile: db.schoolProfile,
-    isConfigured: Boolean(db.schoolProfile && db.schoolProfile.isConfigured),
+    schoolProfile: profile,
+    isConfigured,
   });
 });
 

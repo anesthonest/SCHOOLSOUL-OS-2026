@@ -33,6 +33,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { setupSchool } from '../services/api';
+import { updateSchoolCommercialSubscription } from '../services/subscriptionCommercialService';
 import { useAuth } from '../context/AuthContext';
 import { SchoolLogoUploader } from '../components/common/SchoolLogoUploader';
 import { SchoolSoulMarkSVG } from '../components/common/SchoolSoulLogo';
@@ -41,7 +42,15 @@ import { GlobalCountryInfo, GlobalCountriesService, GLOBAL_COUNTRIES_LIST } from
 import { CountryFrameworkRegistry } from '../framework/countryRegistry';
 import { SupportedCountryCode, CountryEducationFramework } from '../framework/types';
 
-export const SchoolSetupWizard: React.FC = () => {
+export interface SchoolSetupWizardProps {
+  onBackToLanding?: () => void;
+  onGoToJoinExisting?: () => void;
+}
+
+export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
+  onBackToLanding,
+  onGoToJoinExisting,
+}) => {
   const { refreshSchoolProfile, login } = useAuth();
   const [step, setStep] = useState<number>(1);
   const [loading, setLoading] = useState(false);
@@ -125,7 +134,10 @@ export const SchoolSetupWizard: React.FC = () => {
     dateFormat: 'DD/MM/YYYY',
   });
 
-  // STEP 5 — Payments
+  // STEP 5 — Plan Tier, Capacity & Payments
+  const [selectedPlanTier, setSelectedPlanTier] = useState<'Starter' | 'Standard' | 'Enterprise'>('Standard');
+  const [selectedCapacity, setSelectedCapacity] = useState<number>(1000);
+  const [selectedBillingCycle, setSelectedBillingCycle] = useState<'Annual' | 'Monthly'>('Annual');
   const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([
     'MTN Mobile Money',
     'Airtel Money',
@@ -352,6 +364,17 @@ export const SchoolSetupWizard: React.FC = () => {
       await setupSchool(payloadSchool, adminData);
       await refreshSchoolProfile();
 
+      addLog(`✓ Activating 30-Day Free Trial (${selectedPlanTier} Tier, ${selectedCapacity.toLocaleString()} student capacity)...`);
+      await updateSchoolCommercialSubscription({
+        schoolName: schoolData.schoolName,
+        planId: selectedPlanTier === 'Starter' ? 'plan-starter' : selectedPlanTier === 'Enterprise' ? 'plan-enterprise-custom' : 'plan-standard',
+        planTier: selectedPlanTier,
+        activeStudentCount: selectedCapacity,
+        billingCycle: selectedBillingCycle,
+        status: 'TRIAL',
+        currency: (localizationConfig.currency === 'USD' ? 'USD' : 'UGX') as any,
+      });
+
       addLog('✓ Authenticating Super Administrator session...');
       const loginRes = await login(adminData.username, adminData.password, true);
       if (!loginRes.success) {
@@ -379,38 +402,93 @@ export const SchoolSetupWizard: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 py-8">
-      <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden backdrop-blur-xl flex flex-col">
-        {/* Top Header */}
-        <div className="p-6 sm:p-7 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/80 p-1 flex items-center justify-center shadow-lg shadow-amber-500/10 shrink-0">
-              <SchoolSoulMarkSVG size={40} idPrefix="ss-setup-wiz-global" />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-start sm:justify-center p-1.5 sm:p-4 py-1.5 sm:py-6">
+      <div className="w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-xl sm:rounded-3xl shadow-2xl overflow-hidden backdrop-blur-xl flex flex-col my-auto sm:my-0">
+        {/* Top Header - Compact & Mobile Optimized */}
+        <div className="px-3 py-2.5 sm:px-6 sm:py-3.5 bg-slate-950/90 border-b border-slate-800 flex items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/80 p-0.5 flex items-center justify-center shadow-md shadow-amber-500/10 shrink-0">
+              <SchoolSoulMarkSVG size={26} idPrefix="ss-setup-wiz-global" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-white tracking-tight">SchoolSoul OS</h1>
-                <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full font-medium">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <h1 className="text-sm sm:text-lg font-bold text-white tracking-tight uppercase">SchoolSoul OS</h1>
+                <span className="text-[9px] sm:text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-1.5 py-0.2 rounded-md font-semibold tracking-wide">
                   Global Registration
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-[10px] sm:text-xs text-slate-400 truncate">
                 Country-First Educational Operating System & School Identity Setup
               </p>
             </div>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs text-slate-300">
-            <span className="text-lg leading-none">{activeCountryInfo.flagEmoji}</span>
-            <span className="font-medium">{activeCountryInfo.name}</span>
-            <span className="text-slate-500">|</span>
-            <span className="font-mono text-blue-400">{activeCountryInfo.defaultCurrency}</span>
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="hidden md:flex items-center gap-2 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg text-xs text-slate-300">
+              <span className="text-base leading-none">{activeCountryInfo.flagEmoji}</span>
+              <span className="font-medium">{activeCountryInfo.name}</span>
+              <span className="text-slate-500">|</span>
+              <span className="font-mono text-blue-400">{activeCountryInfo.defaultCurrency}</span>
+            </div>
+
+            {onBackToLanding && (
+              <button
+                type="button"
+                onClick={onBackToLanding}
+                data-testid="wizard-back-to-landing-btn"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 border border-slate-700 transition-colors cursor-pointer"
+                title="Return to SchoolSoul Landing"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span className="hidden xs:inline sm:inline">Landing</span>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* 6-Step Stepper Header */}
-        <div className="px-6 py-4 bg-slate-950/50 border-b border-slate-800/80 overflow-x-auto">
-          <div className="flex items-center justify-between min-w-[620px]">
+        {/* 6-Step Stepper Header - Compact & Mobile-First */}
+        <div className="px-3 py-2 sm:px-6 sm:py-3 bg-slate-950/60 border-b border-slate-800/80">
+          {/* Mobile Stepper View (Compact, Zero-Overflow Progress Bar) */}
+          <div className="sm:hidden space-y-1.5">
+            <div className="flex items-center justify-between text-[11px] font-semibold">
+              <span className="text-blue-400">
+                Step {step} of 6 — <span className="text-white">{stepsList[step - 1]?.label}</span>
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                {activeCountryInfo.flagEmoji} {activeCountryInfo.defaultCurrency}
+              </span>
+            </div>
+            {/* 6-Segment Touch-Accessible Progress Bar */}
+            <div className="grid grid-cols-6 gap-1 h-1.5 w-full">
+              {stepsList.map((s) => {
+                const isCurrent = step === s.num;
+                const isPassed = step > s.num || isCompleted;
+                return (
+                  <button
+                    key={s.num}
+                    type="button"
+                    onClick={() => {
+                      if (step > s.num && !loading && !isCompleted) {
+                        setStep(s.num);
+                      }
+                    }}
+                    disabled={step < s.num || loading || isCompleted}
+                    aria-label={`Jump to Step ${s.num}: ${s.label}`}
+                    className={`h-full rounded-full transition-all duration-200 ${
+                      isCurrent
+                        ? 'bg-blue-500 shadow-sm shadow-blue-500/50'
+                        : isPassed
+                        ? 'bg-emerald-500 cursor-pointer hover:bg-emerald-400'
+                        : 'bg-slate-800'
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Desktop & Tablet Stepper View (Horizontal Labeled Icons) */}
+          <div className="hidden sm:flex items-center justify-between">
             {stepsList.map((s, idx) => {
               const Icon = s.icon;
               const isCurrent = step === s.num;
@@ -426,16 +504,16 @@ export const SchoolSetupWizard: React.FC = () => {
                       }
                     }}
                     disabled={step < s.num || loading || isCompleted}
-                    className={`flex items-center gap-2 text-xs transition-all ${
+                    className={`flex items-center gap-1.5 text-xs transition-all ${
                       isCurrent
-                        ? 'text-blue-400 font-semibold scale-105'
+                        ? 'text-blue-400 font-semibold'
                         : isPassed
                         ? 'text-emerald-400 font-medium cursor-pointer hover:text-emerald-300'
                         : 'text-slate-500 cursor-not-allowed'
                     }`}
                   >
                     <div
-                      className={`w-7 h-7 rounded-xl flex items-center justify-center font-mono text-xs transition-all ${
+                      className={`w-6 h-6 rounded-lg flex items-center justify-center font-mono text-[11px] transition-all ${
                         isCurrent
                           ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 ring-2 ring-blue-400/40'
                           : isPassed
@@ -443,14 +521,14 @@ export const SchoolSetupWizard: React.FC = () => {
                           : 'bg-slate-800/80 text-slate-400 border border-slate-700/50'
                       }`}
                     >
-                      {isPassed ? <Check className="w-3.5 h-3.5" /> : s.num}
+                      {isPassed ? <Check className="w-3 h-3" /> : s.num}
                     </div>
-                    <span className="hidden md:inline">{s.label}</span>
+                    <span className="hidden md:inline text-[11px]">{s.label}</span>
                   </button>
 
                   {idx < stepsList.length - 1 && (
                     <div
-                      className={`flex-1 h-[2px] mx-2 transition-colors ${
+                      className={`flex-1 h-[2px] mx-1.5 transition-colors ${
                         step > idx + 1 ? 'bg-emerald-600/60' : 'bg-slate-800'
                       }`}
                     />
@@ -461,38 +539,52 @@ export const SchoolSetupWizard: React.FC = () => {
           </div>
         </div>
 
-        {/* Content Body */}
-        <div className="p-6 sm:p-8 flex-1 overflow-y-auto max-h-[65vh]">
+        {/* Content Body - Compacted Mobile Spacing */}
+        <div className="p-3.5 sm:p-6 md:p-8 flex-1 overflow-y-auto">
           {error && (
-            <div className="mb-5 p-3.5 bg-red-950/60 border border-red-800/80 rounded-2xl text-xs text-red-200 flex items-start gap-2.5 animate-in fade-in duration-150">
+            <div className="mb-3.5 p-3 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-200 flex items-start gap-2 animate-in fade-in duration-150">
               <ShieldAlert className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {duplicateWarning && (
-            <div className="mb-5 p-3.5 bg-amber-950/50 border border-amber-800/80 rounded-2xl text-xs text-amber-200 flex items-start gap-2.5 animate-in fade-in duration-150">
+            <div className="mb-3.5 p-3 bg-amber-950/50 border border-amber-800/80 rounded-xl text-xs text-amber-200 flex items-start gap-2 animate-in fade-in duration-150">
               <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <span>{duplicateWarning}</span>
             </div>
           )}
 
           {/* ================================================================= */}
-          {/* STEP 1: SCHOOL INFORMATION */}
+          {/* STEP 1: SCHOOL INFORMATION & COUNTRY IDENTITY                     */}
           {/* ================================================================= */}
           {step === 1 && !isCompleted && (
-            <div className="space-y-5 animate-in fade-in duration-200">
-              <div className="border-b border-slate-800 pb-3">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
+            <div className="space-y-3 sm:space-y-4 animate-in fade-in duration-200">
+              <div className="border-b border-slate-800 pb-2 sm:pb-2.5">
+                <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-blue-400" />
                   Step 1 — School Information & Country Identity
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
                   Establish permanent institution registration, operating country, and national education framework.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Secondary Option: Link to Join Existing School for students/staff */}
+              {onGoToJoinExisting && (
+                <div className="p-2 sm:p-2.5 bg-blue-950/30 border border-blue-900/40 rounded-xl flex items-center justify-between text-xs text-blue-300">
+                  <span className="text-[11px] sm:text-xs">Student, teacher, or guardian joining an existing school?</span>
+                  <button
+                    type="button"
+                    onClick={onGoToJoinExisting}
+                    className="font-bold underline hover:text-white transition-colors cursor-pointer shrink-0 ml-2"
+                  >
+                    Join Existing School →
+                  </button>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {/* Searchable Country Selector */}
                 <div className="sm:col-span-2">
                   <SearchableCountrySelector
@@ -1092,59 +1184,159 @@ export const SchoolSetupWizard: React.FC = () => {
           )}
 
           {/* ================================================================= */}
-          {/* STEP 5: PAYMENTS */}
+          {/* STEP 5: PLAN, CAPACITY & PAYMENT GATEWAYS                        */}
           {/* ================================================================= */}
           {step === 5 && !isCompleted && (
-            <div className="space-y-5 animate-in fade-in duration-200">
-              <div className="border-b border-slate-800 pb-3">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
+            <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-200">
+              <div className="border-b border-slate-800 pb-2.5 sm:pb-3">
+                <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-blue-400" />
-                  Step 5 — Country Payment Methods & Gateways
+                  Step 5 — Plan Tier, Student Capacity & Payment Gateways
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Available payment and fee collection providers for {activeCountryInfo.flagEmoji} {activeCountryInfo.name}.
+                <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+                  Select your school's operating tier and payment rails for {activeCountryInfo.flagEmoji} {activeCountryInfo.name}.
                 </p>
               </div>
 
-              <div className="space-y-3">
-                {activeCountryInfo.supportedPaymentMethods.map((method, idx) => {
-                  const isChecked = selectedPaymentMethods.includes(method);
-                  return (
-                    <label
-                      key={idx}
-                      className={`flex items-center justify-between p-4 rounded-2xl border transition-all cursor-pointer ${
-                        isChecked
-                          ? 'bg-blue-600/10 border-blue-500/50 text-white'
-                          : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+              {/* 30-Day Free Trial Notice Banner */}
+              <div className="p-3 bg-emerald-950/40 border border-emerald-800/60 rounded-xl text-xs text-emerald-300 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    <strong>30-Day Unrestricted Free Trial Included:</strong> Full platform access is provisioned immediately upon registration. Zero upfront payment or credit card required.
+                  </span>
+                </div>
+                <span className="text-[10px] uppercase font-bold tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-md shrink-0">
+                  Instant Trial
+                </span>
+              </div>
+
+              {/* Plan Tier Selection */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Subscription Plan Tier *
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {[
+                    {
+                      tier: 'Starter' as const,
+                      name: 'Foundation',
+                      desc: 'Essential CBC gradebook, registers & local backup',
+                      min: '100+ students',
+                    },
+                    {
+                      tier: 'Standard' as const,
+                      name: 'Professional',
+                      desc: 'Full digital OS, LAN mesh & mobile money collection',
+                      popular: true,
+                      min: '100+ students',
+                    },
+                    {
+                      tier: 'Enterprise' as const,
+                      name: 'Multi-Campus Enterprise',
+                      desc: 'School groups, diocese networks & custom CMS',
+                      min: '250+ students',
+                    },
+                  ].map((p) => {
+                    const isSelected = selectedPlanTier === p.tier;
+                    return (
+                      <button
+                        key={p.tier}
+                        type="button"
+                        onClick={() => setSelectedPlanTier(p.tier)}
+                        className={`p-3 rounded-xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-600/15 border-blue-500 text-white ring-1 ring-blue-500/50'
+                            : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-1 mb-1">
+                            <span className="text-xs font-bold">{p.name}</span>
+                            {p.popular && (
+                              <span className="text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-1 rounded-sm font-semibold">
+                                Recommended
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-slate-400 leading-snug">{p.desc}</p>
+                        </div>
+                        <span className="text-[10px] font-mono text-slate-400 mt-2 block">{p.min}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Student Capacity Selector */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-slate-300">Licensed Student Capacity</span>
+                  <span className="font-mono text-blue-400 font-bold">{selectedCapacity.toLocaleString()} students</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[100, 250, 500, 1000, 2500, 5000, 10000].map((cap) => (
+                    <button
+                      key={cap}
+                      type="button"
+                      onClick={() => setSelectedCapacity(cap)}
+                      className={`px-3 py-1 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer ${
+                        selectedCapacity === cap
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedPaymentMethods([...selectedPaymentMethods, method]);
-                            } else {
-                              setSelectedPaymentMethods(selectedPaymentMethods.filter((m) => m !== method));
-                            }
-                          }}
-                          className="w-4 h-4 text-blue-600 bg-slate-950 border-slate-700 rounded-sm focus:ring-blue-500"
-                        />
-                        <div>
-                          <p className="text-sm font-semibold">{method}</p>
-                          <p className="text-[11px] text-slate-400">
-                            Country Provider • Settles in {activeCountryInfo.defaultCurrency}
-                          </p>
-                        </div>
-                      </div>
+                      {cap >= 1000 ? `${cap / 1000}k` : cap}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                      <span className="text-xs font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-md">
-                        Active
-                      </span>
-                    </label>
-                  );
-                })}
+              {/* Payment Methods & Gateways */}
+              <div className="space-y-2 pt-1">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Fee Collection & Payment Rails *
+                </label>
+                <div className="space-y-2">
+                  {activeCountryInfo.supportedPaymentMethods.map((method, idx) => {
+                    const isChecked = selectedPaymentMethods.includes(method);
+                    return (
+                      <label
+                        key={idx}
+                        className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                          isChecked
+                            ? 'bg-blue-600/10 border-blue-500/50 text-white'
+                            : 'bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedPaymentMethods([...selectedPaymentMethods, method]);
+                              } else {
+                                setSelectedPaymentMethods(selectedPaymentMethods.filter((m) => m !== method));
+                              }
+                            }}
+                            className="w-4 h-4 text-blue-600 bg-slate-950 border-slate-700 rounded-sm focus:ring-blue-500 cursor-pointer"
+                          />
+                          <div>
+                            <p className="text-xs font-semibold">{method}</p>
+                            <p className="text-[10px] text-slate-400">
+                              Country Provider • Settles in {activeCountryInfo.defaultCurrency}
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-md">
+                          Active
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           )}
@@ -1218,6 +1410,20 @@ export const SchoolSetupWizard: React.FC = () => {
                   <p>
                     <span className="text-slate-400">Payment:</span>{' '}
                     <span className="text-slate-300">{selectedPaymentMethods.join(', ')}</span>
+                  </p>
+                  <p>
+                    <span className="text-slate-400">Subscription Plan:</span>{' '}
+                    <span className="text-blue-300 font-bold">
+                      SchoolSoul {selectedPlanTier === 'Starter' ? 'Foundation' : selectedPlanTier === 'Standard' ? 'Professional' : 'Multi-Campus Enterprise'}
+                    </span>
+                  </p>
+                  <p>
+                    <span className="text-slate-400">Licensed Capacity:</span>{' '}
+                    <span className="text-white font-mono">{selectedCapacity.toLocaleString()} students</span>
+                  </p>
+                  <p>
+                    <span className="text-slate-400">Subscription Status:</span>{' '}
+                    <span className="text-emerald-400 font-bold">30-Day Free Trial (Active immediately)</span>
                   </p>
                   <p>
                     <span className="text-slate-400">Administrator:</span>{' '}
@@ -1370,18 +1576,18 @@ export const SchoolSetupWizard: React.FC = () => {
 
         {/* Footer Navigation Buttons for Steps 1 - 5 */}
         {!isCompleted && step < 6 && (
-          <div className="p-5 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between">
+          <div className="px-3.5 py-2.5 sm:px-6 sm:py-3.5 bg-slate-950/90 border-t border-slate-800 flex items-center justify-between">
             <button
               type="button"
-              onClick={handleBack}
-              disabled={step === 1 || loading}
-              className="px-5 py-2 text-xs font-semibold text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors"
+              onClick={step === 1 && onBackToLanding ? onBackToLanding : handleBack}
+              disabled={loading || (step === 1 && !onBackToLanding)}
+              className="px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-semibold text-slate-300 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Back
+              {step === 1 && onBackToLanding ? 'Back to Landing' : 'Back'}
             </button>
 
-            <div className="text-xs text-slate-500 font-mono">
+            <div className="text-[11px] sm:text-xs text-slate-500 font-mono">
               Step {step} of 6
             </div>
 
@@ -1389,7 +1595,7 @@ export const SchoolSetupWizard: React.FC = () => {
               type="button"
               onClick={handleNext}
               disabled={loading}
-              className="px-6 py-2.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition-all"
+              className="px-4 py-2 sm:px-6 sm:py-2.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl flex items-center gap-1.5 shadow-md shadow-blue-500/20 transition-all cursor-pointer"
             >
               Next Step
               <ArrowRight className="w-3.5 h-3.5" />

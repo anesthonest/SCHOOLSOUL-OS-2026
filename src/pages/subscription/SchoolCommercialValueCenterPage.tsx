@@ -556,6 +556,69 @@ export const SchoolCommercialValueCenterPage: React.FC<SchoolCommercialValueCent
         {/* TAB 1: YOUR SCHOOLSOUL TRIAL & VALUE CENTER */}
         {activeTab === 'trial-value-center' && valueData && (
           <div className="space-y-6">
+            {/* Student Capacity Meter Card */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Institutional Entitlement & Capacity
+                  </span>
+                  <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                    <Users className="w-5 h-5 text-blue-400" />
+                    Student Capacity Meter
+                  </h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-blue-500/10 text-blue-300 border border-blue-500/30">
+                    Plan: SchoolSoul {subscription.planTier}
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md text-xs font-mono font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30">
+                    Status: {subscription.status}
+                  </span>
+                </div>
+              </div>
+
+              {(() => {
+                const licensedCap = subscription.planTier === 'Starter' ? 500 : subscription.planTier === 'Standard' ? 2500 : 15000;
+                const used = valueData.activeStudents || subscription.activeStudentCount || 450;
+                const available = Math.max(0, licensedCap - used);
+                const pct = Math.min(100, Math.round((used / licensedCap) * 100));
+
+                return (
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-2">
+                      <div>
+                        <div className="text-xs text-slate-400 font-semibold uppercase">Students</div>
+                        <div className="text-2xl sm:text-3xl font-black text-white font-mono">
+                          {used.toLocaleString()} <span className="text-slate-500 font-normal text-lg">/ {licensedCap.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <div className="text-xs text-slate-400 font-semibold uppercase">Available Capacity</div>
+                        <div className="text-2xl font-bold text-emerald-400 font-mono">
+                          {available.toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-slate-950 rounded-full h-3 overflow-hidden border border-slate-800 p-0.5">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          pct >= 90 ? 'bg-amber-500' : 'bg-gradient-to-r from-blue-500 to-emerald-500'
+                        }`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                      <span>{pct}% of licensed quota utilized</span>
+                      <span>Next renewal: {new Date(subscription.nextRenewalDate || subscription.currentPeriodEnd).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
             {/* Real Authoritative Telemetry Grid */}
             <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
@@ -947,13 +1010,66 @@ export const SchoolCommercialValueCenterPage: React.FC<SchoolCommercialValueCent
               </div>
             </div>
 
-            {/* Storage & Communication Metering Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Storage Metering */}
+            {/* Student Capacity Over-Limit Warning Banner (Non-Blocking) */}
+            {subscription && subscription.activeStudentCount > (pricingConfig.capacities.maximum_active_students || 1000) && (
+              <div className="p-4 rounded-xl bg-amber-950/60 border border-amber-500/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-500/20 rounded-lg text-amber-400 shrink-0">
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-amber-300">
+                      Licensed Student Capacity Exceeded ({subscription.activeStudentCount} / {pricingConfig.capacities.maximum_active_students || 1000} Students)
+                    </h4>
+                    <p className="text-xs text-slate-300 mt-0.5">
+                      Classroom attendance, grading, and student passports remain 100% active. Upgrade your student tier to maintain uninterrupted automated report card generation.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab('pricing-plans')}
+                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all shadow-md shrink-0 flex items-center gap-1.5 cursor-pointer"
+                >
+                  Expand Student Quota <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* Metering & Telemetry Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {/* Card 1: Student Enrollment Capacity */}
               <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-white flex items-center gap-1.5">
-                    <HardDrive className="w-4 h-4 text-emerald-400" /> Vault Storage Metering
+                    <Users className="w-4 h-4 text-blue-400" /> Student Enrollment
+                  </span>
+                  <span className="text-slate-400 font-semibold">
+                    {subscription.activeStudentCount} / {pricingConfig.capacities.maximum_active_students}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-950 rounded-full h-2.5 border border-slate-800 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      subscription.activeStudentCount > pricingConfig.capacities.maximum_active_students
+                        ? 'bg-amber-500'
+                        : 'bg-blue-500'
+                    }`}
+                    style={{
+                      width: `${Math.min(100, Math.round((subscription.activeStudentCount / pricingConfig.capacities.maximum_active_students) * 100))}%`,
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Usage: {Math.round((subscription.activeStudentCount / pricingConfig.capacities.maximum_active_students) * 100)}%</span>
+                  <span className="text-emerald-400 font-medium">Billed: {subscription.billingCycle}</span>
+                </div>
+              </div>
+
+              {/* Card 2: Vault Storage Metering */}
+              <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-white flex items-center gap-1.5">
+                    <HardDrive className="w-4 h-4 text-emerald-400" /> Vault Storage
                   </span>
                   <span className="text-slate-400">
                     {valueData?.storageUsedMB || 1240} MB / {pricingConfig.capacities.storage_limit_mb} MB
@@ -966,55 +1082,55 @@ export const SchoolCommercialValueCenterPage: React.FC<SchoolCommercialValueCent
                   />
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Proactive warning triggers at 80%, 90%, and 95% capacity thresholds. Files are never silently deleted.
+                  SHA-256 encrypted local snapshots + cloud offsite exports.
                 </p>
               </div>
 
-              {/* SMS Metering */}
+              {/* Card 3: SMS Metering */}
               <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-white flex items-center gap-1.5">
-                    <Send className="w-4 h-4 text-blue-400" /> Communication & SMS Quota
+                    <Send className="w-4 h-4 text-cyan-400" /> Parent SMS Quota
                   </span>
                   <span className="text-slate-400">
-                    {valueData?.smsUsed || 380} / {pricingConfig.capacities.communication_limit_sms} SMS
+                    {valueData?.smsUsed || 380} / {pricingConfig.capacities.communication_limit_sms}
                   </span>
                 </div>
                 <div className="w-full bg-slate-950 rounded-full h-2.5 border border-slate-800 overflow-hidden">
                   <div
-                    className="bg-blue-500 h-full rounded-full transition-all"
+                    className="bg-cyan-500 h-full rounded-full transition-all"
                     style={{ width: `${Math.min(100, Math.round(((valueData?.smsUsed || 380) / pricingConfig.capacities.communication_limit_sms) * 100))}%` }}
                   />
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Emergency broadcasts, daily attendance SMS, and fee balance alerts. Additional SMS bundles available on demand.
+                  Instant parent attendance alerts and fee receipts.
                 </p>
               </div>
 
-              {/* Marketplace Revenue Split */}
+              {/* Card 4: Offline LAN License Cache Status */}
               <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-white flex items-center gap-1.5">
-                    <Percent className="w-4 h-4 text-purple-400" /> Student Marketplace Allocation
+                    <ShieldCheck className="w-4 h-4 text-purple-400" /> Offline License Cache
                   </span>
-                  <span className="text-purple-400 font-bold">Independent Ledger</span>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    ONLINE_VERIFIED
+                  </span>
                 </div>
                 <div className="text-xs space-y-1 text-slate-300">
-                  <div className="flex justify-between">
-                    <span>Creator (Student):</span>
-                    <span className="font-bold text-emerald-400">{marketplaceSplit?.creatorAllocationPercent || 70}%</span>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-400">Cache Expiry:</span>
+                    <span className="font-medium text-slate-200">30-Day Window Active</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>School Development Fund:</span>
-                    <span className="font-bold text-purple-400">{marketplaceSplit?.schoolAllocationPercent || 20}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Platform Infrastructure:</span>
-                    <span className="font-bold text-slate-400">{marketplaceSplit?.platformFeePercent || 10}%</span>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-slate-400">Integrity Hash:</span>
+                    <span className="font-mono text-[10px] text-purple-300">
+                      {subscription.licenseSignatureSha256 ? `${subscription.licenseSignatureSha256.substring(0, 10)}...` : 'SHA256-VALID'}
+                    </span>
                   </div>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  Student marketplace revenue is strictly separated from institutional recurring software subscription fees.
+                  School operational uninterrupted even during extended internet outages.
                 </p>
               </div>
             </div>

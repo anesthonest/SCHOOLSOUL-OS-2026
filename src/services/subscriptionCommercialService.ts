@@ -34,11 +34,38 @@ export const INVOICES_STORAGE_KEY = 'schoolsoul_commercial_invoices_v2';
 export const TRIAL_LIFECYCLE_STORAGE_KEY = 'schoolsoul_trial_lifecycle_v2';
 export const MARKETPLACE_SPLIT_STORAGE_KEY = 'schoolsoul_marketplace_split_v2';
 
-// 1. Initial Standard Commercial Plan Definition
+// 1. Authoritative Commercial Plan Definitions (Foundation, Professional, Enterprise)
 export const DEFAULT_COMMERCIAL_PLANS: SchoolCommercialPlan[] = [
   {
+    id: 'plan-starter',
+    name: 'SchoolSoul Foundation',
+    tier: 'Starter',
+    tagline: 'Essential academic records, CBC gradebook & offline attendance for developing schools',
+    description:
+      'Designed for primary & nursery institutions adopting structured digital governance on an accessible budget: Student Demographic Registers, Local Attendance Registers, CBC Gradebook, Report Cards, and Local Vault Backup.',
+    monthlyBaseUGX: 120000,
+    annualBaseUGX: 1200000,
+    perStudentMonthlyUGX: 0,
+    minimumMonthlyUGX: 120000,
+    entitlements: {
+      maxStudents: 500,
+      maxStaff: 30,
+      storageLimitMB: 10000,
+      smsQuotaMonthly: 1000,
+      whatsAppEnabled: false,
+      onlineLearningMaxRooms: 2,
+      advancedAnalytics: false,
+      customWebsiteCMS: false,
+      marketplaceEnabled: false,
+      prioritySupport: 'Standard SLA',
+      offlineMultiDeviceLAN: false,
+      automatedBackups: false,
+      aiAssistantsEnabled: false,
+    },
+  },
+  {
     id: 'plan-standard',
-    name: 'SchoolSoul Standard',
+    name: 'SchoolSoul Professional',
     tier: 'Standard',
     tagline: 'The complete daily digital operating system for modern growing schools',
     description:
@@ -66,7 +93,7 @@ export const DEFAULT_COMMERCIAL_PLANS: SchoolCommercialPlan[] = [
   },
   {
     id: 'plan-enterprise-custom',
-    name: 'SchoolSoul Enterprise / Custom',
+    name: 'SchoolSoul Multi-Campus Enterprise',
     tier: 'Enterprise',
     tagline: 'Multi-campus institutions, diocese networks, & large colleges',
     description:
@@ -97,13 +124,14 @@ export const DEFAULT_COMMERCIAL_PLANS: SchoolCommercialPlan[] = [
 // 2. Fetch Commercial Plans
 export async function getCommercialPlans(): Promise<SchoolCommercialPlan[]> {
   const config = await getAuthoritativePricingConfig();
-  // Ensure Standard plan reflects authoritative config
-  const standard = DEFAULT_COMMERCIAL_PLANS[0];
-  standard.entitlements.maxStudents = config.capacities.maximum_active_students;
-  standard.entitlements.maxStaff = config.capacities.maximum_staff;
-  standard.entitlements.storageLimitMB = config.capacities.storage_limit_mb;
-  standard.entitlements.smsQuotaMonthly = config.capacities.communication_limit_sms;
-  standard.entitlements.onlineLearningMaxRooms = config.capacities.online_learning_capacity_rooms;
+  const standard = DEFAULT_COMMERCIAL_PLANS.find((p) => p.tier === 'Standard');
+  if (standard) {
+    standard.entitlements.maxStudents = config.capacities.maximum_active_students;
+    standard.entitlements.maxStaff = config.capacities.maximum_staff;
+    standard.entitlements.storageLimitMB = config.capacities.storage_limit_mb;
+    standard.entitlements.smsQuotaMonthly = config.capacities.communication_limit_sms;
+    standard.entitlements.onlineLearningMaxRooms = config.capacities.online_learning_capacity_rooms;
+  }
   return DEFAULT_COMMERCIAL_PLANS;
 }
 
@@ -1270,4 +1298,314 @@ export async function runAutomatedCommercialTestSuite(): Promise<AutomatedTestRe
   }
 
   return results;
+}
+
+// ============================================================================
+// 16. CENTRALIZED MODULE ENTITLEMENT & SUBSCRIPTION FEATURE ACCESS LAYER
+// ============================================================================
+
+export interface ModuleEntitlementResult {
+  entitled: boolean;
+  requiredTier?: CommercialPlanTier;
+  reason?: string;
+  maxLimit?: number;
+  currentUsage?: number;
+}
+
+export const MODULE_ENTITLEMENT_RULES: Record<
+  string,
+  {
+    minTier: CommercialPlanTier;
+    name: string;
+    description: string;
+    requiresAddon?: string;
+  }
+> = {
+  'Student Management': { minTier: 'Starter', name: 'Student Management', description: 'Core student demographic registers & passports' },
+  'Staff HR': { minTier: 'Starter', name: 'Staff HR', description: 'Staff directory & basic role assignments' },
+  'Academics': { minTier: 'Starter', name: 'Academics', description: 'Curriculum, gradebook & assessment records' },
+  'Attendance': { minTier: 'Starter', name: 'Attendance', description: 'Local attendance registers' },
+  'Fees': { minTier: 'Starter', name: 'Fees & Finance', description: 'Fee structure & collection records' },
+  'Communication': { minTier: 'Starter', name: 'Communication', description: 'Notices & announcements' },
+  'Documents': { minTier: 'Starter', name: 'Documents & Forms', description: 'School policy documents & digital consent forms' },
+  'Reports': { minTier: 'Starter', name: 'Reports', description: 'Standardized report cards & terminal transcripts' },
+  'Backup': { minTier: 'Starter', name: 'Vault Backup', description: 'Encrypted institutional data snapshot' },
+  'Offline Sync': { minTier: 'Starter', name: 'Offline Sync', description: 'Local device persistence' },
+  'LearnGuard': { minTier: 'Standard', name: 'LearnGuard Safeguarding', description: 'Safeguarding audits, child welfare & incident logs' },
+  'Marketplace': { minTier: 'Standard', name: 'Student Marketplace', description: 'Creative student projects & school development commerce' },
+  'Advanced analytics': { minTier: 'Standard', name: 'Advanced Analytics', description: 'Predictive performance analytics & executive cockpit' },
+  'Enterprise capabilities': { minTier: 'Enterprise', name: 'Multi-Campus Enterprise', description: 'Consolidated diocese/group reporting & cluster sync' },
+  'Biometric Hardware': { minTier: 'Standard', name: 'Biometric Driver', description: 'Biometric hardware terminal integration', requiresAddon: 'addon-biometric-sync' },
+  'Bulk SMS Engine': { minTier: 'Starter', name: 'Bulk SMS Gateway', description: 'Direct carrier SMS dispatch', requiresAddon: 'addon-sms-bundle-5k' },
+};
+
+const TIER_RANK: Record<CommercialPlanTier, number> = {
+  Starter: 1,
+  Standard: 2,
+  Enterprise: 3,
+};
+
+export function checkModuleEntitlement(
+  moduleKey: string,
+  sub?: SchoolCommercialSubscription,
+  activeAddons: string[] = []
+): ModuleEntitlementResult {
+  const rule = MODULE_ENTITLEMENT_RULES[moduleKey];
+  if (!rule) {
+    return { entitled: true };
+  }
+
+  const userTier = sub?.planTier || 'Standard';
+  const userRank = TIER_RANK[userTier] || 2;
+  const reqRank = TIER_RANK[rule.minTier] || 1;
+
+  // Active status check
+  const isSuspendedOrExpired = sub?.status === 'SUSPENDED' || sub?.status === 'EXPIRED';
+  if (isSuspendedOrExpired) {
+    if (moduleKey === 'Reports' || moduleKey === 'Backup' || moduleKey === 'Student Management') {
+      return {
+        entitled: true,
+        reason: 'Read-only access granted under Zero Data Hostage policy during subscription lapse.',
+      };
+    }
+    return {
+      entitled: false,
+      requiredTier: rule.minTier,
+      reason: 'Subscription is suspended or expired. Please renew to access this module.',
+    };
+  }
+
+  if (userRank < reqRank) {
+    return {
+      entitled: false,
+      requiredTier: rule.minTier,
+      reason: `The ${rule.name} module requires the ${rule.minTier} plan or higher.`,
+    };
+  }
+
+  if (rule.requiresAddon && !activeAddons.includes(rule.requiresAddon)) {
+    return {
+      entitled: false,
+      requiredTier: rule.minTier,
+      reason: `Requires active institutional add-on: ${rule.name}.`,
+    };
+  }
+
+  return { entitled: true };
+}
+
+// ============================================================================
+// 17. 30-DAY OFFLINE LICENSE CACHE & 14-DAY GRACE PERIOD ENGINE
+// ============================================================================
+
+export const OFFLINE_LICENSE_STORAGE_KEY = 'schoolsoul_offline_license_cache_v2';
+
+export interface OfflineLicenseCache {
+  licenseKey: string;
+  schoolId: string;
+  schoolName: string;
+  planTier: CommercialPlanTier;
+  licensedCapacity: number;
+  currentStudentCount: number;
+  cachedAt: string;
+  expiresAt: string; // 30 days
+  gracePeriodExpiresAt: string; // +14 days
+  lastServerVerification: string;
+  entitlementVersion: string;
+  signatureSha256: string;
+  entitlements: Record<string, boolean>;
+}
+
+export async function getAuthoritativeOfflineLicenseCache(): Promise<OfflineLicenseCache> {
+  try {
+    const raw = localStorage.getItem(OFFLINE_LICENSE_STORAGE_KEY);
+    if (raw) {
+      const parsed: OfflineLicenseCache = JSON.parse(raw);
+      if (parsed && parsed.licenseKey && parsed.signatureSha256) {
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading offline license cache:', e);
+  }
+
+  const sub = await getSchoolCommercialSubscription();
+  const cachedAt = new Date();
+  const expiresAt = new Date(cachedAt.getTime() + 30 * 24 * 60 * 60 * 1000); // 30-day window
+  const gracePeriodExpiresAt = new Date(expiresAt.getTime() + (sub.gracePeriodDays || 14) * 24 * 60 * 60 * 1000); // +14 days
+
+  const signatureSha256 = generateSha256Hash(
+    `OFFLINE_LIC:${sub.schoolId}:${sub.planTier}:${sub.licenseKey}:${expiresAt.toISOString()}`
+  );
+
+  const initialCache: OfflineLicenseCache = {
+    licenseKey: sub.licenseKey || `SS-LIC-${sub.planTier.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
+    schoolId: sub.schoolId,
+    schoolName: sub.schoolName,
+    planTier: sub.planTier,
+    licensedCapacity: sub.planTier === 'Starter' ? 500 : sub.planTier === 'Standard' ? 2500 : 15000,
+    currentStudentCount: sub.activeStudentCount || 450,
+    cachedAt: cachedAt.toISOString(),
+    expiresAt: expiresAt.toISOString(),
+    gracePeriodExpiresAt: gracePeriodExpiresAt.toISOString(),
+    lastServerVerification: sub.lastVerifiedAt || cachedAt.toISOString(),
+    entitlementVersion: '2026.6.0',
+    signatureSha256,
+    entitlements: {
+      'Student Management': true,
+      'Staff HR': true,
+      'Academics': true,
+      'Attendance': true,
+      'Fees': true,
+      'Communication': true,
+      'Documents': true,
+      'Reports': true,
+      'Backup': true,
+      'Offline Sync': true,
+      'LearnGuard': sub.planTier !== 'Starter',
+      'Marketplace': sub.planTier !== 'Starter',
+      'Advanced analytics': sub.planTier !== 'Starter',
+      'Enterprise capabilities': sub.planTier === 'Enterprise',
+    },
+  };
+
+  localStorage.setItem(OFFLINE_LICENSE_STORAGE_KEY, JSON.stringify(initialCache));
+  return initialCache;
+}
+
+export function verifyOfflineLicenseCache(cache: OfflineLicenseCache): {
+  valid: boolean;
+  inGracePeriod: boolean;
+  expired: boolean;
+  daysRemaining: number;
+} {
+  const now = new Date();
+  const expiry = new Date(cache.expiresAt);
+  const graceExpiry = new Date(cache.gracePeriodExpiresAt);
+
+  const expectedSig = generateSha256Hash(
+    `OFFLINE_LIC:${cache.schoolId}:${cache.planTier}:${cache.licenseKey}:${cache.expiresAt}`
+  );
+
+  if (cache.signatureSha256 !== expectedSig) {
+    return { valid: false, inGracePeriod: false, expired: true, daysRemaining: 0 };
+  }
+
+  if (now <= expiry) {
+    const daysRemaining = Math.max(0, Math.ceil((expiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    return { valid: true, inGracePeriod: false, expired: false, daysRemaining };
+  }
+
+  if (now <= graceExpiry) {
+    const daysRemaining = Math.max(0, Math.ceil((graceExpiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+    return { valid: true, inGracePeriod: true, expired: false, daysRemaining };
+  }
+
+  return { valid: false, inGracePeriod: false, expired: true, daysRemaining: 0 };
+}
+
+// ============================================================================
+// 18. CAPACITY METER ENGINE (Authoritative Student Count vs Licensed Quota)
+// ============================================================================
+
+export interface CapacityMeterData {
+  studentCount: number;
+  licensedCapacity: number;
+  availableCapacity: number;
+  usagePercent: number;
+  isOverCapacity: boolean;
+  isNearCapacity: boolean;
+  formattedText: string;
+}
+
+export async function getSchoolCapacityMeter(): Promise<CapacityMeterData> {
+  const sub = await getSchoolCommercialSubscription();
+  const studentsCount = await db.students.count().catch(() => sub.activeStudentCount || 450);
+
+  let licensedCapacity = 1000;
+  if (sub.planTier === 'Starter') licensedCapacity = 500;
+  else if (sub.planTier === 'Standard') licensedCapacity = 2500;
+  else if (sub.planTier === 'Enterprise') licensedCapacity = 15000;
+
+  const availableCapacity = Math.max(0, licensedCapacity - studentsCount);
+  const usagePercent = Math.min(100, Math.round((studentsCount / licensedCapacity) * 100));
+  const isOverCapacity = studentsCount > licensedCapacity;
+  const isNearCapacity = usagePercent >= 90;
+
+  return {
+    studentCount: studentsCount,
+    licensedCapacity,
+    availableCapacity,
+    usagePercent,
+    isOverCapacity,
+    isNearCapacity,
+    formattedText: `Students: ${studentsCount.toLocaleString()} / ${licensedCapacity.toLocaleString()} (Available capacity: ${availableCapacity.toLocaleString()})`,
+  };
+}
+
+// ============================================================================
+// 19. SCHOOL GROUPS & MULTI-CAMPUS ENTERPRISE ENGINE
+// ============================================================================
+
+export interface SchoolGroupCampus {
+  schoolId: string;
+  schoolName: string;
+  campusType: 'Main Campus' | 'Junior Campus' | 'Annex' | 'Branch';
+  enrolledStudents: number;
+  licensedCapacity: number;
+  status: 'ACTIVE' | 'TRIAL' | 'MAINTENANCE';
+}
+
+export interface SchoolGroupEnterpriseContext {
+  organizationId: string;
+  organizationName: string;
+  centralBillingEnabled: boolean;
+  totalCampuses: number;
+  consolidatedLicensedCapacity: number;
+  consolidatedEnrolledStudents: number;
+  campuses: SchoolGroupCampus[];
+}
+
+export async function getSchoolGroupEnterpriseContext(
+  organizationId: string = 'org-archdiocese-001'
+): Promise<SchoolGroupEnterpriseContext> {
+  const campuses: SchoolGroupCampus[] = [
+    {
+      schoolId: 'sch-main-001',
+      schoolName: 'St. Mary’s College Kisubi (Main Campus)',
+      campusType: 'Main Campus',
+      enrolledStudents: 1450,
+      licensedCapacity: 2000,
+      status: 'ACTIVE',
+    },
+    {
+      schoolId: 'sch-annex-002',
+      schoolName: 'St. Mary’s Junior Preparatory Campus',
+      campusType: 'Junior Campus',
+      enrolledStudents: 680,
+      licensedCapacity: 1000,
+      status: 'ACTIVE',
+    },
+    {
+      schoolId: 'sch-tech-003',
+      schoolName: 'St. Mary’s TVET & Vocational Institute',
+      campusType: 'Annex',
+      enrolledStudents: 420,
+      licensedCapacity: 600,
+      status: 'ACTIVE',
+    },
+  ];
+
+  const consolidatedEnrolledStudents = campuses.reduce((sum, c) => sum + c.enrolledStudents, 0);
+  const consolidatedLicensedCapacity = campuses.reduce((sum, c) => sum + c.licensedCapacity, 0);
+
+  return {
+    organizationId,
+    organizationName: 'St. Mary’s Educational Group & Diocese Network',
+    centralBillingEnabled: true,
+    totalCampuses: campuses.length,
+    consolidatedLicensedCapacity,
+    consolidatedEnrolledStudents,
+    campuses,
+  };
 }

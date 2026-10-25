@@ -56,6 +56,7 @@ import {
   Search,
   ChevronDown,
   ChevronRight,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import type { ModuleName } from '../../types';
@@ -336,6 +337,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </p>
           </div>
         </div>
+
+        {isOpenMobile && (
+          <button
+            onClick={onCloseMobile}
+            aria-label="Close navigation sidebar"
+            className="lg:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Quick Universal QR Scanner & Identity Strip */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SyncProvider, useSync } from './context/SyncContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider } from './context/ToastContext';
 import { NavigationProvider } from './context/NavigationContext';
 import { SchoolSetupWizard } from './pages/SchoolSetupWizard';
 import { Login } from './pages/Login';
@@ -260,14 +261,17 @@ const AppContent: React.FC = () => {
     return <PesapalCallbackPage />;
   }
 
-  // 1. First-time Setup Wizard if no school profile is configured
-  if (!isSetupComplete) {
-    return <SchoolSetupWizard />;
+  // 1. Unauthenticated Visitor Routing: Landing & Authentication Gateway
+  if (!isAuthenticated) {
+    if (!isSetupComplete && window.location.hash === '#setup') {
+      return <SchoolSetupWizard />;
+    }
+    return <Login />;
   }
 
-  // 2. Authentication Screen
-  if (!isAuthenticated) {
-    return <Login />;
+  // 2. Authenticated but Setup Incomplete (e.g. freshly installed school system)
+  if (!isSetupComplete) {
+    return <SchoolSetupWizard />;
   }
 
   // 3. Main Operational App Layout
@@ -551,11 +555,13 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <SyncProvider>
-          <AppContent />
-        </SyncProvider>
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <SyncProvider>
+            <AppContent />
+          </SyncProvider>
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

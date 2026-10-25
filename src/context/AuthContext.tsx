@@ -237,7 +237,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLockedDueToInactivity(true);
   }, []);
 
-  const isSetupComplete = Boolean(schoolProfile && schoolProfile.isConfigured);
+  const isSetupComplete = Boolean(
+    schoolProfile && (schoolProfile.isConfigured || (schoolProfile as any).status === 'ACTIVE' || (schoolProfile as any).name || schoolProfile.schoolName)
+  );
 
   return (
     <AuthContext.Provider

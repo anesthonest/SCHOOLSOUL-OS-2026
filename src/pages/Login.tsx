@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import {
-  GraduationCap,
   Lock,
   User as UserIcon,
   ShieldAlert,
   ArrowRight,
+  ArrowLeft,
   HelpCircle,
   KeyRound,
   CheckCircle2,
+  GraduationCap,
   Building2,
   UserPlus,
   Search,
@@ -25,9 +26,18 @@ import {
   RefreshCw,
   Send,
   Sparkles,
+  Eye,
+  EyeOff,
+  Sun,
+  Moon,
+  Info,
+  Check,
+  Globe2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
+import { useTheme } from '../context/ThemeContext';
+import { useToast } from '../context/ToastContext';
 import {
   submitAccountRequest,
   checkAccountStatus,
@@ -37,21 +47,59 @@ import {
 } from '../services/api';
 import { Modal } from '../components/common/Modal';
 import { SchoolSoulMarkSVG } from '../components/common/SchoolSoulLogo';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { PasswordInput } from '../components/ui/PasswordInput';
+import { Select } from '../components/ui/Select';
+import { SegmentedTabs } from '../components/ui/SegmentedTabs';
+import { PublicLandingPage } from './PublicLandingPage';
+import { SchoolSetupWizard } from './SchoolSetupWizard';
 
 export const Login: React.FC = () => {
   const { login, schoolProfile } = useAuth();
   const { isOnline } = useSync();
+  const { theme, toggleTheme } = useTheme();
+  const { showSuccess, showError } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'LOGIN' | 'REGISTER' | 'STATUS'>('LOGIN');
+  // Mode: Public Landing vs Auth Gateway vs School Registration
+  const [viewMode, setViewMode] = useState<'AUTH' | 'LANDING' | 'REGISTER_SCHOOL'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('register') || params.get('setup') || params.get('action') === 'register-school' || params.get('tab') === 'register-school') {
+        return 'REGISTER_SCHOOL';
+      }
+      const hash = window.location.hash;
+      if (hash === '#register' || hash === '#register-school' || hash === '#school-registration' || hash === '#setup') {
+        return 'REGISTER_SCHOOL';
+      }
+      if (params.get('auth') || params.get('login') || params.get('action') || params.get('tab') || params.get('view') === 'auth') {
+        return 'AUTH';
+      }
+      if (hash === '#login' || hash === '#signin' || hash === '#auth') {
+        return 'AUTH';
+      }
+    }
+    return 'LANDING';
+  });
+  const [activeTab, setActiveTab] = useState<'LOGIN' | 'REGISTER' | 'STATUS'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') || params.get('action');
+      if (tab?.toUpperCase() === 'REGISTER') return 'REGISTER';
+      if (tab?.toUpperCase() === 'STATUS') return 'STATUS';
+    }
+    return 'LOGIN';
+  });
 
-  // Login form state
+  // Sign In Form State
   const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Request Account state
+  // Multi-Step Join School Registration State
+  const [regStep, setRegStep] = useState<number>(1);
   const [regForm, setRegForm] = useState({
     fullName: '',
     username: '',
@@ -68,38 +116,33 @@ export const Login: React.FC = () => {
     department: '',
   });
   const [regError, setRegError] = useState('');
-  const [regSuccess, setRegSuccess] = useState('');
+  const [regSuccess, setRegSuccess] = useState<string | null>(null);
+  const [regRequestId, setRegRequestId] = useState<string | null>(null);
   const [regLoading, setRegLoading] = useState(false);
 
-  // Status check state
+  // Status Check State
   const [statusQuery, setStatusQuery] = useState('');
   const [statusResult, setStatusResult] = useState<any>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState('');
 
-  // Enhanced Account Recovery & Password Reset state
+  // Password Recovery State
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [recoveryTab, setRecoveryTab] = useState<'OTP_RESET' | 'LOST_CONTACTS'>('OTP_RESET');
   const [recoveryStep, setRecoveryStep] = useState<'REQUEST' | 'VERIFY_OTP' | 'SET_PASSWORD' | 'SUCCESS'>('REQUEST');
-
-  // Step 1: Identifier & dispatch
   const [recoveryIdentifier, setRecoveryIdentifier] = useState('');
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [recoveryError, setRecoveryError] = useState('');
   const [recoveryRequestId, setRecoveryRequestId] = useState('');
   const [recoveryMaskedContact, setRecoveryMaskedContact] = useState('');
   const [simulatedOtp, setSimulatedOtp] = useState('');
-
-  // Step 2: OTP Entry
   const [enteredOtp, setEnteredOtp] = useState('');
   const [resetToken, setResetToken] = useState('');
-
-  // Step 3: New Password
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [resetSuccessMsg, setResetSuccessMsg] = useState('');
 
-  // Tab 2: Lost Contacts & Headteacher Escalation Form
+  // Lost Contacts & Headteacher Escalation State
   const [escalationForm, setEscalationForm] = useState({
     fullName: '',
     identifier: '',
@@ -113,91 +156,165 @@ export const Login: React.FC = () => {
   const [escalationLoading, setEscalationLoading] = useState(false);
   const [escalationError, setEscalationError] = useState('');
 
+  // Informational Modals
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+  // --------------------------------------------------------------------------
+  // HANDLERS
+  // --------------------------------------------------------------------------
+
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!usernameOrEmail || !password) {
-      setError('Please enter your username/email and password.');
+    if (!usernameOrEmail.trim() || !password) {
+      setError('Please provide your username or institutional email and password.');
       return;
     }
 
     setLoading(true);
     setError('');
 
-    const res = await login(usernameOrEmail, password, rememberMe);
+    const res = await login(usernameOrEmail.trim(), password, rememberMe);
     setLoading(false);
 
     if (!res.success) {
-      setError(res.error || 'Invalid credentials.');
+      setError(res.error || 'Invalid credentials. Please verify your login details.');
+    } else {
+      showSuccess('Welcome back!', 'Session authenticated successfully.');
     }
+  };
+
+  // Step Validation for Registration Wizard
+  const validateStep = (stepNumber: number): boolean => {
+    setRegError('');
+    if (stepNumber === 1) {
+      if (!regForm.fullName.trim()) {
+        setRegError('Full Name is required.');
+        return false;
+      }
+      if (!regForm.username.trim() || regForm.username.length < 3) {
+        setRegError('Username must be at least 3 characters.');
+        return false;
+      }
+      if (regForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regForm.email)) {
+        setRegError('Please provide a valid email format or leave blank.');
+        return false;
+      }
+      return true;
+    }
+
+    if (stepNumber === 2) {
+      if (!regForm.requestedRole) {
+        setRegError('Please select your role.');
+        return false;
+      }
+      if (regForm.requestedRole === 'Student' && !regForm.studentIdOrLin.trim()) {
+        setRegError('Student ID or Learner Identification Number (LIN) is required for student accounts.');
+        return false;
+      }
+      if (regForm.requestedRole === 'Parent' && !regForm.childLinOrNin.trim()) {
+        setRegError('Child\'s LIN or Student ID is required to link guardian records.');
+        return false;
+      }
+      return true;
+    }
+
+    if (stepNumber === 3) {
+      // Optional details - always valid
+      return true;
+    }
+
+    if (stepNumber === 4) {
+      if (!regForm.password || regForm.password.length < 8) {
+        setRegError('Password must be at least 8 characters long.');
+        return false;
+      }
+      if (regForm.password !== regForm.confirmPassword) {
+        setRegError('Passwords do not match.');
+        return false;
+      }
+      return true;
+    }
+
+    return true;
+  };
+
+  const handleNextStep = () => {
+    if (validateStep(regStep)) {
+      setRegStep((prev) => Math.min(prev + 1, 5));
+    }
+  };
+
+  const handlePrevStep = () => {
+    setRegError('');
+    setRegStep((prev) => Math.max(prev - 1, 1));
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegError('');
-    setRegSuccess('');
 
-    if (!regForm.fullName || !regForm.username || !regForm.password) {
-      setRegError('Full Name, Username, and Password are required.');
-      return;
-    }
-
-    if (regForm.password.length < 8) {
-      setRegError('Password must be at least 8 characters long.');
-      return;
-    }
-
-    if (regForm.password !== regForm.confirmPassword) {
-      setRegError('Passwords do not match.');
+    if (!validateStep(1) || !validateStep(2) || !validateStep(4)) {
       return;
     }
 
     setRegLoading(true);
     try {
       const res = await submitAccountRequest({
-        fullName: regForm.fullName,
-        username: regForm.username,
-        email: regForm.email,
-        phone: regForm.phone,
+        fullName: regForm.fullName.trim(),
+        username: regForm.username.trim(),
+        email: regForm.email.trim(),
+        phone: regForm.phone.trim(),
         password: regForm.password,
         requestedRole: regForm.requestedRole,
         schoolId: schoolProfile?.id,
-        nationalIdOrNin: regForm.nationalIdOrNin,
-        studentIdOrLin: regForm.studentIdOrLin,
-        childLinOrNin: regForm.childLinOrNin,
-        tinNumber: regForm.tinNumber,
-        nssfNumber: regForm.nssfNumber,
-        department: regForm.department,
+        nationalIdOrNin: regForm.nationalIdOrNin.trim(),
+        studentIdOrLin: regForm.studentIdOrLin.trim(),
+        childLinOrNin: regForm.childLinOrNin.trim(),
+        tinNumber: regForm.tinNumber.trim(),
+        nssfNumber: regForm.nssfNumber.trim(),
+        department: regForm.department.trim(),
       });
 
+      setRegRequestId(res.requestId || 'REQ-' + Date.now().toString().slice(-6));
       setRegSuccess(
-        `Account request submitted successfully! Your application for '${regForm.requestedRole}' is now pending approval by the Headteacher.`
+        res.message ||
+          `Account request submitted successfully! Your application for '${regForm.requestedRole}' is now pending review by the School Administration.`
       );
-      setRegForm({
-        fullName: '',
-        username: '',
-        email: '',
-        phone: '+256 ',
-        password: '',
-        confirmPassword: '',
-        requestedRole: 'Teacher',
-        nationalIdOrNin: '',
-        studentIdOrLin: '',
-        childLinOrNin: '',
-        tinNumber: '',
-        nssfNumber: '',
-        department: '',
-      });
+      showSuccess('Application Submitted', 'Your registration is in the review queue.');
     } catch (err: any) {
-      setRegError(err.message || 'Registration failed.');
+      setRegError(err.message || 'Registration failed. Please check your network or try again.');
     } finally {
       setRegLoading(false);
     }
   };
 
+  const resetRegisterWizard = () => {
+    setRegStep(1);
+    setRegSuccess(null);
+    setRegRequestId(null);
+    setRegError('');
+    setRegForm({
+      fullName: '',
+      username: '',
+      email: '',
+      phone: '+256 ',
+      password: '',
+      confirmPassword: '',
+      requestedRole: 'Teacher',
+      nationalIdOrNin: '',
+      studentIdOrLin: '',
+      childLinOrNin: '',
+      tinNumber: '',
+      nssfNumber: '',
+      department: '',
+    });
+  };
+
   const handleCheckStatus = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!statusQuery.trim()) {
-      setStatusError('Enter your username or email.');
+      setStatusError('Enter your registered username, email, phone number, or Reference ID.');
       return;
     }
     setStatusLoading(true);
@@ -213,7 +330,7 @@ export const Login: React.FC = () => {
     }
   };
 
-  // Recovery handlers
+  // Recovery Handlers
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!recoveryIdentifier.trim()) {
@@ -286,6 +403,7 @@ export const Login: React.FC = () => {
         setUsernameOrEmail(res.username);
       }
       setRecoveryStep('SUCCESS');
+      showSuccess('Password Reset Complete', 'You may now log in with your new password.');
     } catch (err: any) {
       setRecoveryError(err.message || 'Password reset failed.');
     } finally {
@@ -320,6 +438,7 @@ export const Login: React.FC = () => {
       setEscalationSuccess(
         `Your recovery request (Ref: ${res.requestId}) has been dispatched to the Headteacher & ICT Admin. You can follow up with the administration with your National ID/LIN for identity verification.`
       );
+      showSuccess('Escalation Sent', 'Request registered with school administration.');
     } catch (err: any) {
       setEscalationError(err.message || 'Failed to submit escalation.');
     } finally {
@@ -343,897 +462,1022 @@ export const Login: React.FC = () => {
     setEscalationError('');
   };
 
+  // If in public landing mode, render the public landing experience
+  if (viewMode === 'LANDING') {
+    return (
+      <PublicLandingPage
+        onGoToAuth={(initialTab) => {
+          if (initialTab) setActiveTab(initialTab);
+          setViewMode('AUTH');
+        }}
+        onGoToRegisterSchool={() => {
+          setViewMode('REGISTER_SCHOOL');
+        }}
+        schoolName={schoolProfile?.schoolName}
+        schoolLogo={schoolProfile?.schoolLogo}
+      />
+    );
+  }
+
+  // If in School Registration mode, render the authoritative School Registration Wizard (Step 1 — School Information & Country Identity)
+  if (viewMode === 'REGISTER_SCHOOL') {
+    return (
+      <SchoolSetupWizard
+        onBackToLanding={() => setViewMode('LANDING')}
+        onGoToJoinExisting={() => {
+          setActiveTab('REGISTER');
+          setViewMode('AUTH');
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Background Subtle Gradient Blobs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col justify-between p-4 sm:p-6 transition-colors duration-200">
+      {/* Top Bar with Brand Link & Theme Toggle */}
+      <header className="w-full max-w-4xl mx-auto flex items-center justify-between py-2 px-2">
+        <button
+          onClick={() => setViewMode('LANDING')}
+          data-testid="auth-back-to-landing-btn"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-200/50 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to SchoolSoul Landing</span>
+        </button>
 
-      <div className="w-full max-w-lg bg-slate-900/80 border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8 backdrop-blur-xl relative z-10">
-        {/* Branding Header */}
-        <div className="text-center mb-6">
-          {schoolProfile?.schoolLogo ? (
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-800 p-1 border border-slate-700 shadow-lg shadow-blue-600/30 mb-3 overflow-hidden">
-              <img
-                src={schoolProfile.schoolLogo}
-                alt={schoolProfile.schoolName || 'School Logo'}
-                className="max-w-full max-h-full object-contain"
-              />
-            </div>
-          ) : (
-            <div className="inline-flex flex-col items-center justify-center mb-3">
-              <div className="p-2 rounded-2xl bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/80 shadow-xl shadow-amber-500/10">
-                <SchoolSoulMarkSVG size={64} idPrefix="ss-login" />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowHelpModal(true)}
+            aria-label="Need Help with SchoolSoul"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors"
+          >
+            <HelpCircle className="w-4 h-4" />
+            <span className="hidden sm:inline">Help & Guidance</span>
+          </button>
+
+          <button
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+          >
+            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+        </div>
+      </header>
+
+      {/* Main Authentication Container */}
+      <main className="w-full max-w-lg mx-auto my-auto py-6">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-6 sm:p-8 transition-colors duration-200">
+          {/* Institutional Branding Header */}
+          <div className="text-center mb-6">
+            {schoolProfile?.schoolLogo ? (
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 shadow-xs mb-3 overflow-hidden">
+                <img
+                  src={schoolProfile.schoolLogo}
+                  alt={schoolProfile.schoolName || 'School Logo'}
+                  className="max-w-full max-h-full object-contain"
+                />
               </div>
-            </div>
-          )}
-          <h1 className="text-xl font-black text-white tracking-tight uppercase">
-            {schoolProfile?.schoolName || 'SchoolSoul OS'}
-          </h1>
-          <p className="text-xs text-slate-400 mt-0.5 italic">
-            "{schoolProfile?.schoolMotto || 'Knowledge • Character • Integrity'}"
-          </p>
-
-          <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-[11px] font-medium text-slate-300">
-            <Building2 className="w-3.5 h-3.5 text-amber-400" />
-            <span>{schoolProfile?.academicTerm || 'Term I'} • {schoolProfile?.academicYear || '2026'}</span>
-          </div>
-        </div>
-
-        {/* Tab Switcher: Sign In vs Request Account vs Status */}
-        <div className="flex rounded-xl bg-slate-950 p-1 mb-6 border border-slate-800 text-xs font-semibold">
-          <button
-            id="tab-sign-in"
-            type="button"
-            onClick={() => {
-              setActiveTab('LOGIN');
-              setError('');
-            }}
-            className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'LOGIN'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Lock className="w-3.5 h-3.5" />
-            Sign In
-          </button>
-          <button
-            id="tab-request-account"
-            type="button"
-            onClick={() => {
-              setActiveTab('REGISTER');
-              setRegError('');
-              setRegSuccess('');
-            }}
-            className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'REGISTER'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            Join School
-          </button>
-          <button
-            id="tab-check-status"
-            type="button"
-            onClick={() => {
-              setActiveTab('STATUS');
-              setStatusError('');
-            }}
-            className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-              activeTab === 'STATUS'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5" />
-            Check Status
-          </button>
-        </div>
-
-        {/* Offline Notice */}
-        {!isOnline && (
-          <div className="mb-4 p-2.5 text-xs text-amber-300 bg-amber-950/50 border border-amber-800 rounded-xl flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
-            <span>Offline Mode Active – Local offline credentials will be verified.</span>
-          </div>
-        )}
-
-        {/* ================= TAB 1: SIGN IN ================= */}
-        {activeTab === 'LOGIN' && (
-          <div>
-            {/* Error Alert */}
-            {error && (
-              <div className="mb-4 p-3 text-xs text-rose-300 bg-rose-950/60 border border-rose-800 rounded-xl flex items-start gap-2">
-                <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                <div className="space-y-1">
-                  <span>{error}</span>
-                  {error.includes('pending approval') && (
-                    <p className="text-[11px] text-amber-300/90 font-medium">
-                      Tip: Your account was received. The Headteacher reviews and approves staff/parent/student accounts in User Management.
-                    </p>
-                  )}
-                </div>
+            ) : (
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 mb-3 shadow-xs">
+                <SchoolSoulMarkSVG size={36} idPrefix="ss-login-main" />
               </div>
             )}
 
+            <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight uppercase">
+              {schoolProfile?.schoolName || 'SchoolSoul OS'}
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 italic">
+              "{schoolProfile?.schoolMotto || 'Knowledge · Character · Integrity'}"
+            </p>
+
+            <div className="mt-2 text-xs font-semibold text-blue-700 dark:text-blue-400">
+              <span>{schoolProfile?.academicTerm || 'Term I'}</span>
+              <span aria-hidden="true" className="mx-1.5 text-slate-300 dark:text-slate-700">·</span>
+              <span>Academic Year {schoolProfile?.academicYear || '2026'}</span>
+            </div>
+          </div>
+
+          {/* Segmented Tab Switcher (Sign In / Join School / Check Status) */}
+          <div className="mb-6">
+            <SegmentedTabs
+              fullWidth
+              size="md"
+              activeTab={activeTab}
+              onChange={(tab) => {
+                setActiveTab(tab as any);
+                setError('');
+                setRegError('');
+                setStatusError('');
+              }}
+              tabs={[
+                { id: 'LOGIN', label: 'Sign In', icon: <Lock className="w-3.5 h-3.5" /> },
+                { id: 'REGISTER', label: 'Join Existing School', icon: <UserPlus className="w-3.5 h-3.5" /> },
+                { id: 'STATUS', label: 'Check Status', icon: <Clock className="w-3.5 h-3.5" /> },
+              ]}
+            />
+          </div>
+
+          {/* Offline Indicator Alert */}
+          {!isOnline && (
+            <div className="mb-4 p-3 text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 rounded-xl flex items-center gap-2.5">
+              <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
+              <span>Offline Local Mode active. Local offline credentials will be validated.</span>
+            </div>
+          )}
+
+          {/* ================================================================= */}
+          {/* TAB 1: SIGN IN                                                    */}
+          {/* ================================================================= */}
+          {activeTab === 'LOGIN' && (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Username or Email
-                </label>
-                <div className="relative">
-                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    id="login-username-input"
-                    type="text"
-                    placeholder="headteacher, teacher, dos or email"
-                    value={usernameOrEmail}
-                    onChange={(e) => setUsernameOrEmail(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    autoComplete="username"
-                  />
+              {error && (
+                <div
+                  role="alert"
+                  className="p-3.5 text-xs text-rose-800 dark:text-rose-200 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl flex items-start gap-2.5"
+                >
+                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
+                  <div className="space-y-0.5">
+                    <p className="font-semibold">Sign In Failed</p>
+                    <p>{error}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Password
-                  </label>
-                  <button
-                    id="login-forgot-pwd-btn"
-                    type="button"
-                    onClick={() => setShowForgotModal(true)}
-                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    id="login-password-input"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    autoComplete="current-password"
-                  />
-                </div>
-              </div>
+              <Input
+                label="Username or Institutional Email"
+                placeholder="e.g. jmukasa or teacher@school.edu"
+                required
+                value={usernameOrEmail}
+                onChange={(e) => setUsernameOrEmail(e.target.value)}
+                iconLeading={<UserIcon className="w-4 h-4" aria-hidden="true" />}
+                autoComplete="username"
+              />
 
-              <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <PasswordInput
+                label="Password"
+                placeholder="Enter your account password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+
+              <div className="flex items-center justify-between text-xs pt-1">
+                <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-pointer select-none">
                   <input
-                    id="login-remember-me-checkbox"
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded-md border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-500"
+                    className="w-4 h-4 rounded-md border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500"
                   />
-                  <span>Remember me on this device</span>
+                  <span>Remember session</span>
                 </label>
-              </div>
-
-              <button
-                id="login-submit-btn"
-                type="submit"
-                disabled={loading}
-                className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 mt-2"
-              >
-                {loading ? 'Authenticating...' : 'Sign In to SchoolSoul'}
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
-          </div>
-        )}
-
-        {/* ================= TAB 2: REQUEST SCHOOL ACCOUNT ================= */}
-        {activeTab === 'REGISTER' && (
-          <div>
-            {regError && (
-              <div className="mb-4 p-3 text-xs text-rose-300 bg-rose-950/60 border border-rose-800 rounded-xl flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                <span>{regError}</span>
-              </div>
-            )}
-
-            {regSuccess ? (
-              <div className="p-4 bg-emerald-950/60 border border-emerald-800 rounded-xl text-center space-y-3">
-                <CheckCircle2 className="w-10 h-10 text-emerald-400 mx-auto" />
-                <h3 className="text-sm font-bold text-emerald-200">Application Submitted</h3>
-                <p className="text-xs text-emerald-300/90 leading-relaxed">{regSuccess}</p>
-                <div className="pt-2 flex justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('LOGIN')}
-                    className="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
-                  >
-                    Go to Sign In
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab('STATUS')}
-                    className="px-4 py-2 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg"
-                  >
-                    Check Application Status
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleRegisterSubmit} className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
-                <div className="p-2.5 bg-blue-950/40 border border-blue-800/60 rounded-xl text-[11px] text-blue-300 leading-relaxed">
-                  <span className="font-semibold text-blue-200">Layer A Identity & Layer B Access:</span>{' '}
-                  Register your school profile. Accounts require review and administrative approval by the <strong>Headteacher</strong> before private operational records can be accessed.
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. John Bosco Mukasa"
-                      value={regForm.fullName}
-                      onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Username *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. jmukasa"
-                      value={regForm.username}
-                      onChange={(e) => setRegForm({ ...regForm, username: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="jmukasa@school.ac.ug"
-                      value={regForm.email}
-                      onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Phone Number
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="+256 700 000 000"
-                      value={regForm.phone}
-                      onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Requested Role *
-                  </label>
-                  <select
-                    value={regForm.requestedRole}
-                    onChange={(e) => setRegForm({ ...regForm, requestedRole: e.target.value })}
-                    className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="Teacher">Teacher (Academic & Class Instructor)</option>
-                    <option value="Deputy Headteacher">Director of Studies (DOS) / Deputy Headteacher</option>
-                    <option value="Bursar">Bursar / Accounts Officer</option>
-                    <option value="Administrator">Administrator / Registrar</option>
-                    <option value="Parent">Parent / Guardian</option>
-                    <option value="Student">Student / Learner</option>
-                  </select>
-                </div>
-
-                {/* Role-Specific Contextual Fields */}
-                {(regForm.requestedRole === 'Teacher' || regForm.requestedRole === 'Deputy Headteacher' || regForm.requestedRole === 'Bursar') && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-2.5 bg-slate-950/60 rounded-xl border border-slate-800 text-xs">
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-0.5">Department</label>
-                      <input
-                        type="text"
-                        placeholder="e.g. Sciences, Arts"
-                        value={regForm.department}
-                        onChange={(e) => setRegForm({ ...regForm, department: e.target.value })}
-                        className="w-full px-2 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-0.5">TIN (Optional)</label>
-                      <input
-                        type="text"
-                        placeholder="10-digit TIN"
-                        value={regForm.tinNumber}
-                        onChange={(e) => setRegForm({ ...regForm, tinNumber: e.target.value })}
-                        className="w-full px-2 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-0.5">NSSF (Optional)</label>
-                      <input
-                        type="text"
-                        placeholder="NSSF No"
-                        value={regForm.nssfNumber}
-                        onChange={(e) => setRegForm({ ...regForm, nssfNumber: e.target.value })}
-                        className="w-full px-2 py-1.5 text-xs bg-slate-800 border border-slate-700 rounded text-white"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {regForm.requestedRole === 'Student' && (
-                  <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800 text-xs">
-                    <label className="block text-[11px] text-slate-300 font-medium mb-1">
-                      Learner Identification Number (LIN) or Admission No *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. LIN-2026-0042 or ADM-1002"
-                      value={regForm.studentIdOrLin}
-                      onChange={(e) => setRegForm({ ...regForm, studentIdOrLin: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded text-white"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">Matched automatically to your student academic passport.</p>
-                  </div>
-                )}
-
-                {regForm.requestedRole === 'Parent' && (
-                  <div className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800 text-xs">
-                    <label className="block text-[11px] text-slate-300 font-medium mb-1">
-                      Child's LIN, Admission No, or National ID *
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. LIN-2026-0042 or ADM-1002"
-                      value={regForm.childLinOrNin}
-                      onChange={(e) => setRegForm({ ...regForm, childLinOrNin: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded text-white"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">Links your parent portal to your child's fee accounts & report cards.</p>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Password *
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="Min 8 characters"
-                      value={regForm.password}
-                      onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Confirm Password *
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="Confirm password"
-                      value={regForm.confirmPassword}
-                      onChange={(e) => setRegForm({ ...regForm, confirmPassword: e.target.value })}
-                      className="w-full px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-lg text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
 
                 <button
-                  type="submit"
-                  disabled={regLoading}
-                  className="w-full py-2.5 px-4 text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 rounded-xl transition-all shadow-md shadow-blue-600/30 flex items-center justify-center gap-2 mt-3"
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
+                  className="font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
                 >
-                  {regLoading ? 'Submitting Application...' : 'Submit School Account Application'}
-                  <ArrowRight className="w-4 h-4" />
+                  Forgot Password?
                 </button>
-              </form>
-            )}
-          </div>
-        )}
-
-        {/* ================= TAB 3: CHECK APPLICATION STATUS ================= */}
-        {activeTab === 'STATUS' && (
-          <div className="space-y-4">
-            <p className="text-xs text-slate-400">
-              Check the live status of your account request submitted to the Headteacher.
-            </p>
-
-            <form onSubmit={handleCheckStatus} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Enter username or email address"
-                value={statusQuery}
-                onChange={(e) => setStatusQuery(e.target.value)}
-                className="flex-1 px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="submit"
-                disabled={statusLoading}
-                className="px-4 py-2 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-xl flex items-center gap-1.5 shadow-md"
-              >
-                <Search className="w-3.5 h-3.5" />
-                {statusLoading ? 'Checking...' : 'Check'}
-              </button>
-            </form>
-
-            {statusError && (
-              <div className="p-3 bg-rose-950/60 border border-rose-800 rounded-xl text-xs text-rose-300 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                <span>{statusError}</span>
               </div>
-            )}
 
-            {statusResult && (
-              <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="text-sm font-bold text-white">{statusResult.fullName || statusResult.username}</h4>
-                    <p className="text-xs text-slate-400">@{statusResult.username} • Role: {statusResult.requestedRole || statusResult.role}</p>
-                  </div>
-                  <div>
-                    {statusResult.status === 'Active' || statusResult.approvalStatus === 'APPROVED' ? (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                        APPROVED & ACTIVE
-                      </span>
-                    ) : statusResult.status === 'PENDING_APPROVAL' || statusResult.approvalStatus === 'PENDING_APPROVAL' ? (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-950 text-amber-400 border border-amber-800">
-                        PENDING HEADTEACHER APPROVAL
-                      </span>
-                    ) : statusResult.status === 'REJECTED' || statusResult.approvalStatus === 'REJECTED' ? (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-950 text-rose-400 border border-rose-800">
-                        REJECTED
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-800 text-slate-300">
-                        {statusResult.status}
-                      </span>
-                    )}
-                  </div>
-                </div>
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  isLoading={loading}
+                  loadingText="Authenticating..."
+                  iconTrailing={<ArrowRight className="w-4 h-4" />}
+                >
+                  Sign In to SchoolSoul
+                </Button>
+              </div>
 
-                {statusResult.status === 'PENDING_APPROVAL' && (
-                  <p className="text-xs text-amber-300/90 bg-amber-950/40 p-2.5 rounded-lg border border-amber-900/60">
-                    Your application is currently in the Headteacher's verification queue. You will be able to log in immediately once approved.
-                  </p>
-                )}
-
-                {(statusResult.status === 'REJECTED' || statusResult.approvalStatus === 'REJECTED') && (
-                  <div className="text-xs text-rose-300/90 bg-rose-950/40 p-2.5 rounded-lg border border-rose-900/60">
-                    <span className="font-semibold text-rose-200">Rejection Reason:</span>{' '}
-                    {statusResult.rejectionReason || 'Application could not be verified with school records.'}
-                  </div>
-                )}
-
-                {statusResult.status === 'Active' && (
+              {/* Security Reassurance */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-center space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                <p className="flex items-center justify-center gap-1.5 font-medium">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Protected by institutional role-based access control (RBAC).</span>
+                </p>
+                <div className="flex items-center justify-center gap-3">
                   <button
                     type="button"
-                    onClick={() => {
-                      setUsernameOrEmail(statusResult.username);
-                      setActiveTab('LOGIN');
-                    }}
-                    className="w-full py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg"
+                    onClick={() => setShowPrivacyModal(true)}
+                    className="hover:underline text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   >
-                    Proceed to Sign In as @{statusResult.username}
+                    Privacy Information
                   </button>
-                )}
+                  <span aria-hidden="true">·</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowHelpModal(true)}
+                    className="hover:underline text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                  >
+                    Need Help?
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* ================================================================= */}
+          {/* TAB 2: MULTI-STEP JOIN SCHOOL WIZARD                              */}
+          {/* ================================================================= */}
+          {activeTab === 'REGISTER' && (
+            <div>
+              {regSuccess ? (
+                /* Submission Confirmation View */
+                <div className="text-center py-4 space-y-4">
+                  <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-xs">
+                    <CheckCircle2 className="w-8 h-8" aria-hidden="true" />
+                  </div>
+
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                      Application Received!
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                      {regSuccess}
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-left text-xs space-y-1.5">
+                    <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                      <span>Application Reference:</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{regRequestId}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                      <span>Reviewer:</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300">Headteacher & School Registrar</span>
+                    </div>
+                    <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                      <span>Status:</span>
+                      <span className="font-bold text-amber-600 dark:text-amber-400">Pending Review</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                    <Button
+                      variant="primary"
+                      size="md"
+                      fullWidth
+                      onClick={() => {
+                        setStatusQuery(regForm.username || regRequestId || '');
+                        setActiveTab('STATUS');
+                      }}
+                    >
+                      Track Application Status
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="md"
+                      fullWidth
+                      onClick={resetRegisterWizard}
+                    >
+                      Submit Another
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Callout to distinguish creating a new school from joining an existing school */}
+                  <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 text-xs text-blue-900 dark:text-blue-300 flex items-center justify-between gap-2.5">
+                    <div className="space-y-0.5">
+                      <span className="font-bold">Registering a new school or campus?</span>
+                      <p className="text-[11px] text-blue-700 dark:text-blue-400">Establish a complete school institution with national curricula & finance.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('REGISTER_SCHOOL')}
+                      className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer shrink-0"
+                    >
+                      Create School →
+                    </button>
+                  </div>
+
+                  {/* Multi-Step Registration Form for Joining Existing School */}
+                  <form onSubmit={handleRegisterSubmit} className="space-y-5">
+                  {/* Step Progress Indicator */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
+                      <span>Step {regStep} of 5</span>
+                      <span className="text-blue-600 dark:text-blue-400">
+                        {regStep === 1 && 'Personal Information'}
+                        {regStep === 2 && 'School & Role'}
+                        {regStep === 3 && 'Professional Details'}
+                        {regStep === 4 && 'Account Security'}
+                        {regStep === 5 && 'Review & Submit'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-5 gap-1.5 h-1.5">
+                      {[1, 2, 3, 4, 5].map((stepNum) => (
+                        <div
+                          key={stepNum}
+                          className={`h-full rounded-full transition-all duration-200 ${
+                            stepNum <= regStep
+                              ? 'bg-blue-600 dark:bg-blue-500'
+                              : 'bg-slate-200 dark:bg-slate-800'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {regError && (
+                    <div
+                      role="alert"
+                      className="p-3 text-xs text-rose-800 dark:text-rose-200 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl flex items-start gap-2"
+                    >
+                      <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
+                      <span>{regError}</span>
+                    </div>
+                  )}
+
+                  {/* STEP 1: Personal Information */}
+                  {regStep === 1 && (
+                    <div className="space-y-3.5">
+                      <Input
+                        label="Full Legal Name"
+                        placeholder="e.g. Sarah Akwero"
+                        required
+                        value={regForm.fullName}
+                        onChange={(e) => setRegForm({ ...regForm, fullName: e.target.value })}
+                        iconLeading={<UserIcon className="w-4 h-4" aria-hidden="true" />}
+                      />
+
+                      <Input
+                        label="Desired Username"
+                        placeholder="e.g. sakwero"
+                        required
+                        hint="Must be unique, 3-20 characters without spaces."
+                        value={regForm.username}
+                        onChange={(e) =>
+                          setRegForm({
+                            ...regForm,
+                            username: e.target.value.toLowerCase().replace(/\s+/g, ''),
+                          })
+                        }
+                        iconLeading={<UserCheck className="w-4 h-4" aria-hidden="true" />}
+                      />
+
+                      <Input
+                        label="Email Address"
+                        type="email"
+                        placeholder="e.g. sakwero@school.edu"
+                        value={regForm.email}
+                        onChange={(e) => setRegForm({ ...regForm, email: e.target.value })}
+                        iconLeading={<Mail className="w-4 h-4" aria-hidden="true" />}
+                      />
+
+                      <Input
+                        label="Phone Number"
+                        type="tel"
+                        placeholder="+256 700 000 000"
+                        value={regForm.phone}
+                        onChange={(e) => setRegForm({ ...regForm, phone: e.target.value })}
+                        iconLeading={<Smartphone className="w-4 h-4" aria-hidden="true" />}
+                      />
+                    </div>
+                  )}
+
+                  {/* STEP 2: School & Role Selection */}
+                  {regStep === 2 && (
+                    <div className="space-y-3.5">
+                      <Select
+                        label="Requested Role at School"
+                        required
+                        value={regForm.requestedRole}
+                        onChange={(e) => setRegForm({ ...regForm, requestedRole: e.target.value })}
+                        options={[
+                          { value: 'Teacher', label: 'Teacher / Subject Instructor' },
+                          { value: 'Class Teacher', label: 'Class Teacher / Stream In-Charge' },
+                          { value: 'Parent', label: 'Parent / Legal Guardian' },
+                          { value: 'Student', label: 'Student / Learner' },
+                          { value: 'Bursar', label: 'Bursar / Accounts Officer' },
+                          { value: 'Librarian', label: 'School Librarian' },
+                          { value: 'School Nurse', label: 'School Nurse / Health Officer' },
+                          { value: 'Welfare Officer', label: 'Welfare / Safeguarding Officer' },
+                          { value: 'Director of Studies', label: 'Director of Studies (DOS)' },
+                          { value: 'Support Staff', label: 'Support Staff / Driver / Warden' },
+                        ]}
+                      />
+
+                      {regForm.requestedRole === 'Student' && (
+                        <Input
+                          label="Learner Identification Number (LIN) or Student ID"
+                          placeholder="e.g. LIN-2026-8812"
+                          required
+                          hint="Issued by the Ministry of Education or school registry."
+                          value={regForm.studentIdOrLin}
+                          onChange={(e) => setRegForm({ ...regForm, studentIdOrLin: e.target.value })}
+                          iconLeading={<GraduationCap className="w-4 h-4" aria-hidden="true" />}
+                        />
+                      )}
+
+                      {regForm.requestedRole === 'Parent' && (
+                        <Input
+                          label="Child's LIN or Student Admission Number"
+                          placeholder="e.g. LIN-2026-1042"
+                          required
+                          hint="Used to securely link your parent portal to your child's records."
+                          value={regForm.childLinOrNin}
+                          onChange={(e) => setRegForm({ ...regForm, childLinOrNin: e.target.value })}
+                          iconLeading={<GraduationCap className="w-4 h-4" aria-hidden="true" />}
+                        />
+                      )}
+
+                      <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+                        <span className="font-semibold">Institutional Validation:</span> Roles carry permissions that determine access to grades, student records, and finances. The Headteacher validates role requests against the school roll.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* STEP 3: Professional & Optional Details */}
+                  {regStep === 3 && (
+                    <div className="space-y-3.5">
+                      <Input
+                        label="Department / Subject Group"
+                        placeholder="e.g. Sciences, Humanities, Languages, Sports"
+                        value={regForm.department}
+                        onChange={(e) => setRegForm({ ...regForm, department: e.target.value })}
+                        iconLeading={<Briefcase className="w-4 h-4" aria-hidden="true" />}
+                      />
+
+                      <Input
+                        label="National ID Number (NIN)"
+                        placeholder="e.g. CM90012345XYZ"
+                        hint="For staff and parent identity verification."
+                        value={regForm.nationalIdOrNin}
+                        onChange={(e) => setRegForm({ ...regForm, nationalIdOrNin: e.target.value })}
+                        iconLeading={<FileText className="w-4 h-4" aria-hidden="true" />}
+                      />
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Input
+                          label="Tax Identification Number (TIN)"
+                          placeholder="e.g. 1000234567"
+                          value={regForm.tinNumber}
+                          onChange={(e) => setRegForm({ ...regForm, tinNumber: e.target.value })}
+                        />
+
+                        <Input
+                          label="NSSF / Social Security Number"
+                          placeholder="e.g. 2001928374"
+                          value={regForm.nssfNumber}
+                          onChange={(e) => setRegForm({ ...regForm, nssfNumber: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* STEP 4: Account Security */}
+                  {regStep === 4 && (
+                    <div className="space-y-3.5">
+                      <PasswordInput
+                        label="Create Account Password"
+                        placeholder="Enter at least 8 characters"
+                        required
+                        showStrengthMeter
+                        value={regForm.password}
+                        onChange={(e) => setRegForm({ ...regForm, password: e.target.value })}
+                      />
+
+                      <PasswordInput
+                        label="Confirm Account Password"
+                        placeholder="Re-enter your password to confirm"
+                        required
+                        value={regForm.confirmPassword}
+                        onChange={(e) => setRegForm({ ...regForm, confirmPassword: e.target.value })}
+                      />
+
+                      {regForm.password && regForm.confirmPassword && (
+                        <p
+                          className={`text-xs font-semibold flex items-center gap-1.5 ${
+                            regForm.password === regForm.confirmPassword
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-rose-600 dark:text-rose-400'
+                          }`}
+                        >
+                          {regForm.password === regForm.confirmPassword ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              Passwords match
+                            </>
+                          ) : (
+                            'Passwords do not match yet'
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* STEP 5: Review & Submit */}
+                  {regStep === 5 && (
+                    <div className="space-y-3.5">
+                      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-1.5">
+                          Application Summary
+                        </h4>
+
+                        <div className="grid grid-cols-2 gap-2 text-slate-600 dark:text-slate-300">
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500 block text-[11px]">Full Name:</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{regForm.fullName}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500 block text-[11px]">Username:</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{regForm.username}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500 block text-[11px]">Requested Role:</span>
+                            <span className="font-semibold text-blue-600 dark:text-blue-400">{regForm.requestedRole}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 dark:text-slate-500 block text-[11px]">Phone:</span>
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{regForm.phone}</span>
+                          </div>
+                          {regForm.email && (
+                            <div className="col-span-2">
+                              <span className="text-slate-400 dark:text-slate-500 block text-[11px]">Email:</span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">{regForm.email}</span>
+                            </div>
+                          )}
+                          {regForm.studentIdOrLin && (
+                            <div className="col-span-2">
+                              <span className="text-slate-400 dark:text-slate-500 block text-[11px]">Student LIN/ID:</span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">{regForm.studentIdOrLin}</span>
+                            </div>
+                          )}
+                          {regForm.childLinOrNin && (
+                            <div className="col-span-2">
+                              <span className="text-slate-400 dark:text-slate-500 block text-[11px]">Child LIN/ID:</span>
+                              <span className="font-semibold text-slate-800 dark:text-slate-200">{regForm.childLinOrNin}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                        By submitting, you confirm that your identity details are accurate. SchoolSoul enforces audit logging on all registration submissions.
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Wizard Navigation Controls */}
+                  <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    {regStep > 1 ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="md"
+                        onClick={handlePrevStep}
+                        iconLeading={<ArrowLeft className="w-4 h-4" />}
+                      >
+                        Back
+                      </Button>
+                    ) : (
+                      <div />
+                    )}
+
+                    {regStep < 5 ? (
+                      <Button
+                        type="button"
+                        variant="primary"
+                        size="md"
+                        onClick={handleNextStep}
+                        iconTrailing={<ArrowRight className="w-4 h-4" />}
+                      >
+                        Continue
+                      </Button>
+                    ) : (
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="md"
+                        isLoading={regLoading}
+                        loadingText="Submitting..."
+                        iconLeading={<CheckCircle2 className="w-4 h-4" />}
+                      >
+                        Submit Application
+                      </Button>
+                    )}
+                  </div>
+                </form>
               </div>
             )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Security Footer Note */}
-        <div className="mt-6 pt-4 border-t border-slate-800/80 text-center text-[11px] text-slate-500 flex items-center justify-center gap-1">
-          <KeyRound className="w-3.5 h-3.5 text-slate-400" />
-          <span>Protected by Argon2id, JWT Session & Headteacher Approval Matrix</span>
+          {/* ================================================================= */}
+          {/* TAB 3: CHECK APPLICATION STATUS                                  */}
+          {/* ================================================================= */}
+          {activeTab === 'STATUS' && (
+            <div className="space-y-4">
+              <form onSubmit={handleCheckStatus} className="space-y-3">
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Enter your registered username, official email, phone number, or Application Reference ID to inspect review status.
+                </p>
+
+                <div className="flex gap-2">
+                  <div className="flex-1">
+                    <Input
+                      placeholder="e.g. sakwero or REQ-291038"
+                      value={statusQuery}
+                      onChange={(e) => setStatusQuery(e.target.value)}
+                      iconLeading={<Search className="w-4 h-4" aria-hidden="true" />}
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="md"
+                    isLoading={statusLoading}
+                    loadingText="Checking..."
+                  >
+                    Check
+                  </Button>
+                </div>
+              </form>
+
+              {statusError && (
+                <div
+                  role="alert"
+                  className="p-3 text-xs text-rose-800 dark:text-rose-200 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl flex items-start gap-2"
+                >
+                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
+                  <span>{statusError}</span>
+                </div>
+              )}
+
+              {statusResult && (
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3 animate-fade-in text-xs">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
+                    <div>
+                      <p className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                        {statusResult.fullName || statusResult.username || 'Applicant'}
+                      </p>
+                      <p className="text-slate-500 text-[11px]">Role: {statusResult.requestedRole || statusResult.role}</p>
+                    </div>
+
+                    <div className="text-right">
+                      <span
+                        className={`inline-block font-bold px-2 py-0.5 rounded-md text-[11px] ${
+                          statusResult.status === 'APPROVED' || statusResult.approvalStatus === 'APPROVED'
+                            ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                            : statusResult.status === 'REJECTED' || statusResult.approvalStatus === 'REJECTED'
+                            ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
+                            : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                        }`}
+                      >
+                        {statusResult.status || statusResult.approvalStatus || 'PENDING_APPROVAL'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 text-slate-600 dark:text-slate-300">
+                    {statusResult.reviewerComment && (
+                      <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 block text-[11px] mb-0.5">
+                          Reviewer Notes:
+                        </span>
+                        <p className="italic text-slate-600 dark:text-slate-400">{statusResult.reviewerComment}</p>
+                      </div>
+                    )}
+
+                    <p>
+                      <strong className="text-slate-800 dark:text-slate-200">Next Action: </strong>
+                      {statusResult.status === 'APPROVED' || statusResult.approvalStatus === 'APPROVED' ? (
+                        <span className="text-emerald-600 dark:text-emerald-400">
+                          Your account has been commissioned! You may now sign in using your username and password.
+                        </span>
+                      ) : statusResult.status === 'REJECTED' || statusResult.approvalStatus === 'REJECTED' ? (
+                        <span className="text-rose-600 dark:text-rose-400">
+                          Application was not approved. Please consult the school office for requirements or re-apply.
+                        </span>
+                      ) : (
+                        <span>
+                          Your application is currently under review by the Headteacher or ICT Administrator. Please check back periodically.
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
+                  {(statusResult.status === 'APPROVED' || statusResult.approvalStatus === 'APPROVED') && (
+                    <div className="pt-2">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        fullWidth
+                        onClick={() => {
+                          setUsernameOrEmail(statusResult.username || '');
+                          setActiveTab('LOGIN');
+                        }}
+                      >
+                        Proceed to Sign In
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+      </main>
 
-      {/* Account Recovery & Password Reset Modal */}
+      {/* Global Footer Attribution */}
+      <footer className="w-full max-w-4xl mx-auto py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+        <p className="font-medium text-slate-600 dark:text-slate-300">
+          © 2026 SchoolSoul OS. All Rights Reserved.
+        </p>
+        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+          Developed under the VINEXSAH TECHNOLOGIES project.
+        </p>
+      </footer>
+
+      {/* ===================================================================== */}
+      {/* PASSWORD RECOVERY & HEADTEACHER ESCALATION MODAL                      */}
+      {/* ===================================================================== */}
       <Modal
         isOpen={showForgotModal}
         onClose={resetRecoveryModal}
         title="Account Recovery & Identity Verification"
+        maxWidth="lg"
+        id="account-recovery-modal"
       >
-        <div className="space-y-4 text-xs">
-          {/* Recovery Type Tabs */}
-          <div className="flex rounded-lg bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => {
-                setRecoveryTab('OTP_RESET');
-                setRecoveryError('');
-              }}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${
-                recoveryTab === 'OTP_RESET'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-              Reset with Code (OTP)
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setRecoveryTab('LOST_CONTACTS');
-                setRecoveryError('');
-              }}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${
-                recoveryTab === 'LOST_CONTACTS'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5" />
-              Lost Email/Phone / Headteacher Recovery
-            </button>
-          </div>
+        <div className="space-y-4">
+          <SegmentedTabs
+            fullWidth
+            size="sm"
+            activeTab={recoveryTab}
+            onChange={(tab) => {
+              setRecoveryTab(tab as any);
+              setRecoveryError('');
+            }}
+            tabs={[
+              { id: 'OTP_RESET', label: 'SMS / Email OTP Reset', icon: <KeyRound className="w-3.5 h-3.5" /> },
+              { id: 'LOST_CONTACTS', label: 'Lost Contacts Escalation', icon: <FileText className="w-3.5 h-3.5" /> },
+            ]}
+          />
 
-          {/* ================= TAB 1: OTP PASSWORD RESET ================= */}
+          {recoveryError && (
+            <div
+              role="alert"
+              className="p-3 text-xs text-rose-800 dark:text-rose-200 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl flex items-start gap-2"
+            >
+              <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
+              <span>{recoveryError}</span>
+            </div>
+          )}
+
+          {/* TAB A: OTP RESET */}
           {recoveryTab === 'OTP_RESET' && (
-            <div className="space-y-4">
-              {recoveryError && (
-                <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-300 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{recoveryError}</span>
-                </div>
-              )}
-
-              {/* STEP 1: REQUEST OTP */}
+            <div>
               {recoveryStep === 'REQUEST' && (
-                <form onSubmit={handleRequestOtp} className="space-y-3">
-                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                    Enter your <strong>Username</strong>, registered <strong>Email</strong>, <strong>Phone Number</strong>, <strong>National ID / NIN</strong>, or <strong>Student LIN</strong>. A secure 6-digit verification code will be dispatched to your registered contact.
+                <form onSubmit={handleRequestOtp} className="space-y-3.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Provide your registered username, official email, phone number, or Learner ID (LIN). A 6-digit verification code will be dispatched.
                   </p>
 
-                  <div>
-                    <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Account Identifier *
-                    </label>
-                    <div className="relative">
-                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. jmukasa, jmukasa@school.ac.ug, or +256..."
-                        value={recoveryIdentifier}
-                        onChange={(e) => setRecoveryIdentifier(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
+                  <Input
+                    label="Account Identifier"
+                    placeholder="e.g. jmukasa, teacher@school.edu, or LIN-2026-1042"
+                    required
+                    value={recoveryIdentifier}
+                    onChange={(e) => setRecoveryIdentifier(e.target.value)}
+                    iconLeading={<UserIcon className="w-4 h-4" aria-hidden="true" />}
+                  />
 
-                  <div className="pt-2 flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={resetRecoveryModal}
-                      className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
-                    >
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="outline" size="md" onClick={resetRecoveryModal}>
                       Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="submit"
-                      disabled={recoveryLoading}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg flex items-center gap-1.5 shadow-md"
+                      variant="primary"
+                      size="md"
+                      isLoading={recoveryLoading}
+                      loadingText="Sending Code..."
                     >
-                      <Send className="w-3.5 h-3.5" />
-                      {recoveryLoading ? 'Dispatching...' : 'Send Verification Code'}
-                    </button>
+                      Send Verification Code
+                    </Button>
                   </div>
                 </form>
               )}
 
-              {/* STEP 2: ENTER OTP */}
               {recoveryStep === 'VERIFY_OTP' && (
-                <form onSubmit={handleVerifyOtp} className="space-y-3">
-                  <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl space-y-1">
-                    <div className="font-semibold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
-                      <Smartphone className="w-4 h-4 text-blue-600" />
-                      Code Dispatched
+                <form onSubmit={handleVerifyOtp} className="space-y-3.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    We sent a 6-digit code to <strong className="text-slate-800 dark:text-slate-200">{recoveryMaskedContact}</strong>. Enter the code below to verify your identity.
+                  </p>
+
+                  {simulatedOtp && (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl text-xs text-amber-800 dark:text-amber-300">
+                      <strong>Offline/Local Verification:</strong> Simulated SMS OTP is <code className="font-bold underline">{simulatedOtp}</code>.
                     </div>
-                    <p className="text-blue-700 dark:text-blue-300 text-[11px]">
-                      A 6-digit code has been sent to <strong>{recoveryMaskedContact}</strong>. Code valid for 15 minutes.
-                    </p>
-                    {simulatedOtp && (
-                      <div className="mt-2 pt-2 border-t border-blue-200 dark:border-blue-800 flex items-center justify-between text-[11px]">
-                        <span className="text-blue-600 dark:text-blue-400 font-medium">Sandbox Simulation Passcode:</span>
-                        <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-blue-200 dark:bg-blue-900 text-blue-900 dark:text-blue-100 tracking-wider">
-                          {simulatedOtp}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  )}
 
-                  <div>
-                    <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Enter 6-Digit Code *
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      required
-                      autoFocus
-                      placeholder="e.g. 123456"
-                      value={enteredOtp}
-                      onChange={(e) => setEnteredOtp(e.target.value.replace(/\D/g, ''))}
-                      className="w-full text-center text-lg font-mono tracking-widest px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                  <Input
+                    label="6-Digit Verification Code"
+                    placeholder="123456"
+                    required
+                    maxLength={6}
+                    value={enteredOtp}
+                    onChange={(e) => setEnteredOtp(e.target.value.replace(/\D/g, ''))}
+                    iconLeading={<Key className="w-4 h-4" aria-hidden="true" />}
+                  />
 
-                  <div className="pt-2 flex justify-between items-center">
+                  <div className="flex justify-between items-center pt-2">
                     <button
                       type="button"
                       onClick={() => setRecoveryStep('REQUEST')}
-                      className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 flex items-center gap-1"
+                      className="text-xs text-slate-500 hover:underline"
                     >
-                      <RefreshCw className="w-3 h-3" />
-                      Change identifier / Resend
+                      Change Identifier
                     </button>
-                    <button
-                      type="submit"
-                      disabled={recoveryLoading || enteredOtp.length < 6}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg flex items-center gap-1.5 shadow-md"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      {recoveryLoading ? 'Verifying...' : 'Verify Code'}
-                    </button>
-                  </div>
-                </form>
-              )}
 
-              {/* STEP 3: SET NEW PASSWORD */}
-              {recoveryStep === 'SET_PASSWORD' && (
-                <form onSubmit={handleCompletePasswordReset} className="space-y-3">
-                  <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-emerald-800 dark:text-emerald-200">
-                    <div className="font-bold flex items-center gap-1.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      Identity Verified
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="md" onClick={resetRecoveryModal}>
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        size="md"
+                        isLoading={recoveryLoading}
+                        loadingText="Verifying..."
+                      >
+                        Verify Code
+                      </Button>
                     </div>
-                    <p className="text-[11px] mt-0.5">Please choose a new, strong password (minimum 8 characters).</p>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      New Password *
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      minLength={8}
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Confirm New Password *
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      minLength={8}
-                      placeholder="••••••••"
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="pt-2 flex justify-end gap-2">
-                    <button
-                      type="submit"
-                      disabled={recoveryLoading}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg flex items-center gap-1.5 shadow-md"
-                    >
-                      <Key className="w-3.5 h-3.5" />
-                      {recoveryLoading ? 'Updating...' : 'Save New Password & Unlock Account'}
-                    </button>
                   </div>
                 </form>
               )}
 
-              {/* STEP 4: SUCCESS */}
+              {recoveryStep === 'SET_PASSWORD' && (
+                <form onSubmit={handleCompletePasswordReset} className="space-y-3.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Identity verified successfully! Enter your new password below.
+                  </p>
+
+                  <PasswordInput
+                    label="New Password"
+                    placeholder="Enter at least 8 characters"
+                    required
+                    showStrengthMeter
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+
+                  <PasswordInput
+                    label="Confirm New Password"
+                    placeholder="Re-enter new password"
+                    required
+                    value={confirmNewPassword}
+                    onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  />
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="outline" size="md" onClick={resetRecoveryModal}>
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="md"
+                      isLoading={recoveryLoading}
+                      loadingText="Updating Password..."
+                    >
+                      Update Password
+                    </Button>
+                  </div>
+                </form>
+              )}
+
               {recoveryStep === 'SUCCESS' && (
-                <div className="text-center py-4 space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                <div className="text-center py-4 space-y-4">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
                     <CheckCircle2 className="w-6 h-6" />
                   </div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">Password Updated Successfully</h3>
-                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-xs">
-                    {resetSuccessMsg}
+                  <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Password Reset Complete
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                    {resetSuccessMsg || 'Your password has been updated. You can now log into your SchoolSoul workspace.'}
                   </p>
-                  <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        resetRecoveryModal();
-                        setActiveTab('LOGIN');
-                      }}
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg shadow-md"
-                    >
-                      Proceed to Sign In
-                    </button>
-                  </div>
+                  <Button
+                    variant="primary"
+                    size="md"
+                    onClick={() => {
+                      resetRecoveryModal();
+                      setActiveTab('LOGIN');
+                    }}
+                  >
+                    Return to Sign In
+                  </Button>
                 </div>
               )}
             </div>
           )}
 
-          {/* ================= TAB 2: LOST EMAIL/PHONE & HEADTEACHER ESCALATION ================= */}
+          {/* TAB B: LOST CONTACTS ESCALATION */}
           {recoveryTab === 'LOST_CONTACTS' && (
-            <div className="space-y-3">
-              {escalationError && (
-                <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-300 flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{escalationError}</span>
-                </div>
-              )}
-
+            <div>
               {escalationSuccess ? (
-                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-2 text-center">
-                  <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-                  <h4 className="font-bold text-sm text-emerald-900 dark:text-emerald-200">Escalation Logged</h4>
-                  <p className="text-xs text-emerald-700 dark:text-emerald-300/90 leading-relaxed">
+                <div className="text-center py-4 space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Escalation Logged
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
                     {escalationSuccess}
                   </p>
-                  <div className="pt-2 flex justify-center">
-                    <button
-                      type="button"
-                      onClick={resetRecoveryModal}
-                      className="px-4 py-1.5 text-xs font-semibold bg-blue-600 text-white rounded-lg hover:bg-blue-500"
-                    >
-                      Close
-                    </button>
-                  </div>
+                  <Button variant="primary" size="md" onClick={resetRecoveryModal}>
+                    Close
+                  </Button>
                 </div>
               ) : (
-                <form onSubmit={handleEscalationSubmit} className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-                  <div className="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed">
-                    <span className="font-bold">Administrative Identity Verification:</span> If you have changed your phone number, lost your email, or are locked out completely, submit your institutional credentials below. The <strong>Headteacher</strong> will inspect the school registry and override credentials safely.
+                <form onSubmit={handleEscalationSubmit} className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                  <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-xl text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+                    <span className="font-semibold">Headteacher Identity Review:</span> If you have changed your phone number, lost email access, or are locked out completely, submit institutional credentials below. The Headteacher will verify your physical school identity and authorize credential updates.
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Full Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. John Mukasa"
-                        value={escalationForm.fullName}
-                        onChange={(e) => setEscalationForm({ ...escalationForm, fullName: e.target.value })}
-                        className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Username (if remembered)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. jmukasa"
-                        value={escalationForm.identifier}
-                        onChange={(e) => setEscalationForm({ ...escalationForm, identifier: e.target.value })}
-                        className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        National ID / NIN (Staff/Parents)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. CM90012345XYZ"
-                        value={escalationForm.nationalIdOrNin}
-                        onChange={(e) => setEscalationForm({ ...escalationForm, nationalIdOrNin: e.target.value })}
-                        className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        Student LIN / Admission No
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="e.g. LIN-88421 or ADM-2026"
-                        value={escalationForm.studentIdOrLin}
-                        onChange={(e) => setEscalationForm({ ...escalationForm, studentIdOrLin: e.target.value })}
-                        className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        New Contact Email
-                      </label>
-                      <input
-                        type="email"
-                        placeholder="newemail@domain.com"
-                        value={escalationForm.newEmail}
-                        onChange={(e) => setEscalationForm({ ...escalationForm, newEmail: e.target.value })}
-                        className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                        New Phone Number
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="+256 700 000 000"
-                        value={escalationForm.newPhone}
-                        onChange={(e) => setEscalationForm({ ...escalationForm, newPhone: e.target.value })}
-                        className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Reason for Contact Loss & Notes *
-                    </label>
-                    <textarea
+                    <Input
+                      label="Full Legal Name"
+                      placeholder="e.g. John Mukasa"
                       required
-                      rows={2}
-                      placeholder="e.g. Lost SIM card and swapped to new number; need password reset to login for Term I marks entry."
-                      value={escalationForm.recoveryNotes}
-                      onChange={(e) => setEscalationForm({ ...escalationForm, recoveryNotes: e.target.value })}
-                      className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+                      value={escalationForm.fullName}
+                      onChange={(e) => setEscalationForm({ ...escalationForm, fullName: e.target.value })}
+                    />
+                    <Input
+                      label="Username (if remembered)"
+                      placeholder="e.g. jmukasa"
+                      value={escalationForm.identifier}
+                      onChange={(e) => setEscalationForm({ ...escalationForm, identifier: e.target.value })}
                     />
                   </div>
 
-                  <div className="pt-2 flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={resetRecoveryModal}
-                      className="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
-                    >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Input
+                      label="National ID / NIN (Staff / Parents)"
+                      placeholder="e.g. CM90012345XYZ"
+                      value={escalationForm.nationalIdOrNin}
+                      onChange={(e) => setEscalationForm({ ...escalationForm, nationalIdOrNin: e.target.value })}
+                    />
+                    <Input
+                      label="Student LIN / Admission No"
+                      placeholder="e.g. LIN-88421"
+                      value={escalationForm.studentIdOrLin}
+                      onChange={(e) => setEscalationForm({ ...escalationForm, studentIdOrLin: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Input
+                      label="New Contact Email"
+                      type="email"
+                      placeholder="newemail@domain.com"
+                      value={escalationForm.newEmail}
+                      onChange={(e) => setEscalationForm({ ...escalationForm, newEmail: e.target.value })}
+                    />
+                    <Input
+                      label="New Phone Number"
+                      type="tel"
+                      placeholder="+256 700 000 000"
+                      value={escalationForm.newPhone}
+                      onChange={(e) => setEscalationForm({ ...escalationForm, newPhone: e.target.value })}
+                    />
+                  </div>
+
+                  <Input
+                    label="Reason for Contact Loss & Notes"
+                    placeholder="e.g. Lost SIM card; need reset to submit Term marks."
+                    required
+                    value={escalationForm.recoveryNotes}
+                    onChange={(e) => setEscalationForm({ ...escalationForm, recoveryNotes: e.target.value })}
+                  />
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button variant="outline" size="md" onClick={resetRecoveryModal}>
                       Cancel
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="submit"
-                      disabled={escalationLoading}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg flex items-center gap-1.5 shadow-md"
+                      variant="primary"
+                      size="md"
+                      isLoading={escalationLoading}
+                      loadingText="Submitting..."
+                      iconLeading={<FileText className="w-4 h-4" />}
                     >
-                      <FileText className="w-3.5 h-3.5" />
-                      {escalationLoading ? 'Submitting...' : 'Submit to Headteacher'}
-                    </button>
+                      Submit to Headteacher
+                    </Button>
                   </div>
                 </form>
               )}
@@ -1242,13 +1486,85 @@ export const Login: React.FC = () => {
         </div>
       </Modal>
 
-      <footer className="mt-6 text-center text-[11px] text-slate-500">
-        <p>© 2026 SchoolSoul OS. All Rights Reserved.</p>
-        <p className="mt-0.5 text-[10px] text-slate-500/80">
-          Developed under the VINEXSAH TECHNOLOGIES project.
-        </p>
-      </footer>
+      {/* ===================================================================== */}
+      {/* INFORMATIONAL HELP MODAL                                              */}
+      {/* ===================================================================== */}
+      <Modal
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+        title="SchoolSoul Sign In Guidance"
+        maxWidth="md"
+        id="login-help-modal"
+      >
+        <div className="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          <div className="space-y-1">
+            <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">Where do I get my login details?</h4>
+            <p>
+              Your initial username and temporary password are provided by your school's ICT Administrator or Headteacher upon enrollment or staffing appointment.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">Can I join without an existing account?</h4>
+            <p>
+              Yes! Click the <strong>Join School</strong> tab to submit an application. Select your intended role (Teacher, Student, Parent, Bursar) and fill in your details. The school leadership will review and approve your access.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">Does SchoolSoul work offline?</h4>
+            <p>
+              Yes. If your school uses a local server or LAN network, you can log in even when internet connectivity is interrupted. Offline actions sync safely once connection resumes.
+            </p>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <Button variant="primary" size="sm" onClick={() => setShowHelpModal(false)}>
+              Understood
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ===================================================================== */}
+      {/* PRIVACY & DATA PROTECTION NOTICE MODAL                                */}
+      {/* ===================================================================== */}
+      <Modal
+        isOpen={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        title="Privacy & Student Data Safeguards"
+        maxWidth="md"
+        id="login-privacy-modal"
+      >
+        <div className="space-y-3.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 text-blue-900 dark:text-blue-200">
+            <p className="font-semibold mb-1">Institutional Data Sovereignty</p>
+            <p>
+              All academic, financial, attendance, and biometric records are owned exclusively by your school institution. SchoolSoul does not sell, broker, or monetize learner or guardian information.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <h4 className="font-bold text-slate-900 dark:text-slate-100">Role-Based Data Partitioning</h4>
+            <p>
+              Teachers only access grades and registers for their assigned classes. Financial ledgers are strictly restricted to authorized bursars and the headteacher. Child safeguarding incidents are protected by immutable audit logs.
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <h4 className="font-bold text-slate-900 dark:text-slate-100">Questions or Data Inquiries</h4>
+            <p>
+              For data modification, transcript requests, or deletion inquiries, contact your school administration or ICT officer directly.
+            </p>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <Button variant="primary" size="sm" onClick={() => setShowPrivacyModal(false)}>
+              Close
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
-

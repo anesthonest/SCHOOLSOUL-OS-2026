@@ -231,6 +231,104 @@ router.get('/pricing', (req, res) => {
 });
 
 /**
+ * 1b. POST /api/billing/quote
+ * Authoritative student-based tiered pricing quote calculator
+ */
+router.post('/quote', (req, res) => {
+  const {
+    planId = 'plan-standard',
+    studentCount = 100,
+    billingCycle = 'ANNUAL',
+    currency = 'UGX',
+    selectedAddonIds = [],
+    discountCode,
+  } = req.body;
+
+  const studentRateUSD: Record<string, { annual: number; monthly: number; minFloor: number; name: string }> = {
+    'plan-starter': { annual: 2.0, monthly: 0.22, minFloor: 100, name: 'SchoolSoul Foundation' },
+    'plan-standard': { annual: 5.0, monthly: 0.5, minFloor: 100, name: 'SchoolSoul Professional' },
+    'plan-enterprise-custom': { annual: 9.5, monthly: 0.95, minFloor: 250, name: 'SchoolSoul Multi-Campus Enterprise' },
+  };
+
+  const selectedTier = studentRateUSD[planId] || studentRateUSD['plan-standard'];
+  const billedStudents = Math.max(Number(studentCount) || 100, selectedTier.minFloor);
+  const isAnnual = String(billingCycle).toUpperCase() === 'ANNUAL';
+
+  const exchangeRates: Record<string, { rate: number; taxRate: number; symbol: string }> = {
+    USD: { rate: 1, taxRate: 0, symbol: '$' },
+    UGX: { rate: 3750, taxRate: 18, symbol: 'UGX' },
+    KES: { rate: 133, taxRate: 16, symbol: 'KSh' },
+    TZS: { rate: 2650, taxRate: 18, symbol: 'TSh' },
+    RWF: { rate: 1200, taxRate: 18, symbol: 'FRw' },
+    NGN: { rate: 1450, taxRate: 7.5, symbol: '₦' },
+    GHS: { rate: 12, taxRate: 15, symbol: 'GH₵' },
+    ZMW: { rate: 25, taxRate: 16, symbol: 'ZK' },
+    ZAR: { rate: 18.5, taxRate: 15, symbol: 'R' },
+    GBP: { rate: 0.78, taxRate: 20, symbol: '£' },
+    EUR: { rate: 0.91, taxRate: 19, symbol: '€' },
+  };
+
+  const currInfo = exchangeRates[(currency || 'UGX').toUpperCase()] || exchangeRates.UGX;
+  const usdRate = isAnnual ? selectedTier.annual : selectedTier.monthly;
+  const baseUSD = billedStudents * usdRate;
+  const baseAmount = Math.round(baseUSD * currInfo.rate);
+
+  // Addons
+  const addonRatesUSD: Record<string, { annual: number; monthly: number }> = {
+    'addon-sms-bundle-5k': { annual: 250, monthly: 25 },
+    'addon-custom-cms': { annual: 150, monthly: 15 },
+    'addon-biometric-sync': { annual: 300, monthly: 30 },
+    'addon-dedicated-sla': { annual: 500, monthly: 50 },
+  };
+
+  let addonsUSD = 0;
+  if (Array.isArray(selectedAddonIds)) {
+    for (const id of selectedAddonIds) {
+      if (addonRatesUSD[id]) {
+        addonsUSD += isAnnual ? addonRatesUSD[id].annual : addonRatesUSD[id].monthly;
+      }
+    }
+  }
+  const addonsAmount = Math.round(addonsUSD * currInfo.rate);
+  const subtotal = baseAmount + addonsAmount;
+
+  let discount = 0;
+  if (discountCode && String(discountCode).toUpperCase() === 'VINEXSAH10') {
+    discount = Math.round(subtotal * 0.1);
+  }
+  const net = Math.max(0, subtotal - discount);
+  const tax = Math.round((net * currInfo.taxRate) / 100);
+  const total = net + tax;
+
+  const quoteHash = computeSha256(
+    `QUOTE:${planId}:${billedStudents}:${billingCycle}:${total}:${currInfo.symbol}`
+  );
+
+  res.json({
+    status: 'success',
+    quote: {
+      planId,
+      planName: selectedTier.name,
+      studentCount: Number(studentCount) || 100,
+      billedStudents,
+      billingCycle: isAnnual ? 'ANNUAL' : 'MONTHLY',
+      currency: (currency || 'UGX').toUpperCase(),
+      currencySymbol: currInfo.symbol,
+      ratePerStudent: Math.round(usdRate * currInfo.rate * 100) / 100,
+      baseAmount,
+      addonsAmount,
+      subtotal,
+      discountAmount: discount,
+      taxRatePercent: currInfo.taxRate,
+      taxAmount: tax,
+      totalAmount: total,
+      quoteHash,
+      generatedAt: new Date().toISOString(),
+    },
+  });
+});
+
+/**
  * 2. GET /api/billing/countries
  * All configured African and international countries
  */

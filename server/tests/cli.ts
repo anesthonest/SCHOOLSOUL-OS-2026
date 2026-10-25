@@ -7,6 +7,8 @@ import { runAccountRecoveryAndSuccessionSuite } from './testAccountRecoveryAndSu
 import { runBreakTestCertificationSuite } from './testBreakTestCertificationSuite';
 import { runResilienceAndDualStorageSuite } from './testResilienceAndDualStorageSuite';
 import { runV6ProductionCandidateSuite } from './testV6ProductionCandidateSuite';
+import { runLandingFirstScreenAudit } from './testLandingPageFirstScreen';
+import { runInteractiveFlowTests } from './testUserFlowTransitions';
 
 async function main() {
   try {
@@ -68,6 +70,24 @@ async function main() {
       console.log(`${icon} [${res.category} / ${res.code}] ${res.name}: ${res.details} (${res.durationMs}ms)`);
     }
 
+    console.log('\n================================================================');
+    console.log('🌟 RUNNING FIRST-SCREEN & LANDING PAGE CRITICAL AUDIT MATRIX');
+    console.log('================================================================\n');
+    const landingResults = await runLandingFirstScreenAudit();
+    for (const res of landingResults) {
+      const icon = res.status === 'PASS' ? '✅ [PASS]' : '❌ [FAIL]';
+      console.log(`${icon} [${res.category} / ${res.testId}] ${res.name}: ${res.details}`);
+    }
+
+    console.log('\n================================================================');
+    console.log('🧪 RUNNING SCHOOLSOUL REAL USER FLOW & REGISTRATION AUDIT MATRIX');
+    console.log('================================================================\n');
+    const flowResults = await runInteractiveFlowTests();
+    for (const res of flowResults) {
+      const icon = res.status === 'PASS' ? '✅ [PASS]' : '❌ [FAIL]';
+      console.log(`${icon} [${res.category} / ${res.testId}] ${res.name}: ${res.details}`);
+    }
+
     const failures = results
       .filter(r => r.status === 'FAIL')
       .concat(pesapalResults.filter(r => r.status === 'FAIL') as any)
@@ -77,7 +97,9 @@ async function main() {
       .concat(recoveryResults.filter(r => r.status === 'FAIL') as any)
       .concat(breakTestResults.filter(r => r.status === 'FAIL') as any)
       .concat(resilienceResults.filter(r => r.status === 'FAIL') as any)
-      .concat(v6Results.filter(r => r.status === 'FAIL') as any);
+      .concat(v6Results.filter(r => r.status === 'FAIL') as any)
+      .concat(landingResults.filter(r => r.status === 'FAIL') as any)
+      .concat(flowResults.filter(r => r.status === 'FAIL') as any);
 
     if (failures.length > 0) {
       console.error(`\n❌ Suite failed with ${failures.length} test failures.`);

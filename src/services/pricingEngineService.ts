@@ -270,3 +270,297 @@ export async function getPricingRuleForCountry(countryCode: string): Promise<Cou
   const rules = await getCountryPricingRules();
   return rules.find((r) => r.countryCode === countryCode) || rules[0];
 }
+
+// ============================================================================
+// 8. AUTHORITATIVE STUDENT-BASED TIERED PRICING ARCHITECTURE (VINEXSAH TECHNOLOGIES)
+// ============================================================================
+
+export interface StudentPlanDefinition {
+  id: string;
+  tier: CommercialPlanTier;
+  name: string;
+  tagline: string;
+  description: string;
+  perStudentAnnualUSD: number;
+  perStudentMonthlyUSD: number;
+  minimumStudentFloor: number;
+  isPopular?: boolean;
+  isCustom?: boolean;
+  features: string[];
+  entitlements: {
+    maxStudents: number;
+    maxStaff: number;
+    storageLimitMB: number;
+    smsQuotaMonthly: number;
+    onlineRooms: number;
+    supportLevel: string;
+    offlineLAN: boolean;
+    marketplaceCommissionPercent: number;
+  };
+}
+
+export const STUDENT_PRICING_PLANS: StudentPlanDefinition[] = [
+  {
+    id: 'plan-starter',
+    tier: 'Starter',
+    name: 'SchoolSoul Foundation',
+    tagline: 'Essential academic records, CBC gradebook & offline attendance',
+    description: 'Designed for primary & nursery institutions adopting structured digital governance on an accessible budget.',
+    perStudentAnnualUSD: 2.00,
+    perStudentMonthlyUSD: 0.22,
+    minimumStudentFloor: 100,
+    features: [
+      'Offline-First Local Attendance Registers',
+      'CBC & National Examination Gradebook',
+      'Student Demographic Registers & Passports',
+      'Standardized Report Card PDF Generation',
+      'Single-device Local Vault Backup',
+      'Email & Community Support (24-hr SLA)',
+    ],
+    entitlements: {
+      maxStudents: 500,
+      maxStaff: 30,
+      storageLimitMB: 10000,
+      smsQuotaMonthly: 1000,
+      onlineRooms: 2,
+      supportLevel: 'Standard Email SLA',
+      offlineLAN: false,
+      marketplaceCommissionPercent: 18,
+    },
+  },
+  {
+    id: 'plan-standard',
+    tier: 'Standard',
+    name: 'SchoolSoul Professional',
+    tagline: 'Full daily digital operating system with LAN & mobile money',
+    description: 'The standard choice for growing primary, secondary, and mixed institutions across East & Sub-Saharan Africa.',
+    perStudentAnnualUSD: 5.00,
+    perStudentMonthlyUSD: 0.50,
+    minimumStudentFloor: 100,
+    isPopular: true,
+    features: [
+      'Everything in Foundation',
+      'Offline-First Multi-Device Local LAN Mesh Sync',
+      'Pesapal, MTN & Airtel MoMo Fee Collection',
+      'Automated Parent SMS & WhatsApp Notices',
+      'Digital Student Passport & Dynamic QR Badges',
+      'CBC Activity of Integration (AOI) Portfolios',
+      'LearnGuard Safeguarding & Incident Audit',
+      'Priority 4-Hour Response SLA',
+    ],
+    entitlements: {
+      maxStudents: 2500,
+      maxStaff: 150,
+      storageLimitMB: 50000,
+      smsQuotaMonthly: 5000,
+      onlineRooms: 15,
+      supportLevel: 'Priority 4-hr SLA',
+      offlineLAN: true,
+      marketplaceCommissionPercent: 15,
+    },
+  },
+  {
+    id: 'plan-enterprise-custom',
+    tier: 'Enterprise',
+    name: 'SchoolSoul Multi-Campus Enterprise',
+    tagline: 'Institutional diocese networks, large colleges & international schools',
+    description: 'Engineered for high-capacity school networks requiring custom domain CMS, biometric clusters, and dedicated SLA.',
+    perStudentAnnualUSD: 9.50,
+    perStudentMonthlyUSD: 0.95,
+    minimumStudentFloor: 250,
+    isCustom: true,
+    features: [
+      'Everything in Professional',
+      'Unlimited Multi-Campus Consolidation',
+      'Custom Branded Portal & School Website CMS',
+      'Hardware Biometric Attendance Cluster Sync',
+      'Dedicated 24/7 Account Manager & Phone SLA',
+      'Custom UNEB/KNEC/Cambridge Transcripts',
+      'Direct Banking API Integration (Host-to-Host)',
+      'Lowest Marketplace Commission (10%)',
+    ],
+    entitlements: {
+      maxStudents: 15000,
+      maxStaff: 1000,
+      storageLimitMB: 250000,
+      smsQuotaMonthly: 25000,
+      onlineRooms: 100,
+      supportLevel: 'Dedicated 24/7 Account Manager',
+      offlineLAN: true,
+      marketplaceCommissionPercent: 10,
+    },
+  },
+];
+
+export interface CurrencyExchangeRule {
+  currency: SupportedCurrency;
+  symbol: string;
+  name: string;
+  rateVsUSD: number;
+  taxRatePercent: number;
+  taxLabel: string;
+}
+
+export const SUPPORTED_CURRENCY_RATES: Record<string, CurrencyExchangeRule> = {
+  USD: { currency: 'USD', symbol: '$', name: 'US Dollar (Global)', rateVsUSD: 1, taxRatePercent: 0, taxLabel: 'Zero Export Tax' },
+  UGX: { currency: 'UGX', symbol: 'UGX', name: 'Uganda Shilling', rateVsUSD: 3750, taxRatePercent: 18, taxLabel: '18% URA VAT' },
+  KES: { currency: 'KES', symbol: 'KSh', name: 'Kenya Shilling', rateVsUSD: 133, taxRatePercent: 16, taxLabel: '16% KRA VAT' },
+  TZS: { currency: 'TZS', symbol: 'TSh', name: 'Tanzania Shilling', rateVsUSD: 2650, taxRatePercent: 18, taxLabel: '18% TRA VAT' },
+  RWF: { currency: 'RWF', symbol: 'FRw', name: 'Rwanda Franc', rateVsUSD: 1200, taxRatePercent: 18, taxLabel: '18% RRA VAT' },
+  NGN: { currency: 'NGN', symbol: '₦', name: 'Nigeria Naira', rateVsUSD: 1450, taxRatePercent: 7.5, taxLabel: '7.5% FIRS VAT' },
+  GHS: { currency: 'GHS', symbol: 'GH₵', name: 'Ghana Cedi', rateVsUSD: 12, taxRatePercent: 15, taxLabel: '15% GRA VAT' },
+  ZMW: { currency: 'ZMW', symbol: 'ZK', name: 'Zambia Kwacha', rateVsUSD: 25, taxRatePercent: 16, taxLabel: '16% ZRA VAT' },
+  ZAR: { currency: 'ZAR', symbol: 'R', name: 'South Africa Rand', rateVsUSD: 18.5, taxRatePercent: 15, taxLabel: '15% SARS VAT' },
+  GBP: { currency: 'GBP', symbol: '£', name: 'British Pound', rateVsUSD: 0.78, taxRatePercent: 20, taxLabel: '20% HMRC VAT' },
+  EUR: { currency: 'EUR', symbol: '€', name: 'Euro', rateVsUSD: 0.91, taxRatePercent: 19, taxLabel: '19% EU VAT' },
+};
+
+export interface CommercialAddon {
+  id: string;
+  name: string;
+  description: string;
+  monthlyUSD: number;
+  annualUSD: number;
+}
+
+export const COMMERCIAL_ADDONS: CommercialAddon[] = [
+  {
+    id: 'addon-sms-bundle-5k',
+    name: 'Bulk SMS Quota Pack (+5,000 SMS)',
+    description: 'Instant parent delivery across MTN, Airtel, Safaricom, and Vodacom networks',
+    monthlyUSD: 25,
+    annualUSD: 250,
+  },
+  {
+    id: 'addon-custom-cms',
+    name: 'Custom Domain & School Website CMS',
+    description: 'Deploy your official school portal on your own domain (e.g. portal.yourschool.ac.ug)',
+    monthlyUSD: 15,
+    annualUSD: 150,
+  },
+  {
+    id: 'addon-biometric-sync',
+    name: 'Biometric Hardware Attendance Driver',
+    description: 'Direct optical & fingerprint terminal TCP/IP sync to attendance registers',
+    monthlyUSD: 30,
+    annualUSD: 300,
+  },
+  {
+    id: 'addon-dedicated-sla',
+    name: 'Dedicated 24/7 Telephone SLA & Account Lead',
+    description: 'Guaranteed 15-minute emergency escalation and direct engineering phone support',
+    monthlyUSD: 50,
+    annualUSD: 500,
+  },
+];
+
+export interface CalculatedStudentQuote {
+  planId: string;
+  planName: string;
+  tier: CommercialPlanTier;
+  studentCount: number;
+  billedStudentCount: number;
+  billingCycle: 'Annual' | 'Monthly';
+  currency: string;
+  currencySymbol: string;
+  ratePerStudent: number;
+  baseAmount: number;
+  addonsAmount: number;
+  selectedAddonIds: string[];
+  subtotal: number;
+  taxRatePercent: number;
+  taxAmount: number;
+  discountAmount: number;
+  totalAmount: number;
+  annualSavingsAmount: number;
+  annualSavingsPercent: number;
+  savingsFormatted: string;
+}
+
+export function calculateStudentSubscriptionQuote(params: {
+  planId: string;
+  studentCount: number;
+  billingCycle: 'Annual' | 'Monthly';
+  currency?: string;
+  selectedAddonIds?: string[];
+  discountCode?: string;
+}): CalculatedStudentQuote {
+  const plan = STUDENT_PRICING_PLANS.find((p) => p.id === params.planId) || STUDENT_PRICING_PLANS[1];
+  const currKey = (params.currency || 'USD').toUpperCase();
+  const currRule = SUPPORTED_CURRENCY_RATES[currKey] || SUPPORTED_CURRENCY_RATES.USD;
+
+  const rawStudents = Math.max(0, Number(params.studentCount) || 100);
+  const billedStudentCount = Math.max(rawStudents, plan.minimumStudentFloor);
+
+  const isAnnual = params.billingCycle === 'Annual';
+
+  // Rate in USD per student
+  const usdRatePerStudent = isAnnual ? plan.perStudentAnnualUSD : plan.perStudentMonthlyUSD;
+  const convertedRatePerStudent = Math.round(usdRatePerStudent * currRule.rateVsUSD * 100) / 100;
+
+  // Base amount
+  const baseAmountUSD = billedStudentCount * usdRatePerStudent;
+  const baseAmount = Math.round(baseAmountUSD * currRule.rateVsUSD);
+
+  // Add-ons
+  const selectedAddons = params.selectedAddonIds || [];
+  let addonsUSD = 0;
+  for (const addonId of selectedAddons) {
+    const addon = COMMERCIAL_ADDONS.find((a) => a.id === addonId);
+    if (addon) {
+      addonsUSD += isAnnual ? addon.annualUSD : addon.monthlyUSD;
+    }
+  }
+  const addonsAmount = Math.round(addonsUSD * currRule.rateVsUSD);
+
+  // Subtotal
+  const subtotal = baseAmount + addonsAmount;
+
+  // Discount
+  let discountAmount = 0;
+  if (params.discountCode && params.discountCode.toUpperCase() === 'VINEXSAH10') {
+    discountAmount = Math.round(subtotal * 0.1);
+  }
+
+  const netSubtotal = Math.max(0, subtotal - discountAmount);
+
+  // Tax
+  const taxRatePercent = currRule.taxRatePercent;
+  const taxAmount = Math.round((netSubtotal * taxRatePercent) / 100);
+  const totalAmount = netSubtotal + taxAmount;
+
+  // Savings calculation: comparing 12 months of monthly vs 1 year of annual
+  const fullYearMonthlyUSD = billedStudentCount * plan.perStudentMonthlyUSD * 12;
+  const annualUSD = billedStudentCount * plan.perStudentAnnualUSD;
+  const savingsUSD = Math.max(0, fullYearMonthlyUSD - annualUSD);
+  const annualSavingsAmount = Math.round(savingsUSD * currRule.rateVsUSD);
+  const annualSavingsPercent = fullYearMonthlyUSD > 0 ? Math.round((savingsUSD / fullYearMonthlyUSD) * 100) : 0;
+
+  const savingsFormatted = isAnnual
+    ? `Save ${currRule.symbol} ${annualSavingsAmount.toLocaleString()} per year compared to monthly billing (~2 months free)`
+    : `Switch to Annual to save ${currRule.symbol} ${annualSavingsAmount.toLocaleString()} per year (~${annualSavingsPercent}% savings)`;
+
+  return {
+    planId: plan.id,
+    planName: plan.name,
+    tier: plan.tier,
+    studentCount: rawStudents,
+    billedStudentCount,
+    billingCycle: params.billingCycle,
+    currency: currRule.currency,
+    currencySymbol: currRule.symbol,
+    ratePerStudent: convertedRatePerStudent,
+    baseAmount,
+    addonsAmount,
+    selectedAddonIds: selectedAddons,
+    subtotal,
+    taxRatePercent,
+    taxAmount,
+    discountAmount,
+    totalAmount,
+    annualSavingsAmount,
+    annualSavingsPercent,
+    savingsFormatted,
+  };
+}
+

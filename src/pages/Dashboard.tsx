@@ -22,6 +22,8 @@ import { useSync } from '../context/SyncContext';
 import { fetchAllUsers, fetchAuditLogs } from '../services/api';
 import type { User, AuditLog } from '../types';
 import { Badge } from '../components/common/Badge';
+import { Skeleton } from '../components/ui/LoadingSpinner';
+import { EmptyState } from '../components/ui/EmptyState';
 
 interface DashboardProps {
   onNavigate: (view: string) => void;
@@ -61,6 +63,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     month: 'long',
     day: 'numeric',
   });
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse" role="status" aria-label="Loading dashboard...">
+        <div className="h-44 rounded-2xl bg-slate-200 dark:bg-slate-800" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="h-28 rounded-xl bg-slate-200 dark:bg-slate-800" />
+          <div className="h-28 rounded-xl bg-slate-200 dark:bg-slate-800" />
+          <div className="h-28 rounded-xl bg-slate-200 dark:bg-slate-800" />
+          <div className="h-28 rounded-xl bg-slate-200 dark:bg-slate-800" />
+        </div>
+        <div className="h-64 rounded-xl bg-slate-200 dark:bg-slate-800" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -518,7 +535,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
             <div className="space-y-3">
               {recentAudits.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">No audit records recorded yet.</p>
+                <EmptyState
+                  title="No Audit Logs Recorded Yet"
+                  description="System actions, grade entries, fee reconciliations, and staff logins will appear in this authoritative ledger."
+                  actionLabel="Inspect Audit System"
+                  onAction={() => onNavigate('audit')}
+                />
               ) : (
                 recentAudits.map((log) => (
                   <div

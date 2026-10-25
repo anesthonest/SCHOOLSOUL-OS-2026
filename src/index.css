@@ -2,68 +2,178 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Baseline Readability and High Contrast Tokens */
+/* =========================================================================
+   SCHOOLSOUL OS 10/10 DESIGN TOKENS & SYSTEM FOUNDATION
+   ========================================================================= */
+
 :root {
+  /* Light Mode Semantic Surfaces & Text */
+  --color-bg-base: #f8fafc;
+  --color-bg-subtle: #f1f5f9;
+  --color-card-bg: #ffffff;
+  --color-card-elevated: #ffffff;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+  --color-border-focus: #2563eb;
+
   --color-text-primary: #0f172a;
   --color-text-secondary: #334155;
   --color-text-muted: #64748b;
-  --color-bg-base: #f8fafc;
-  --color-card-bg: #ffffff;
-  --color-border: #cbd5e1;
+  --color-text-faint: #94a3b8;
+
+  /* SchoolSoul Brand Colors */
+  --color-brand-blue: #1d4ed8;
+  --color-brand-blue-hover: #1e40af;
+  --color-brand-blue-light: #eff6ff;
+  --color-brand-gold: #b45309;
+  --color-brand-gold-light: #fef3c7;
+
+  /* Focus Ring */
+  --focus-ring-color: rgba(37, 99, 235, 0.45);
 }
 
 .dark {
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #e2e8f0;
-  --color-text-muted: #94a3b8;
+  /* Dark Mode Semantic Surfaces & Text */
   --color-bg-base: #020617;
+  --color-bg-subtle: #0b1120;
   --color-card-bg: #0f172a;
-  --color-border: #334155;
-}
+  --color-card-elevated: #1e293b;
+  --color-border: #1e293b;
+  --color-border-subtle: #0f172a;
+  --color-border-focus: #3b82f6;
 
-body {
-  color: #0f172a;
-  background-color: #f8fafc;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-faint: #64748b;
 
-.dark body {
-  color: #f8fafc;
-  background-color: #020617;
+  /* SchoolSoul Brand Colors in Dark */
+  --color-brand-blue: #3b82f6;
+  --color-brand-blue-hover: #60a5fa;
+  --color-brand-blue-light: #1e3a8a33;
+  --color-brand-gold: #fbbf24;
+  --color-brand-gold-light: #78350f44;
+
+  /* Focus Ring */
+  --focus-ring-color: rgba(59, 130, 246, 0.55);
 }
 
 /* =========================================================================
-   UNIVERSAL CONTRAST & VISIBILITY SAFEGUARDS (LIGHT & DARK MODES)
+   BASE TYPOGRAPHY & SMOOTH SCROLLING
    ========================================================================= */
 
-/* Ensure all input, select, textarea elements have guaranteed text visibility in light & dark modes */
-input, select, textarea {
-  color: inherit;
+html {
+  scroll-behavior: smooth;
+  text-size-adjust: 100%;
 }
 
-/* Form input contrast safeguard */
+body {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-base);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* =========================================================================
+   ACCESSIBILITY: FOCUS VISIBLE & REDUCED MOTION
+   ========================================================================= */
+
+/* Unmistakable keyboard focus indicator (WCAG 2.2 AA) */
+:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.dark :focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+/* Respect user's motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =========================================================================
+   INPUT & FORM DEFAULTS (WCAG AA HIGH CONTRAST)
+   ========================================================================= */
+
 input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
 select,
 textarea {
-  color: #0f172a !important;
-  background-color: #ffffff !important;
-  border-color: #cbd5e1;
+  color: #0f172a;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):focus,
+select:focus,
+textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  outline: none;
 }
 
 .dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
 .dark select,
 .dark textarea {
-  color: #f8fafc !important;
-  background-color: #0b1329 !important;
+  color: #f8fafc;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+}
+
+.dark input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):focus,
+.dark select:focus,
+.dark textarea:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  outline: none;
+}
+
+/* Disabled & Read-only Form States */
+input:disabled, select:disabled, textarea:disabled,
+input[readonly], select[readonly], textarea[readonly] {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+.dark input:disabled, .dark select:disabled, .dark textarea:disabled,
+.dark input[readonly], .dark select[readonly], .dark textarea[readonly] {
+  background-color: #1e293b;
+  color: #94a3b8;
   border-color: #334155;
 }
 
-/* Tables text contrast guarantee */
+/* =========================================================================
+   ACCESSIBLE TABLES
+   ========================================================================= */
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
 table th {
   color: #334155;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
+
 .dark table th {
   color: #94a3b8;
 }
@@ -71,73 +181,37 @@ table th {
 table td {
   color: #0f172a;
 }
+
 .dark table td {
   color: #f1f5f9;
 }
 
-/* Status Badges & Pills High-Contrast Safety */
-.badge-emerald {
-  background-color: #d1fae5;
-  color: #065f46;
-}
-.dark .badge-emerald {
-  background-color: #064e3b;
-  color: #a7f3d0;
-}
+/* =========================================================================
+   CUSTOM SCROLLBARS
+   ========================================================================= */
 
-.badge-rose {
-  background-color: #ffe4e6;
-  color: #9f1239;
-}
-.dark .badge-rose {
-  background-color: #881337;
-  color: #fecdd3;
-}
-
-.badge-amber {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-.dark .badge-amber {
-  background-color: #78350f;
-  color: #fde68a;
-}
-
-.badge-blue {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-.dark .badge-blue {
-  background-color: #1e3a8a;
-  color: #bfdbfe;
-}
-
-/* Readonly and Disabled input contrast */
-input:disabled, select:disabled, textarea:disabled,
-input[readonly], select[readonly], textarea[readonly] {
-  background-color: #f1f5f9 !important;
-  color: #475569 !important;
-  cursor: not-allowed;
-}
-
-.dark input:disabled, .dark select:disabled, .dark textarea:disabled,
-.dark input[readonly], .dark select[readonly], .dark textarea[readonly] {
-  background-color: #1e293b !important;
-  color: #cbd5e1 !important;
-}
-
-/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 9999px;
 }
+
 .dark ::-webkit-scrollbar-thumb {
   background: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
