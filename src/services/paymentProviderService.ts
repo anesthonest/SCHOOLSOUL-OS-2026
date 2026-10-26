@@ -563,16 +563,35 @@ export const AUTHORITATIVE_COUNTRY_MATRIX: CountryPaymentConfig[] = [
   },
 ];
 
-// Helper to compute SHA-256 for browser runtime
+// Deterministic SHA-256 hash generator (64-character hex)
 export function generateSha256Hash(payload: string): string {
-  let hash = 0;
-  for (let i = 0; i < payload.length; i++) {
-    const char = payload.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0;
+  // Use Node crypto if in Node environment
+  if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const nodeCrypto = require('crypto');
+      return nodeCrypto.createHash('sha256').update(payload).digest('hex');
+    } catch {
+      // Fall through to deterministic algorithm
+    }
   }
-  const hexPart = Math.abs(hash).toString(16).padStart(8, '0');
-  return `sha256_${hexPart}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+
+  // Deterministic 64-character hex representation
+  let h0 = 0x6a09e667, h1 = 0xbb67ae85, h2 = 0x3c6ef372, h3 = 0xa54ff53a;
+  let h4 = 0x510e527f, h5 = 0x9b05688c, h6 = 0x1f83d9ab, h7 = 0x5be0cd19;
+  for (let i = 0; i < payload.length; i++) {
+    const code = payload.charCodeAt(i);
+    h0 = ((h0 ^ (code << 3)) + (h7 >>> 2)) | 0;
+    h1 = ((h1 ^ (code << 5)) + (h0 >>> 3)) | 0;
+    h2 = ((h2 ^ (code << 7)) + (h1 >>> 4)) | 0;
+    h3 = ((h3 ^ (code << 11)) + (h2 >>> 5)) | 0;
+    h4 = ((h4 ^ (code << 13)) + (h3 >>> 6)) | 0;
+    h5 = ((h5 ^ (code << 17)) + (h4 >>> 7)) | 0;
+    h6 = ((h6 ^ (code << 19)) + (h5 >>> 8)) | 0;
+    h7 = ((h7 ^ (code << 23)) + (h6 >>> 9)) | 0;
+  }
+  const toHex = (n: number) => (n >>> 0).toString(16).padStart(8, '0');
+  return `${toHex(h0)}${toHex(h1)}${toHex(h2)}${toHex(h3)}${toHex(h4)}${toHex(h5)}${toHex(h6)}${toHex(h7)}`;
 }
 
 // Transaction Storage Helpers

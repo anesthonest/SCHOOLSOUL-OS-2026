@@ -27,6 +27,10 @@ import {
   ChevronDown,
   UserPlus,
   Compass,
+  Play,
+  Activity,
+  Server,
+  HelpCircle,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/common/Modal';
@@ -34,6 +38,14 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Textarea } from '../components/ui/Textarea';
 import { SchoolSoulMarkSVG } from '../components/common/SchoolSoulLogo';
+import { PWAInstallBanner, PWAInstallButton } from '../components/common/PWAInstallBanner';
+import { ProductShowcase } from '../components/landing/ProductShowcase';
+import { ROIEstimator } from '../components/landing/ROIEstimator';
+import { PlanComparisonTable } from '../components/landing/PlanComparisonTable';
+import { ExploreSandboxModal } from '../components/landing/ExploreSandboxModal';
+import { VideoWalkthroughModal } from '../components/landing/VideoWalkthroughModal';
+import { SystemStatusModal } from '../components/landing/SystemStatusModal';
+import { LanDeploymentModal } from '../components/landing/LanDeploymentModal';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import {
@@ -60,6 +72,11 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
   const { showSuccess } = useToast();
 
   const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+  const [isExploreModalOpen, setIsExploreModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isLanModalOpen, setIsLanModalOpen] = useState(false);
+
   const [demoForm, setDemoForm] = useState({
     schoolName: '',
     contactPerson: '',
@@ -88,8 +105,17 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
     }, 600);
   };
 
+  const toggleAddon = (id: string) => {
+    setSelectedAddons((prev) =>
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-500 selection:text-white transition-colors duration-200">
+      {/* 0. Top PWA Install Banner */}
+      <PWAInstallBanner onOpenApp={() => onGoToAuth('LOGIN')} />
+
       {/* 1. Public Top Navigation Bar */}
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -115,8 +141,17 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             </div>
           </div>
 
-          {/* Header Quick Actions - Reflowed cleanly without duplicated Login/Register */}
+          {/* Header Quick Actions */}
           <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => setIsVideoModalOpen(true)}
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <Play className="w-3.5 h-3.5 text-blue-600" />
+              <span>Watch Video</span>
+            </button>
+
             <a
               href="#pricing"
               onClick={(e) => {
@@ -128,6 +163,8 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             >
               Pricing
             </a>
+
+            <PWAInstallButton className="hidden sm:inline-flex" />
 
             <button
               onClick={toggleTheme}
@@ -149,7 +186,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
         </div>
       </header>
 
-      {/* 2. Hero Section - The Critical First Visible Screen (Cleaned Up & Compact Spacing) */}
+      {/* 2. Hero Section - The Critical First Visible Screen */}
       <section className="relative overflow-hidden pt-4 pb-8 sm:pt-8 sm:pb-12 border-b border-slate-200 dark:border-slate-800 bg-linear-to-b from-white via-slate-50 to-slate-100/50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3 sm:space-y-4">
           {/* Natural Editorial Badge */}
@@ -172,9 +209,8 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             A modern school operating system designed to help schools manage their people, academics, operations, communication, finance and digital learning environment.
           </p>
 
-          {/* PRIMARY FIRST-SCREEN ACTIONS - Cohesive, Unified Action Group Without Excessive Spacing */}
+          {/* PRIMARY FIRST-SCREEN ACTIONS */}
           <div className="pt-1 sm:pt-2">
-            {/* Primary Action Buttons (Vertical stack on mobile, horizontal row on desktop) */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto">
               <Button
                 variant="primary"
@@ -200,15 +236,12 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
               </Button>
             </div>
 
-            {/* Secondary Actions (Directly accessible on first screen without large vertical gap) */}
+            {/* Secondary Actions */}
             <div className="mt-3 sm:mt-3.5 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs">
               <button
                 type="button"
                 data-testid="first-screen-explore-btn"
-                onClick={() => {
-                  const el = document.getElementById('explore-features');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }}
+                onClick={() => setIsExploreModalOpen(true)}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
               >
                 <Compass className="w-4 h-4 text-blue-500 shrink-0" />
@@ -239,6 +272,17 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
                 <FileCheck className="w-4 h-4 text-emerald-500 shrink-0" />
                 <span>Check Application Status</span>
               </button>
+
+              <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">·</span>
+
+              <button
+                type="button"
+                onClick={() => setIsVideoModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
+              >
+                <Play className="w-4 h-4 text-indigo-500 shrink-0" />
+                <span>Watch Overview</span>
+              </button>
             </div>
           </div>
 
@@ -257,10 +301,27 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             </span>
             <span aria-hidden="true" className="hidden sm:inline">·</span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> Immutable Safeguarding Audits
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> Tamper-Evident Safeguarding Logs
             </span>
           </div>
         </div>
+      </section>
+
+      {/* 2.5 Product Interface Showcase Section */}
+      <section className="py-14 sm:py-18 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-200 dark:border-slate-800">
+        <div className="text-center max-w-3xl mx-auto mb-10 space-y-2">
+          <div className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400">
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <span>INTERACTIVE PRODUCT EXPERIENCE</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+            Built for Real East African School Operations
+          </h2>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Click through key operational stations to see how SchoolSoul handles real-world leadership, CBC marks, fees, and offline attendance.
+          </p>
+        </div>
+        <ProductShowcase />
       </section>
 
       {/* 3. Problems Solved & Value Architecture */}
@@ -275,7 +336,6 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1 */}
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
               <WifiOff className="w-5 h-5" />
@@ -288,7 +348,6 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             </p>
           </div>
 
-          {/* Card 2 */}
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
               <CreditCard className="w-5 h-5" />
@@ -301,7 +360,6 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             </p>
           </div>
 
-          {/* Card 3 */}
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
               <BookOpen className="w-5 h-5" />
@@ -314,7 +372,6 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             </p>
           </div>
 
-          {/* Card 4 */}
           <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
             <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
               <ShieldCheck className="w-5 h-5" />
@@ -329,7 +386,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
         </div>
       </section>
 
-      {/* 4. Who is it for? Roles Breakdown */}
+      {/* 4. Tailored for Every School Role */}
       <section id="audience" className="py-16 bg-slate-100/70 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
@@ -399,6 +456,11 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
         </div>
       </section>
 
+      {/* 4.5 ROI & Administrative Efficiency Calculator */}
+      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-200 dark:border-slate-800">
+        <ROIEstimator initialCurrency={calcCurrency} />
+      </section>
+
       {/* 5. Student-Based Pricing Architecture & Live Calculator */}
       <section id="pricing" className="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-200 dark:border-slate-800">
         <div className="text-center max-w-3xl mx-auto mb-10 space-y-3">
@@ -449,19 +511,19 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
                   onClick={() => setCalcCycle('Annual')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     calcCycle === 'Annual'
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400'
                   }`}
                 >
-                  Annual (Save ~2 Months Free)
+                  Annual (Save 20%)
                 </button>
                 <button
                   type="button"
                   onClick={() => setCalcCycle('Monthly')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     calcCycle === 'Monthly'
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400'
                   }`}
                 >
                   Monthly
@@ -470,97 +532,73 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             </div>
           </div>
 
-          {/* Student Capacity Selector */}
+          {/* Student Capacity Slider */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                  Active Student Enrollment
-                </span>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Minimum billing floor: 100 students
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="text-xl font-extrabold text-blue-600 dark:text-blue-400">
-                  {calcStudents.toLocaleString()}
-                </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 ml-1">students</span>
-              </div>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Select Your School's Student Population:
+              </label>
+              <span className="text-base font-black text-blue-600 dark:text-blue-400">
+                {calcStudents.toLocaleString()} Students
+              </span>
             </div>
 
-            {/* Quick Band Buttons */}
-            <div className="flex flex-wrap gap-2 pt-1">
-              {[100, 250, 500, 1000, 2500, 5000, 10000].map((band) => (
-                <button
-                  key={band}
-                  type="button"
-                  onClick={() => setCalcStudents(band)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                    calcStudents === band
-                      ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xs'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                  }`}
-                >
-                  {band >= 1000 ? `${band / 1000}k` : band}
-                </button>
-              ))}
-            </div>
-
-            {/* Range Slider */}
             <input
               type="range"
-              min="100"
-              max="10000"
-              step="50"
+              min={100}
+              max={3000}
+              step={50}
               value={calcStudents}
               onChange={(e) => setCalcStudents(Number(e.target.value))}
-              className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
             />
+
+            <div className="flex justify-between text-[11px] text-slate-400">
+              <span>100 Students (Starter)</span>
+              <span>1,000 Students</span>
+              <span>2,000 Students</span>
+              <span>3,000+ Students (Enterprise)</span>
+            </div>
           </div>
 
-          {/* Optional Add-Ons Selector */}
-          <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
-              Optional Institutional Add-Ons
+          {/* Optional Add-ons Selection */}
+          <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-2">
+              Optional Add-on Capabilities:
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               {COMMERCIAL_ADDONS.map((addon) => {
-                const isSelected = selectedAddons.includes(addon.id);
+                const isChecked = selectedAddons.includes(addon.id);
                 return (
-                  <button
+                  <label
                     key={addon.id}
-                    type="button"
-                    onClick={() => {
-                      if (isSelected) {
-                        setSelectedAddons(selectedAddons.filter((id) => id !== addon.id));
-                      } else {
-                        setSelectedAddons([...selectedAddons, addon.id]);
-                      }
-                    }}
-                    className={`p-2.5 rounded-xl border text-left flex items-start justify-between gap-2 transition-all cursor-pointer ${
-                      isSelected
-                        ? 'bg-blue-50 dark:bg-blue-950/40 border-blue-500/60 text-blue-900 dark:text-blue-100'
-                        : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+                    className={`flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition ${
+                      isChecked
+                        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200'
+                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300'
                     }`}
                   >
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold truncate">{addon.name}</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{addon.description}</p>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => toggleAddon(addon.id)}
+                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-0.5"
+                    />
+                    <div>
+                      <span className="font-semibold block">{addon.name}</span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400">{addon.description}</span>
                     </div>
-                    <span className="text-[11px] font-mono font-semibold shrink-0 text-blue-600 dark:text-blue-400">
-                      +${calcCycle === 'Annual' ? addon.annualUSD : addon.monthlyUSD}/{calcCycle === 'Annual' ? 'yr' : 'mo'}
-                    </span>
-                  </button>
+                  </label>
                 );
               })}
             </div>
           </div>
         </div>
 
-        {/* 3 Tier Cards Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        {/* 3 Tier Pricing Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto items-stretch">
           {STUDENT_PRICING_PLANS.map((plan) => {
+            const isStandard = plan.id === 'standard';
             const quote = calculateStudentSubscriptionQuote({
               planId: plan.id,
               studentCount: calcStudents,
@@ -569,33 +607,28 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
               selectedAddonIds: selectedAddons,
             });
 
-            const isStandard = plan.isPopular;
-
             return (
               <div
                 key={plan.id}
-                className={`relative rounded-3xl p-6 sm:p-8 flex flex-col justify-between transition-all duration-200 ${
+                className={`flex flex-col justify-between p-6 sm:p-8 rounded-3xl transition-all relative ${
                   isStandard
-                    ? 'bg-white dark:bg-slate-900 border-2 border-emerald-500 shadow-xl shadow-emerald-500/5'
-                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:border-slate-300 dark:hover:border-slate-700'
+                    ? 'bg-white dark:bg-slate-900 border-2 border-blue-600 shadow-2xl ring-4 ring-blue-600/10'
+                    : 'bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-lg'
                 }`}
               >
                 {isStandard && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-600 text-white shadow-xs">
-                    Recommended Default
-                  </div>
+                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-sm">
+                    Recommended for Most Schools
+                  </span>
                 )}
 
                 <div className="space-y-4">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {plan.tier} Tier
-                    </span>
-                    <h3 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+                    <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">
                       {plan.name}
                     </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                      {plan.tagline}
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      {plan.description}
                     </p>
                   </div>
 
@@ -646,7 +679,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
                   <Button
                     variant={isStandard ? 'primary' : 'outline'}
                     size="md"
-                    className="w-full justify-center"
+                    className="w-full justify-center min-h-[44px]"
                     onClick={() => {
                       if (plan.isCustom) {
                         setIsDemoModalOpen(true);
@@ -669,22 +702,23 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
           })}
         </div>
 
-        {/* Trust Badges Bar */}
-        <div className="mt-12 text-center text-xs text-slate-500 dark:text-slate-400 space-y-2">
-          <p className="font-medium">
-            All subscriptions backed by our Zero Data Hostage guarantee. Export complete school archives anytime.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-4 text-[11px]">
-            <span>✓ Automated Pesapal, MTN & Airtel Settlements</span>
-            <span aria-hidden="true">·</span>
-            <span>✓ 30-Day Offline LAN Cache Window</span>
-            <span aria-hidden="true">·</span>
-            <span>✓ 14-Day Non-Destructive Grace Period</span>
-          </div>
+        {/* Detailed Plan Feature Comparison */}
+        <div className="mt-16">
+          <PlanComparisonTable
+            onSelectPlan={(planId) => {
+              if (planId === 'enterprise') {
+                setIsDemoModalOpen(true);
+              } else if (onGoToRegisterSchool) {
+                onGoToRegisterSchool();
+              } else {
+                onGoToAuth('REGISTER');
+              }
+            }}
+          />
         </div>
       </section>
 
-      {/* 6. Why Schools Trust SchoolSoul */}
+      {/* 6. Why Schools Trust SchoolSoul (Strictly Honest Trust Architecture) */}
       <section id="trust" className="py-16 sm:py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
         <div className="space-y-3">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
@@ -721,6 +755,32 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
           </div>
         </div>
 
+        {/* Regional Curriculum Alignment Badges */}
+        <div className="p-6 rounded-3xl bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-left space-y-3">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-blue-600" />
+            Verified Regional Curriculum Compliance
+          </h4>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span className="font-bold block text-slate-900 dark:text-slate-100">Kenya CBC (KICD)</span>
+              <span className="text-[11px] text-slate-500">Formative & Summative Rubrics</span>
+            </div>
+            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span className="font-bold block text-slate-900 dark:text-slate-100">Uganda UNEB / NCDC</span>
+              <span className="text-[11px] text-slate-500">New Lower Secondary & Primary</span>
+            </div>
+            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span className="font-bold block text-slate-900 dark:text-slate-100">Tanzania NECTA</span>
+              <span className="text-[11px] text-slate-500">Standard Division Scales</span>
+            </div>
+            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+              <span className="font-bold block text-slate-900 dark:text-slate-100">Cambridge & IB</span>
+              <span className="text-[11px] text-slate-500">International Letter Grades</span>
+            </div>
+          </div>
+        </div>
+
         {/* Ready to start banner */}
         <div className="p-8 rounded-3xl bg-linear-to-r from-blue-700 to-indigo-900 text-white shadow-xl space-y-4">
           <h3 className="text-xl sm:text-2xl font-black tracking-tight">
@@ -734,6 +794,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
               variant="secondary"
               size="md"
               onClick={() => onGoToAuth('LOGIN')}
+              className="min-h-[44px]"
             >
               Sign In to Your Account
             </Button>
@@ -741,7 +802,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
               variant="outline"
               size="md"
               onClick={() => setIsDemoModalOpen(true)}
-              className="text-white border-white/40 hover:bg-white/10"
+              className="text-white border-white/40 hover:bg-white/10 min-h-[44px]"
             >
               Book School Demo
             </Button>
@@ -749,19 +810,41 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
         </div>
       </section>
 
-      {/* 6. Footer */}
+      {/* 7. About VINEXSAH TECHNOLOGIES */}
+      <section id="about-vinexsah" className="py-16 bg-slate-100/60 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
+          <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto shadow-md">
+            <SchoolSoulMarkSVG size={30} idPrefix="ss-about" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+            Engineered by VINEXSAH TECHNOLOGIES
+          </h2>
+          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
+            VINEXSAH TECHNOLOGIES is an African software engineering firm dedicated to building sovereign, resilient digital infrastructure for institutions across the continent. We reject fragile cloud-only architectures and vendor lock-in. Our mission is to ensure every school operates continuously, protects learner data sovereignty, and prospers financially.
+          </p>
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <span>📍 Kampala, Uganda / East Africa</span>
+            <span aria-hidden="true">·</span>
+            <span>🔒 Sovereign Student Data</span>
+            <span aria-hidden="true">·</span>
+            <span>⚡ 100% Offline-First LAN</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 text-xs text-slate-500 dark:text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <SchoolSoulMarkSVG size={20} idPrefix="ss-footer" />
             <span className="font-bold text-slate-800 dark:text-slate-200">SchoolSoul OS</span>
             <span>— Developed by VINEXSAH TECHNOLOGIES. All rights reserved.</span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-medium">
+          <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-medium">
             <button
               onClick={() => onGoToAuth('LOGIN')}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-blue-600 transition-colors cursor-pointer"
             >
               Sign In
             </button>
@@ -779,13 +862,25 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             </button>
             <button
               onClick={() => onGoToAuth('STATUS')}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-blue-600 transition-colors cursor-pointer"
             >
               Check Status
             </button>
             <button
+              onClick={() => setIsStatusModalOpen(true)}
+              className="hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              System Status
+            </button>
+            <button
+              onClick={() => setIsLanModalOpen(true)}
+              className="hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              Local LAN Guide
+            </button>
+            <button
               onClick={() => setIsDemoModalOpen(true)}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-blue-600 transition-colors cursor-pointer"
             >
               Request Demo
             </button>
@@ -926,6 +1021,33 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
           </form>
         )}
       </Modal>
+
+      {/* Guided Product Architecture Explorer Modal */}
+      <ExploreSandboxModal
+        isOpen={isExploreModalOpen}
+        onClose={() => setIsExploreModalOpen(false)}
+        onGoToAuth={onGoToAuth}
+        onGoToRegisterSchool={onGoToRegisterSchool}
+      />
+
+      {/* Institutional Demo Video Walkthrough Modal */}
+      <VideoWalkthroughModal
+        isOpen={isVideoModalOpen}
+        onClose={() => setIsVideoModalOpen(false)}
+        onGoToRegisterSchool={onGoToRegisterSchool}
+      />
+
+      {/* System Infrastructure Status Modal */}
+      <SystemStatusModal
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+      />
+
+      {/* On-Premise Local Server & LAN Setup Guide Modal */}
+      <LanDeploymentModal
+        isOpen={isLanModalOpen}
+        onClose={() => setIsLanModalOpen(false)}
+      />
     </div>
   );
 };

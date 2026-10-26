@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { OfflineBanner } from '../common/OfflineBanner';
 import { UniversalBreadcrumbHeader } from './UniversalBreadcrumbHeader';
 import { UnsavedChangesModal } from '../common/UnsavedChangesModal';
+import { PWAUpdateNotification } from '../common/PWAUpdateNotification';
 import { useNavigation } from '../../context/NavigationContext';
 
 interface AppLayoutProps {
@@ -67,6 +68,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activeView, onNa
 
       {/* Global Unsaved Changes Warning Modal */}
       <UnsavedChangesModal />
+
+      {/* PWA Background Update Prompt */}
+      <PWAUpdateNotification />
     </div>
   );
 };

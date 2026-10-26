@@ -1,0 +1,36 @@
+{
+  "id": "/",
+  "name": "SchoolSoul OS",
+  "short_name": "SchoolSoul",
+  "description": "SchoolSoul OS — Unified School Operating System. Offline-first school administration, academics, fees, attendance, and communications.",
+  "developer": {
+    "name": "VINEXSAH TECHNOLOGIES"
+  },
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0f172a",
+  "background_color": "#0b0f19",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

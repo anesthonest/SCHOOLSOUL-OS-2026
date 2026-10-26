@@ -1,19 +1,44 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { syncEngine } from '../services/syncEngine';
 
+export type SyncStatusState = 'ONLINE' | 'OFFLINE' | 'SYNCING' | 'SYNCED' | 'SYNC_ERROR';
+
 interface SyncContextType {
   isOnline: boolean;
   isSyncing: boolean;
+  syncStatus: SyncStatusState;
   pendingQueueCount: number;
+  lastSyncTime: Date | null;
+  lastSyncMessage: string | null;
   triggerSyncNow: () => Promise<{ success: boolean; syncedCount: number; message: string }>;
 }
 
 const SyncContext = createContext<SyncContextType | undefined>(undefined);
 
 export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [pendingQueueCount, setPendingQueueCount] = useState<number>(0);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(() => {
+    try {
+      const stored = localStorage.getItem('schoolsoul_last_sync_time');
+      return stored ? new Date(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [lastSyncMessage, setLastSyncMessage] = useState<string | null>(null);
+
+  // Derive syncStatus
+  const syncStatus: SyncStatusState = !isOnline
+    ? 'OFFLINE'
+    : isSyncing
+    ? 'SYNCING'
+    : lastSyncMessage && lastSyncMessage.toLowerCase().includes('fail')
+    ? 'SYNC_ERROR'
+    : pendingQueueCount === 0 && lastSyncTime
+    ? 'SYNCED'
+    : 'ONLINE';
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -35,7 +60,18 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const triggerSyncNow = useCallback(async () => {
-    return await syncEngine.triggerSync();
+    const res = await syncEngine.triggerSync();
+    setLastSyncMessage(res.message);
+    if (res.success) {
+      const now = new Date();
+      setLastSyncTime(now);
+      try {
+        localStorage.setItem('schoolsoul_last_sync_time', now.toISOString());
+      } catch {
+        // ignore
+      }
+    }
+    return res;
   }, []);
 
   return (
@@ -43,7 +79,10 @@ export const SyncProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         isOnline,
         isSyncing,
+        syncStatus,
         pendingQueueCount,
+        lastSyncTime,
+        lastSyncMessage,
         triggerSyncNow,
       }}
     >

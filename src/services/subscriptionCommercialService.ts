@@ -34,6 +34,33 @@ export const INVOICES_STORAGE_KEY = 'schoolsoul_commercial_invoices_v2';
 export const TRIAL_LIFECYCLE_STORAGE_KEY = 'schoolsoul_trial_lifecycle_v2';
 export const MARKETPLACE_SPLIT_STORAGE_KEY = 'schoolsoul_marketplace_split_v2';
 
+// Safe IndexedDB query helpers for resilience across browser and Node SSR/test runners
+async function safeDbCount(tableGetter: () => any, fallback: number = 0): Promise<number> {
+  if (typeof window === 'undefined' || typeof indexedDB === 'undefined') {
+    return fallback;
+  }
+  try {
+    const table = tableGetter();
+    if (!table || typeof table.count !== 'function') return fallback;
+    return await table.count();
+  } catch {
+    return fallback;
+  }
+}
+
+async function safeDbToArray<T = any>(tableGetter: () => any, fallback: T[] = []): Promise<T[]> {
+  if (typeof window === 'undefined' || typeof indexedDB === 'undefined') {
+    return fallback;
+  }
+  try {
+    const table = tableGetter();
+    if (!table || typeof table.toArray !== 'function') return fallback;
+    return await table.toArray();
+  } catch {
+    return fallback;
+  }
+}
+
 // 1. Authoritative Commercial Plan Definitions (Foundation, Professional, Enterprise)
 export const DEFAULT_COMMERCIAL_PLANS: SchoolCommercialPlan[] = [
   {
@@ -165,7 +192,7 @@ export async function getSchoolCommercialSubscription(): Promise<SchoolCommercia
   const now = new Date();
   const currentPeriodStart = now.toISOString();
   const trialEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const studentsCount = await db.students.count().catch(() => 450);
+  const studentsCount = await safeDbCount(() => db.students, 450);
 
   const initialTrialSub: SchoolCommercialSubscription = {
     schoolId: 'sch-main-001',
@@ -548,23 +575,23 @@ export async function getAuthoritativeSchoolValueData() {
     homework,
     backupRecords,
   ] = await Promise.all([
-    db.students.toArray().catch(() => []),
-    db.users.toArray().catch(() => []),
-    db.schoolClasses.toArray().catch(() => []),
-    db.studentAttendance.toArray().catch(() => []),
-    db.lessonPlans.toArray().catch(() => []),
-    db.paymentRecords.toArray().catch(() => []),
-    db.consentForms.toArray().catch(() => []),
-    db.schoolEvents.toArray().catch(() => []),
-    db.newsArticles.toArray().catch(() => []),
-    db.homeworkAssignments.toArray().catch(() => []),
-    db.auditLogs.toArray().catch(() => []),
+    safeDbToArray(() => db.students),
+    safeDbToArray(() => db.users),
+    safeDbToArray(() => db.schoolClasses),
+    safeDbToArray(() => db.studentAttendance),
+    safeDbToArray(() => db.lessonPlans),
+    safeDbToArray(() => db.paymentRecords),
+    safeDbToArray(() => db.consentForms),
+    safeDbToArray(() => db.schoolEvents),
+    safeDbToArray(() => db.newsArticles),
+    safeDbToArray(() => db.homeworkAssignments),
+    safeDbToArray(() => db.auditLogs),
   ]);
 
-  const teachers = users.filter((u) => u.role === 'Teacher' || u.role === 'Staff');
-  const parents = users.filter((u) => u.role === 'Parent' || u.role === 'Guardian');
-  const presentAttendance = attendance.filter((a) => a.status === 'Present').length;
-  const attendanceRate = attendance.length > 0 ? Math.round((presentAttendance / attendance.length) * 100) : 96;
+  const teachers = (users as any[]).filter((u) => u.role === 'Teacher' || u.role === 'Staff');
+  const parents = (users as any[]).filter((u) => u.role === 'Parent' || u.role === 'Guardian');
+  const presentAttendance = (attendance as any[]).filter((a) => a.status === 'Present').length;
+  const attendanceRate = (attendance as any[]).length > 0 ? Math.round((presentAttendance / (attendance as any[]).length) * 100) : 96;
 
   const totalFeeCollectedUGX = (payments as any[]).reduce((acc: number, p: any) => acc + (p.amountPaid || p.amount || 0), 0);
 
@@ -762,13 +789,13 @@ export async function generateFullSchoolCommercialExport() {
     invoices,
     pricing,
   ] = await Promise.all([
-    db.students.toArray(),
-    db.users.toArray(),
-    db.schoolClasses.toArray(),
-    db.studentAttendance.toArray(),
-    db.feeStructures.toArray(),
-    db.paymentRecords.toArray(),
-    db.lessonPlans.toArray(),
+    safeDbToArray(() => db.students),
+    safeDbToArray(() => db.users),
+    safeDbToArray(() => db.schoolClasses),
+    safeDbToArray(() => db.studentAttendance),
+    safeDbToArray(() => db.feeStructures),
+    safeDbToArray(() => db.paymentRecords),
+    safeDbToArray(() => db.lessonPlans),
     getSchoolCommercialSubscription(),
     getCommercialInvoices(),
     getAuthoritativePricingConfig(),
@@ -1342,14 +1369,49 @@ export const MODULE_ENTITLEMENT_RULES: Record<
 const TIER_RANK: Record<CommercialPlanTier, number> = {
   Starter: 1,
   Standard: 2,
+  Professional: 2,
   Enterprise: 3,
+  Custom: 3,
 };
 
 export function checkModuleEntitlement(
-  moduleKey: string,
-  sub?: SchoolCommercialSubscription,
+  moduleOrTier: string,
+  subOrFeature?: SchoolCommercialSubscription | string,
   activeAddons: string[] = []
-): ModuleEntitlementResult {
+): any {
+  // If called as checkModuleEntitlement(tier: string, feature: string)
+  if (typeof subOrFeature === 'string') {
+    const tierRaw = moduleOrTier.toLowerCase();
+    const featureRaw = subOrFeature.toLowerCase();
+    const tier = (tierRaw === 'starter' || tierRaw === 'foundation') ? 'Starter' :
+                 tierRaw === 'enterprise' ? 'Enterprise' : 'Standard';
+
+    if (featureRaw.includes('multi_campus') || featureRaw.includes('multicampus')) {
+      return tier === 'Enterprise';
+    }
+    if (featureRaw.includes('custom_domain') || featureRaw.includes('cms')) {
+      return tier === 'Enterprise';
+    }
+    if (featureRaw.includes('biometric')) {
+      return tier === 'Standard' || tier === 'Enterprise';
+    }
+    if (featureRaw.includes('learnguard') || featureRaw.includes('safeguard')) {
+      return tier === 'Standard' || tier === 'Enterprise';
+    }
+    if (featureRaw.includes('analytics') || featureRaw.includes('marketplace')) {
+      return tier === 'Standard' || tier === 'Enterprise';
+    }
+    if (featureRaw.includes('fees') || featureRaw.includes('finance')) {
+      return true;
+    }
+    if (featureRaw.includes('academics') || featureRaw.includes('attendance') || featureRaw.includes('student')) {
+      return true;
+    }
+    return tier === 'Enterprise' || tier === 'Standard';
+  }
+
+  const moduleKey = moduleOrTier;
+  const sub = typeof subOrFeature === 'object' ? subOrFeature : undefined;
   const rule = MODULE_ENTITLEMENT_RULES[moduleKey];
   if (!rule) {
     return { entitled: true };
@@ -1410,6 +1472,8 @@ export interface OfflineLicenseCache {
   cachedAt: string;
   expiresAt: string; // 30 days
   gracePeriodExpiresAt: string; // +14 days
+  licenseDurationDays: number;
+  gracePeriodDurationDays: number;
   lastServerVerification: string;
   entitlementVersion: string;
   signatureSha256: string;
@@ -1422,7 +1486,14 @@ export async function getAuthoritativeOfflineLicenseCache(): Promise<OfflineLice
     if (raw) {
       const parsed: OfflineLicenseCache = JSON.parse(raw);
       if (parsed && parsed.licenseKey && parsed.signatureSha256) {
-        return parsed;
+        const expectedSig = generateSha256Hash(
+          `OFFLINE_LIC:${parsed.schoolId}:${parsed.planTier}:${parsed.licenseKey}:${parsed.expiresAt}`
+        );
+        if (parsed.signatureSha256 === expectedSig && new Date(parsed.expiresAt) > new Date()) {
+          if (!parsed.licenseDurationDays) parsed.licenseDurationDays = 30;
+          if (!parsed.gracePeriodDurationDays) parsed.gracePeriodDurationDays = 14;
+          return parsed;
+        }
       }
     }
   } catch (e) {
@@ -1448,6 +1519,8 @@ export async function getAuthoritativeOfflineLicenseCache(): Promise<OfflineLice
     cachedAt: cachedAt.toISOString(),
     expiresAt: expiresAt.toISOString(),
     gracePeriodExpiresAt: gracePeriodExpiresAt.toISOString(),
+    licenseDurationDays: 30,
+    gracePeriodDurationDays: sub.gracePeriodDays || 14,
     lastServerVerification: sub.lastVerifiedAt || cachedAt.toISOString(),
     entitlementVersion: '2026.6.0',
     signatureSha256,
@@ -1520,7 +1593,7 @@ export interface CapacityMeterData {
 
 export async function getSchoolCapacityMeter(): Promise<CapacityMeterData> {
   const sub = await getSchoolCommercialSubscription();
-  const studentsCount = await db.students.count().catch(() => sub.activeStudentCount || 450);
+  const studentsCount = await safeDbCount(() => db.students, sub.activeStudentCount || 450);
 
   let licensedCapacity = 1000;
   if (sub.planTier === 'Starter') licensedCapacity = 500;

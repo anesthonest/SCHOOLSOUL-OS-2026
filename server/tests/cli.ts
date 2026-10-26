@@ -9,6 +9,7 @@ import { runResilienceAndDualStorageSuite } from './testResilienceAndDualStorage
 import { runV6ProductionCandidateSuite } from './testV6ProductionCandidateSuite';
 import { runLandingFirstScreenAudit } from './testLandingPageFirstScreen';
 import { runInteractiveFlowTests } from './testUserFlowTransitions';
+import { runPWAMarketReadinessSuite } from './testPWAMarketReadinessSuite';
 
 async function main() {
   try {
@@ -88,6 +89,15 @@ async function main() {
       console.log(`${icon} [${res.category} / ${res.testId}] ${res.name}: ${res.details}`);
     }
 
+    console.log('\n================================================================');
+    console.log('📱 RUNNING PWA, SYNC RESILIENCE & MARKET READINESS SUITE');
+    console.log('================================================================\n');
+    const pwaResults = await runPWAMarketReadinessSuite();
+    for (const res of pwaResults) {
+      const icon = res.status === 'PASS' ? '✅ [PASS]' : '❌ [FAIL]';
+      console.log(`${icon} [${res.category} / ${res.testId}] ${res.name}: ${res.details}`);
+    }
+
     const failures = results
       .filter(r => r.status === 'FAIL')
       .concat(pesapalResults.filter(r => r.status === 'FAIL') as any)
@@ -99,13 +109,14 @@ async function main() {
       .concat(resilienceResults.filter(r => r.status === 'FAIL') as any)
       .concat(v6Results.filter(r => r.status === 'FAIL') as any)
       .concat(landingResults.filter(r => r.status === 'FAIL') as any)
-      .concat(flowResults.filter(r => r.status === 'FAIL') as any);
+      .concat(flowResults.filter(r => r.status === 'FAIL') as any)
+      .concat(pwaResults.filter(r => r.status === 'FAIL') as any);
 
     if (failures.length > 0) {
       console.error(`\n❌ Suite failed with ${failures.length} test failures.`);
       process.exit(1);
     } else {
-      console.log('\n🎉 All acceptance, Pesapal production, School Market Media, Universal Naming, Universal QR, Account Recovery, Independent Break-Tests, V5 Dual-Storage, and V6 Production Candidate Release Gate Tests passed with 100% success rate (0 critical failures)!');
+      console.log('\n🎉 All acceptance, Pesapal production, School Market Media, Universal Naming, Universal QR, Account Recovery, Independent Break-Tests, V5 Dual-Storage, V6 Production Candidate, and PWA Market Readiness Tests passed with 100% success rate (0 critical failures)!');
       process.exit(0);
     }
   } catch (err) {

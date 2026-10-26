@@ -32,6 +32,8 @@ import { UniversalQRScannerModal } from '../common/UniversalQRScannerModal';
 import { SchoolQRCodeModal } from '../common/SchoolQRCodeModal';
 import { OnboardingGuideModal } from '../common/OnboardingGuideModal';
 import { HelpDrawerModal } from '../common/HelpDrawerModal';
+import { SyncCenterModal } from '../common/SyncCenterModal';
+import { PWAInstallButton } from '../common/PWAInstallBanner';
 
 interface NavbarProps {
   onToggleSidebarMobile: () => void;
@@ -51,6 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebarMobile, activeVie
   const [isSchoolQROpen, setIsSchoolQROpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isHelpDrawerOpen, setIsHelpDrawerOpen] = useState(false);
+  const [isSyncCenterOpen, setIsSyncCenterOpen] = useState(false);
   const [logoLoadError, setLogoLoadError] = useState(false);
 
   // Evaluate if first login for onboarding prompt
@@ -130,12 +133,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebarMobile, activeVie
             <EnvironmentModeBadge />
           </div>
 
-          {/* Connectivity Status Indicator */}
+          {/* PWA Install Button */}
+          <PWAInstallButton className="hidden md:inline-flex" />
+
+          {/* Connectivity Status Indicator & Sync Center Trigger */}
           <button
             id="navbar-sync-trigger-btn"
-            onClick={triggerSyncNow}
-            title={isOnline ? 'Online - Click to sync now' : 'Offline - Actions queued locally'}
-            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+            onClick={() => setIsSyncCenterOpen(true)}
+            title={isOnline ? 'Connected to Server — Click to open Sync Center' : 'Offline Mode — Local storage active. Click to open Sync Center'}
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer min-h-[38px] ${
               isOnline
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/80'
                 : 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/80'
@@ -381,6 +387,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebarMobile, activeVie
         onNavigate={(view) => {
           if (onNavigate) onNavigate(view);
         }}
+      />
+
+      {/* Sync & Offline Resilience Center Modal */}
+      <SyncCenterModal
+        isOpen={isSyncCenterOpen}
+        onClose={() => setIsSyncCenterOpen(false)}
       />
     </header>
   );

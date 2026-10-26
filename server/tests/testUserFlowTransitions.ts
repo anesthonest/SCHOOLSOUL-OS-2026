@@ -17,6 +17,12 @@ import {
 } from '../../src/services/subscriptionCommercialService';
 
 // Polyfills for Node environment
+if (typeof (globalThis as any).indexedDB === 'undefined') {
+  (globalThis as any).indexedDB = {
+    open: () => ({ onsuccess: () => {}, onerror: () => {}, onupgradeneeded: () => {} }),
+  };
+}
+
 if (typeof globalThis.localStorage === 'undefined') {
   const store = new Map<string, string>();
   globalThis.localStorage = {

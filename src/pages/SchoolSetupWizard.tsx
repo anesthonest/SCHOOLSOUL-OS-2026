@@ -397,7 +397,7 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
     { num: 2, label: 'Administrator', icon: UserCheck },
     { num: 3, label: 'Education Config', icon: BookOpen },
     { num: 4, label: 'Localization', icon: Globe2 },
-    { num: 5, label: 'Payments', icon: CreditCard },
+    { num: 5, label: 'Payment & Billing Rails', icon: CreditCard },
     { num: 6, label: 'Confirmation', icon: CheckCircle2 },
   ];
 
@@ -1191,7 +1191,7 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
               <div className="border-b border-slate-800 pb-2.5 sm:pb-3">
                 <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-blue-400" />
-                  Step 5 — Plan Tier, Student Capacity & Payment Gateways
+                  Step 5 — Plan Tier, Student Capacity, Payment & Billing Rails
                 </h2>
                 <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
                   Select your school's operating tier and payment rails for {activeCountryInfo.flagEmoji} {activeCountryInfo.name}.
