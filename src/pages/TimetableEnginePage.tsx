@@ -12,23 +12,30 @@ import {
   BookOpen,
   Edit2,
   Trash2,
+  ChevronDown,
 } from 'lucide-react';
 import {
   getTimetableSlots,
   getSchoolClasses,
   getSubjects,
+  getAcademicYears,
+  getAcademicTerms,
   addTimetableSlot,
   updateTimetableSlot,
   deleteTimetableSlot,
 } from '../services/academicsApi';
-import type { TimetableSlot, SchoolClass, Subject } from '../types';
+import type { TimetableSlot, SchoolClass, Subject, AcademicYearConfig, AcademicTermConfig } from '../types';
 
 export const TimetableEnginePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [slots, setSlots] = useState<TimetableSlot[]>([]);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [years, setYears] = useState<AcademicYearConfig[]>([]);
+  const [terms, setTerms] = useState<AcademicTermConfig[]>([]);
 
+  const [selectedYear, setSelectedYear] = useState('2026');
+  const [selectedTerm, setSelectedTerm] = useState('Term 1');
   const [selectedClass, setSelectedClass] = useState('Senior 1');
   const [selectedStream, setSelectedStream] = useState('North');
 
@@ -62,14 +69,18 @@ export const TimetableEnginePage: React.FC = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [sList, cList, subjList] = await Promise.all([
+      const [sList, cList, subjList, yList, tList] = await Promise.all([
         getTimetableSlots(selectedClass, selectedStream),
         getSchoolClasses(),
         getSubjects(),
+        getAcademicYears(),
+        getAcademicTerms(),
       ]);
       setSlots(sList);
       setClasses(cList);
       setSubjects(subjList);
+      setYears(yList);
+      setTerms(tList);
       if (subjList.length > 0 && !selectedSubjectId) {
         setSelectedSubjectId(subjList[0].id);
       }
@@ -231,54 +242,138 @@ export const TimetableEnginePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Selector Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-slate-900 border border-slate-800">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+      {/* Selector Bar: Responsive Matrix with 48px touch targets */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Academic Year Selector */}
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Select Class</label>
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs font-bold text-white"
-            >
-              {classes.map((c) => (
-                <option key={c.id} value={c.className}>
-                  {c.className} ({c.classCode})
-                </option>
-              ))}
-            </select>
+            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Academic Year
+            </label>
+            <div className="relative">
+              <select
+                aria-label="Select Academic Year"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="w-full min-h-[48px] appearance-none rounded-xl px-3.5 py-3 pr-10 text-xs font-bold bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer transition-all"
+              >
+                {years.length > 0 ? (
+                  years.map((y) => (
+                    <option key={y.id} value={y.yearName} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                      Year {y.yearName} {y.isCurrent ? '(Current)' : ''}
+                    </option>
+                  ))
+                ) : (
+                  <>
+                    <option value="2026" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Year 2026 (Current)</option>
+                    <option value="2027" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Year 2027</option>
+                  </>
+                )}
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-600 dark:text-slate-300">
+                <ChevronDown className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+              </div>
+            </div>
           </div>
 
+          {/* Academic Term Selector */}
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Select Stream</label>
-            <select
-              value={selectedStream}
-              onChange={(e) => setSelectedStream(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs font-bold text-white"
-            >
-              <option value="North">North Stream</option>
-              <option value="South">South Stream</option>
-              <option value="East">East Stream</option>
-              <option value="West">West Stream</option>
-              <option value="A">Stream A</option>
-              <option value="B">Stream B</option>
-              <option value="Science">Science</option>
-              <option value="Arts">Arts</option>
-            </select>
+            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Academic Term
+            </label>
+            <div className="relative">
+              <select
+                aria-label="Select Academic Term"
+                value={selectedTerm}
+                onChange={(e) => setSelectedTerm(e.target.value)}
+                className="w-full min-h-[48px] appearance-none rounded-xl px-3.5 py-3 pr-10 text-xs font-bold bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer transition-all"
+              >
+                {terms.length > 0 ? (
+                  terms.map((t) => (
+                    <option key={t.id} value={t.termName} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                      {t.termName} {t.isCurrent ? '(Active)' : ''}
+                    </option>
+                  ))
+                ) : (
+                  <>
+                    <option value="Term 1" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Term 1 (Active)</option>
+                    <option value="Term 2" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Term 2</option>
+                    <option value="Term 3" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Term 3</option>
+                  </>
+                )}
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-600 dark:text-slate-300">
+                <ChevronDown className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+              </div>
+            </div>
+          </div>
+
+          {/* School Class Selector */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Select Class
+            </label>
+            <div className="relative">
+              <select
+                aria-label="Select Class"
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="w-full min-h-[48px] appearance-none rounded-xl px-3.5 py-3 pr-10 text-xs font-bold bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer transition-all"
+              >
+                {classes.map((c) => (
+                  <option key={c.id} value={c.className} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                    {c.className} ({c.classCode})
+                  </option>
+                ))}
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-600 dark:text-slate-300">
+                <ChevronDown className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+              </div>
+            </div>
+          </div>
+
+          {/* Stream Selector */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+              Select Stream
+            </label>
+            <div className="relative">
+              <select
+                aria-label="Select Stream"
+                value={selectedStream}
+                onChange={(e) => setSelectedStream(e.target.value)}
+                className="w-full min-h-[48px] appearance-none rounded-xl px-3.5 py-3 pr-10 text-xs font-bold bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer transition-all"
+              >
+                <option value="North" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">North Stream</option>
+                <option value="South" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">South Stream</option>
+                <option value="East" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">East Stream</option>
+                <option value="West" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">West Stream</option>
+                <option value="A" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Stream A</option>
+                <option value="B" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Stream B</option>
+                <option value="Science" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Science</option>
+                <option value="Arts" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Arts</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-600 dark:text-slate-300">
+                <ChevronDown className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+              </div>
+            </div>
           </div>
         </div>
 
-        {conflicts.length > 0 ? (
-          <div className="px-3 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-semibold flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
-            <span>{conflicts.length} Conflict(s) Detected in Schedule</span>
-          </div>
-        ) : (
-          <div className="px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>Schedule Conflict Free</span>
-          </div>
-        )}
+        {/* Schedule Conflict Status Banner */}
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between flex-wrap gap-2">
+          {conflicts.length > 0 ? (
+            <div className="px-3.5 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{conflicts.length} Conflict(s) Detected in Schedule Matrix</span>
+            </div>
+          ) : (
+            <div className="px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>Schedule Matrix Conflict-Free ({selectedClass} - {selectedStream} Stream, {selectedYear} {selectedTerm})</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Timetable Grid Matrix */}
@@ -386,91 +481,119 @@ export const TimetableEnginePage: React.FC = () => {
             </div>
 
             <form onSubmit={handleSaveSlot} className="space-y-4 mt-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Day of Week</label>
-                  <select
-                    value={dayOfWeek}
-                    onChange={(e) => setDayOfWeek(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
-                  >
-                    {days.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase text-[10px] tracking-wider">
+                    Day of Week
+                  </label>
+                  <div className="relative">
+                    <select
+                      aria-label="Day of Week"
+                      value={dayOfWeek}
+                      onChange={(e) => setDayOfWeek(e.target.value as any)}
+                      className="w-full min-h-[48px] appearance-none rounded-xl px-3.5 py-3 pr-10 text-xs font-semibold bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer transition-all"
+                    >
+                      {days.map((d) => (
+                        <option key={d} value={d} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-600 dark:text-slate-300">
+                      <ChevronDown className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+                    </div>
+                  </div>
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Period Number</label>
-                  <select
-                    value={periodNumber}
-                    onChange={(e) => setPeriodNumber(Number(e.target.value))}
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
-                  >
-                    {periods.map((p) => (
-                      <option key={p.num} value={p.num}>
-                        Period {p.num} ({p.time})
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase text-[10px] tracking-wider">
+                    Period Number & Time
+                  </label>
+                  <div className="relative">
+                    <select
+                      aria-label="Period Number"
+                      value={periodNumber}
+                      onChange={(e) => setPeriodNumber(Number(e.target.value))}
+                      className="w-full min-h-[48px] appearance-none rounded-xl px-3.5 py-3 pr-10 text-xs font-semibold bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer transition-all"
+                    >
+                      {periods.map((p) => (
+                        <option key={p.num} value={p.num} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                          Period {p.num} ({p.time})
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-600 dark:text-slate-300">
+                      <ChevronDown className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Select Subject</label>
-                <select
-                  value={selectedSubjectId}
-                  onChange={(e) => setSelectedSubjectId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
-                >
-                  {subjects.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.subjectName} ({s.subjectCode})
-                    </option>
-                  ))}
-                </select>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase text-[10px] tracking-wider">
+                  Select Subject
+                </label>
+                <div className="relative">
+                  <select
+                    aria-label="Select Subject"
+                    value={selectedSubjectId}
+                    onChange={(e) => setSelectedSubjectId(e.target.value)}
+                    className="w-full min-h-[48px] appearance-none rounded-xl px-3.5 py-3 pr-10 text-xs font-semibold bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer transition-all"
+                  >
+                    {subjects.map((s) => (
+                      <option key={s.id} value={s.id} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                        {s.subjectName} ({s.subjectCode}) — {s.department}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-600 dark:text-slate-300">
+                    <ChevronDown className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+                  </div>
+                </div>
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Assigned Teacher</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase text-[10px] tracking-wider">
+                  Assigned Teacher
+                </label>
                 <input
                   type="text"
                   required
                   value={teacherName}
                   onChange={(e) => setTeacherName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                  className="w-full min-h-[48px] rounded-xl px-3.5 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                   placeholder="e.g. Mr. Okello Patrick"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Classroom / Lab Room</label>
+                <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase text-[10px] tracking-wider">
+                  Classroom / Lab Room
+                </label>
                 <input
                   type="text"
                   required
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white"
+                  className="w-full min-h-[48px] rounded-xl px-3.5 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all"
                   placeholder="e.g. Room 101, Science Lab 2"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
                 <button
                   type="button"
                   onClick={() => {
                     setIsModalOpen(false);
                     setEditingSlotId(null);
                   }}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold"
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-md shadow-purple-600/30 flex items-center gap-2"
+                  className="min-h-[44px] px-5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold shadow-md shadow-purple-600/30 flex items-center gap-2 transition-all cursor-pointer"
                 >
                   {editingSlotId ? 'Update Slot' : 'Save Slot'}
                 </button>

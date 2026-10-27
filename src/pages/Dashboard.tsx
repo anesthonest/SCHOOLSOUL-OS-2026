@@ -24,6 +24,7 @@ import type { User, AuditLog } from '../types';
 import { Badge } from '../components/common/Badge';
 import { Skeleton } from '../components/ui/LoadingSpinner';
 import { EmptyState } from '../components/ui/EmptyState';
+import { SchoolQRInviteCard } from '../components/dashboard/SchoolQRInviteCard';
 
 interface DashboardProps {
   onNavigate: (view: string) => void;
@@ -594,8 +595,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Right 1 Col: School Profile Card & System Health Panel */}
+        {/* Right 1 Col: School QR & Invitation Card, Profile & Health Panel */}
         <div className="space-y-6">
+          {/* Dedicated Institutional QR & Invite Gateway Panel */}
+          <SchoolQRInviteCard />
+
           {/* School Identity Card */}
           <div className="p-5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">

@@ -46,6 +46,7 @@ import { ExploreSandboxModal } from '../components/landing/ExploreSandboxModal';
 import { VideoWalkthroughModal } from '../components/landing/VideoWalkthroughModal';
 import { SystemStatusModal } from '../components/landing/SystemStatusModal';
 import { LanDeploymentModal } from '../components/landing/LanDeploymentModal';
+import { CaseStudiesAndPilotSection } from '../components/landing/CaseStudiesAndPilotSection';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import {
@@ -80,8 +81,10 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
   const [demoForm, setDemoForm] = useState({
     schoolName: '',
     contactPerson: '',
+    role: 'Headteacher / Principal',
     email: '',
     phone: '+256 ',
+    preferredContact: 'WhatsApp',
     country: 'Uganda',
     estimatedStudents: '500-1000',
     notes: '',
@@ -810,7 +813,13 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
         </div>
       </section>
 
-      {/* 7. About VINEXSAH TECHNOLOGIES */}
+      {/* 7. Case Studies & Pilot Cohort Architecture */}
+      <CaseStudiesAndPilotSection
+        onRequestPilot={() => setIsDemoModalOpen(true)}
+        onExploreFeatures={() => setIsExploreModalOpen(true)}
+      />
+
+      {/* 8. About VINEXSAH TECHNOLOGIES */}
       <section id="about-vinexsah" className="py-16 bg-slate-100/60 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
           <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto shadow-md">
@@ -959,6 +968,33 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
                 required
                 value={demoForm.phone}
                 onChange={(e) => setDemoForm({ ...demoForm, phone: e.target.value })}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Select
+                label="Your Role / Designation"
+                value={demoForm.role}
+                onChange={(e) => setDemoForm({ ...demoForm, role: e.target.value })}
+                options={[
+                  { value: 'Headteacher / Principal', label: 'Headteacher / Principal' },
+                  { value: 'Director / School Owner', label: 'Director / School Owner' },
+                  { value: 'Bursar / Finance Officer', label: 'Bursar / Finance Officer' },
+                  { value: 'Academic Registrar / Dean', label: 'Academic Registrar / Dean' },
+                  { value: 'ICT Lead / Systems Admin', label: 'ICT Lead / Systems Admin' },
+                  { value: 'Board / Trustee Member', label: 'Board / Trustee Member' },
+                ]}
+              />
+
+              <Select
+                label="Preferred Contact Method"
+                value={demoForm.preferredContact}
+                onChange={(e) => setDemoForm({ ...demoForm, preferredContact: e.target.value })}
+                options={[
+                  { value: 'WhatsApp', label: 'WhatsApp Message' },
+                  { value: 'Phone Call', label: 'Phone Call' },
+                  { value: 'Email', label: 'Official Email' },
+                ]}
               />
             </div>
 

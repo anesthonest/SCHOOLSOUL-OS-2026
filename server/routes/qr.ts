@@ -2,7 +2,7 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import QRCode from 'qrcode';
 import { readServerDB, writeServerDB } from '../db/store';
-import { requireAuth } from '../middleware/authMiddleware';
+import { requireAuth, requireRoles } from '../middleware/authMiddleware';
 
 export const qrRouter = Router();
 
@@ -448,6 +448,59 @@ qrRouter.post('/verify', async (req, res) => {
       });
     }
 
+    // -------------------------------------------------------------
+    // WORKFLOW E: SECURE SCHOOL INVITATION / JOIN QR
+    // -------------------------------------------------------------
+    if (parsedPayload?.type === 'SCHOOL_INVITATION' || rawInput.startsWith('INV-')) {
+      const inviteToken = parsedPayload?.token || rawInput;
+      const invitations = db.schoolInvitations || [];
+      const invitation = invitations.find(
+        (inv: any) => inv.token.toUpperCase() === String(inviteToken).trim().toUpperCase()
+      );
+
+      if (!invitation) {
+        return res.status(404).json({
+          success: false,
+          verified: false,
+          error: 'This School Invitation QR code is unrecognized, expired, or invalid.',
+        });
+      }
+
+      if (invitation.status === 'REVOKED') {
+        return res.status(400).json({
+          success: false,
+          verified: false,
+          error: 'This invitation QR code has been revoked by the school administrator.',
+        });
+      }
+
+      const now = Date.now();
+      const expiresAtMs = new Date(invitation.expiresAt).getTime();
+      if (now > expiresAtMs) {
+        invitation.status = 'EXPIRED';
+        writeServerDB(db);
+        return res.status(400).json({
+          success: false,
+          verified: false,
+          error: 'This invitation QR code has expired (validity window ended). Please request a fresh code from your administrator.',
+        });
+      }
+
+      return res.json({
+        success: true,
+        verified: true,
+        type: 'SCHOOL_INVITATION',
+        invitation: {
+          token: invitation.token,
+          schoolId: invitation.schoolId,
+          schoolName: invitation.schoolName,
+          expiresAt: invitation.expiresAt,
+          allowedRoles: invitation.allowedRoles || ['Teacher', 'Student', 'Parent', 'Staff'],
+        },
+        message: `Verified Institutional Invitation for "${invitation.schoolName}". Submit your details for administrative approval.`,
+      });
+    }
+
     // Default: Not found
     return res.status(404).json({
       success: false,
@@ -458,3 +511,370 @@ qrRouter.post('/verify', async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
+/**
+ * GET /api/qr/active-invitation
+ * Retrieves current active invitation QR for school, its expiration timer, and pending join requests count.
+ */
+qrRouter.get('/active-invitation', requireAuth, async (req: any, res) => {
+  try {
+    const db = readServerDB();
+    const user = req.user;
+    const activeSchoolId = user?.schoolId || db.schoolProfile?.id || 'school-ug-001';
+    const activeSchoolName = db.schoolProfile?.schoolName || 'Victoria Horizon International School';
+
+    if (!db.schoolInvitations) db.schoolInvitations = [];
+
+    const now = Date.now();
+    // Find active non-expired token
+    let activeInvitation = db.schoolInvitations.find(
+      (inv: any) =>
+        inv.schoolId === activeSchoolId &&
+        inv.status === 'ACTIVE' &&
+        new Date(inv.expiresAt).getTime() > now
+    );
+
+    // If none exists, auto-provision initial 15-minute token for administrator convenience
+    if (!activeInvitation && (user?.role === 'Administrator' || user?.role === 'Headteacher' || user?.role === 'School Owner' || user?.role === 'Platform Administrator')) {
+      const token = `INV-${crypto.randomBytes(3).toString('hex').toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+      const expiresAt = new Date(now + 15 * 60 * 1000).toISOString();
+      const createdAt = new Date().toISOString();
+
+      activeInvitation = {
+        id: `inv-${Date.now()}`,
+        schoolId: activeSchoolId,
+        schoolName: activeSchoolName,
+        token,
+        status: 'ACTIVE',
+        createdBy: user?.fullName || user?.username || 'School Administrator',
+        allowedRoles: ['Teacher', 'Student', 'Parent', 'Staff'],
+        expiresInMinutes: 15,
+        expiresAt,
+        createdAt,
+        usedCount: 0,
+      };
+
+      db.schoolInvitations.unshift(activeInvitation);
+      writeServerDB(db);
+    }
+
+    // Render optical QR machine code
+    let qrDataUrl = '';
+    let inviteUrl = '';
+    if (activeInvitation) {
+      const invitePayload = JSON.stringify({
+        type: 'SCHOOL_INVITATION',
+        token: activeInvitation.token,
+        schoolId: activeInvitation.schoolId,
+        schoolName: activeInvitation.schoolName,
+        expiresAt: activeInvitation.expiresAt,
+      });
+
+      qrDataUrl = await QRCode.toDataURL(invitePayload, {
+        errorCorrectionLevel: 'H',
+        margin: 2,
+        width: 380,
+        color: {
+          dark: '#1e1b4b',
+          light: '#ffffff',
+        },
+      });
+
+      inviteUrl = `https://schoolsoul.org/join?token=${encodeURIComponent(activeInvitation.token)}&school=${encodeURIComponent(activeSchoolId)}`;
+    }
+
+    // Count pending join requests for this school
+    const requests = db.accountRequests || [];
+    const pendingCount = requests.filter(
+      (r: any) => (!r.schoolId || r.schoolId === activeSchoolId) && r.status === 'PENDING_APPROVAL'
+    ).length;
+
+    res.json({
+      success: true,
+      invitation: activeInvitation || null,
+      qrDataUrl,
+      inviteUrl,
+      pendingCount,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/qr/generate-invitation
+ * Generates or regenerates a short-lived (default 15 min), revocable invitation token.
+ */
+qrRouter.post(
+  '/generate-invitation',
+  requireAuth,
+  requireRoles('Administrator', 'School Owner', 'Head Teacher', 'Headteacher', 'Platform Administrator'),
+  async (req: any, res) => {
+    try {
+      const user = req.user;
+      const db = readServerDB();
+      const activeSchoolId = user?.schoolId || db.schoolProfile?.id || 'school-ug-001';
+      const activeSchoolName = db.schoolProfile?.schoolName || 'Victoria Horizon International School';
+
+      const expiresInMinutes = Number(req.body.expiresInMinutes) || 15;
+      const allowedRoles = req.body.allowedRoles || ['Teacher', 'Student', 'Parent', 'Staff'];
+
+      if (!db.schoolInvitations) db.schoolInvitations = [];
+
+      // Revoke any previous active tokens for this school
+      db.schoolInvitations.forEach((inv: any) => {
+        if (inv.schoolId === activeSchoolId && inv.status === 'ACTIVE') {
+          inv.status = 'REVOKED';
+          inv.revokedAt = new Date().toISOString();
+        }
+      });
+
+      const token = `INV-${crypto.randomBytes(3).toString('hex').toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+      const now = Date.now();
+      const expiresAt = new Date(now + expiresInMinutes * 60 * 1000).toISOString();
+      const createdAt = new Date().toISOString();
+
+      const newInvitation = {
+        id: `inv-${Date.now()}`,
+        schoolId: activeSchoolId,
+        schoolName: activeSchoolName,
+        token,
+        status: 'ACTIVE',
+        createdBy: user?.fullName || user?.username || 'School Administrator',
+        allowedRoles,
+        expiresInMinutes,
+        expiresAt,
+        createdAt,
+        usedCount: 0,
+      };
+
+      db.schoolInvitations.unshift(newInvitation);
+
+      // Audit log
+      if (!db.auditLogs) db.auditLogs = [];
+      db.auditLogs.unshift({
+        id: `audit-${Date.now()}`,
+        timestamp: createdAt,
+        userId: user?.id || 'admin',
+        username: user?.username || 'admin',
+        userRole: user?.role || 'Headteacher',
+        action: 'QR_INVITATION_GENERATED' as any,
+        details: `Generated secure invitation QR (${token}) valid for ${expiresInMinutes} minutes for school "${activeSchoolName}".`,
+      });
+
+      writeServerDB(db);
+
+      const invitePayload = JSON.stringify({
+        type: 'SCHOOL_INVITATION',
+        token: newInvitation.token,
+        schoolId: newInvitation.schoolId,
+        schoolName: newInvitation.schoolName,
+        expiresAt: newInvitation.expiresAt,
+      });
+
+      const qrDataUrl = await QRCode.toDataURL(invitePayload, {
+        errorCorrectionLevel: 'H',
+        margin: 2,
+        width: 380,
+        color: {
+          dark: '#1e1b4b',
+          light: '#ffffff',
+        },
+      });
+
+      const inviteUrl = `https://schoolsoul.org/join?token=${encodeURIComponent(newInvitation.token)}&school=${encodeURIComponent(activeSchoolId)}`;
+
+      res.status(201).json({
+        success: true,
+        message: `Fresh invitation token generated. Valid for ${expiresInMinutes} minutes.`,
+        invitation: newInvitation,
+        qrDataUrl,
+        inviteUrl,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+/**
+ * POST /api/qr/revoke-invitation
+ * Explicitly revokes active invitation token to prevent any new join attempts.
+ */
+qrRouter.post(
+  '/revoke-invitation',
+  requireAuth,
+  requireRoles('Administrator', 'School Owner', 'Head Teacher', 'Headteacher', 'Platform Administrator'),
+  async (req: any, res) => {
+    try {
+      const user = req.user;
+      const db = readServerDB();
+      const activeSchoolId = user?.schoolId || db.schoolProfile?.id || 'school-ug-001';
+
+      if (!db.schoolInvitations) db.schoolInvitations = [];
+      let revokedCount = 0;
+
+      db.schoolInvitations.forEach((inv: any) => {
+        if (inv.schoolId === activeSchoolId && inv.status === 'ACTIVE') {
+          inv.status = 'REVOKED';
+          inv.revokedAt = new Date().toISOString();
+          revokedCount++;
+        }
+      });
+
+      if (!db.auditLogs) db.auditLogs = [];
+      db.auditLogs.unshift({
+        id: `audit-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        userId: user?.id || 'admin',
+        username: user?.username || 'admin',
+        userRole: user?.role || 'Headteacher',
+        action: 'QR_INVITATION_REVOKED' as any,
+        details: `Revoked active invitation QR tokens for school ${activeSchoolId}.`,
+      });
+
+      writeServerDB(db);
+      res.json({
+        success: true,
+        message: `Revoked ${revokedCount} active invitation QR token(s).`,
+      });
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+);
+
+/**
+ * POST /api/qr/validate-invitation
+ * Validates token string (manual code input or scanned URL param). Rate limited.
+ */
+qrRouter.post('/validate-invitation', async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token || typeof token !== 'string' || !token.trim()) {
+      return res.status(400).json({ success: false, error: 'Invitation token is required.' });
+    }
+
+    const clientIp = req.ip || req.socket.remoteAddress || '127.0.0.1';
+    const rateCheck = checkRateLimit(`invite_val_${clientIp}`, 60, 60000);
+    if (!rateCheck.allowed) {
+      return res.status(429).json({ success: false, error: 'Rate limit exceeded. Please wait 1 minute.' });
+    }
+
+    const db = readServerDB();
+    const invitations = db.schoolInvitations || [];
+    const inv = invitations.find((i: any) => i.token.toUpperCase() === token.trim().toUpperCase());
+
+    if (!inv) {
+      return res.status(404).json({ success: false, error: 'Invitation code not found or invalid.' });
+    }
+
+    if (inv.status === 'REVOKED') {
+      return res.status(400).json({ success: false, error: 'This invitation code has been revoked.' });
+    }
+
+    if (Date.now() > new Date(inv.expiresAt).getTime()) {
+      inv.status = 'EXPIRED';
+      writeServerDB(db);
+      return res.status(400).json({ success: false, error: 'This invitation code has expired.' });
+    }
+
+    res.json({
+      success: true,
+      valid: true,
+      school: {
+        id: inv.schoolId,
+        schoolName: inv.schoolName,
+        country: db.schoolProfile?.country || 'Uganda',
+        curriculum: db.schoolProfile?.curriculumId || 'Ugandan CBC',
+      },
+      allowedRoles: inv.allowedRoles || ['Teacher', 'Student', 'Parent', 'Staff'],
+      expiresAt: inv.expiresAt,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/qr/submit-join-request
+ * Submits a new join request via invitation QR into the school approval queue.
+ */
+qrRouter.post('/submit-join-request', async (req, res) => {
+  try {
+    const {
+      token,
+      fullName,
+      email,
+      phone,
+      requestedRole,
+      employeeOrStudentNumber,
+      notes,
+    } = req.body;
+
+    if (!token || !fullName || !requestedRole) {
+      return res.status(400).json({ success: false, error: 'Token, full name, and requested role are required.' });
+    }
+
+    const db = readServerDB();
+    const invitations = db.schoolInvitations || [];
+    const inv = invitations.find((i: any) => i.token.toUpperCase() === String(token).trim().toUpperCase());
+
+    if (!inv || inv.status !== 'ACTIVE' || Date.now() > new Date(inv.expiresAt).getTime()) {
+      return res.status(400).json({ success: false, error: 'Invalid or expired invitation token.' });
+    }
+
+    if (!db.accountRequests) db.accountRequests = [];
+
+    const now = new Date().toISOString();
+    const requestId = `req-qr-${Date.now()}`;
+    const cleanUsername = fullName.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(10 + Math.random() * 90);
+
+    const joinRequest = {
+      id: requestId,
+      schoolId: inv.schoolId,
+      schoolName: inv.schoolName,
+      userId: `usr-pending-${Date.now()}`,
+      fullName: String(fullName).trim(),
+      username: cleanUsername,
+      email: email ? String(email).trim() : '',
+      phone: phone ? String(phone).trim() : '',
+      requestedRole,
+      status: 'PENDING_APPROVAL',
+      requestOrigin: 'QR_INVITATION',
+      invitationToken: inv.token,
+      employeeNumber: employeeOrStudentNumber || '',
+      notes: notes || 'Submitted via Verified QR Invitation',
+      requestedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    db.accountRequests.unshift(joinRequest);
+    inv.usedCount = (inv.usedCount || 0) + 1;
+
+    // Audit log
+    if (!db.auditLogs) db.auditLogs = [];
+    db.auditLogs.unshift({
+      id: `audit-${Date.now()}`,
+      timestamp: now,
+      userId: joinRequest.userId,
+      username: joinRequest.username,
+      userRole: requestedRole,
+      action: 'JOIN_REQUEST_SUBMITTED' as any,
+      details: `Submitted school join request for ${joinRequest.fullName} as ${requestedRole} via QR invitation (${inv.token}).`,
+    });
+
+    writeServerDB(db);
+
+    res.status(201).json({
+      success: true,
+      message: `Join request submitted successfully for ${inv.schoolName}. Please wait for Headteacher/Administrator approval.`,
+      requestId,
+      request: joinRequest,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+

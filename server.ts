@@ -31,6 +31,7 @@ import { marketRouter } from './server/routes/market';
 import { docsRouter } from './server/routes/docs';
 import { qrRouter } from './server/routes/qr';
 import { feedbackRouter } from './server/routes/feedback';
+import { academicsRouter } from './server/routes/academics';
 import { setupLiveLearningWebSocket } from './server/services/liveLearningSocket';
 
 async function startServer() {
@@ -87,6 +88,7 @@ async function startServer() {
   app.use('/api/docs', docsRouter);
   app.use('/api/qr', qrRouter);
   app.use('/api/feedback', feedbackRouter);
+  app.use('/api/academics', academicsRouter);
   app.use('/api', liveLearningRouter);
 
   // Serve PWA manifest and static assets

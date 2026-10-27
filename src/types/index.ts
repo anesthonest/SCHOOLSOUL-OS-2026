@@ -446,7 +446,9 @@ export interface SyncQueueItem {
     | 'budget'
     | 'financial_transaction'
     | 'journal_entry'
-    | 'payment_reminder';
+    | 'payment_reminder'
+    | 'subject'
+    | 'timetable_slot';
   action: 'CREATE' | 'UPDATE' | 'DELETE' | 'INSERT';
   payload: any;
   timestamp?: string;
@@ -1255,14 +1257,20 @@ export interface AcademicClub {
 
 export interface Subject {
   id: string;
+  schoolId?: string;
   subjectCode: string; // e.g. "MTH 101", "ENG 101", "BIO 201"
   subjectName: string; // e.g. "Mathematics", "English Language", "Biology"
   department: string;
   classification: 'Core' | 'Elective' | 'Vocational' | 'Practical / Lab';
   curriculumType: CurriculumType;
+  educationLevel?: 'Primary' | 'Lower Secondary' | 'Upper Secondary' | 'TVET' | 'All Levels';
+  category?: string;
+  description?: string;
   classIds: string[]; // Classes taking this subject
   teacherIds: string[]; // Assigned teachers
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface TimetableSlot {

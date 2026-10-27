@@ -5,6 +5,7 @@ import { OfflineBanner } from '../common/OfflineBanner';
 import { UniversalBreadcrumbHeader } from './UniversalBreadcrumbHeader';
 import { UnsavedChangesModal } from '../common/UnsavedChangesModal';
 import { PWAUpdateNotification } from '../common/PWAUpdateNotification';
+import { MobileBottomNav } from './MobileBottomNav';
 import { useNavigation } from '../../context/NavigationContext';
 
 interface AppLayoutProps {
@@ -50,7 +51,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activeView, onNa
         <OfflineBanner />
 
         {/* Page Content View */}
-        <main id="app-main-content" className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
+        <main id="app-main-content" className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto pb-20 lg:pb-8">
           {/* Universal Back Navigation & Breadcrumbs Header */}
           <UniversalBreadcrumbHeader />
           
@@ -58,7 +59,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activeView, onNa
         </main>
 
         {/* Global Footer Attribution */}
-        <footer id="schoolsoul-app-footer" className="py-4 px-6 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200/80 dark:border-slate-800/80 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xs mt-auto">
+        <footer id="schoolsoul-app-footer" className="py-4 px-6 text-center text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200/80 dark:border-slate-800/80 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xs mt-auto mb-16 lg:mb-0">
           <p className="font-medium text-slate-600 dark:text-slate-300">© 2026 SchoolSoul OS. All Rights Reserved.</p>
           <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
             Developed under the VINEXSAH TECHNOLOGIES project.
@@ -68,6 +69,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children, activeView, onNa
 
       {/* Global Unsaved Changes Warning Modal */}
       <UnsavedChangesModal />
+
+      {/* Mobile Bottom Navigation Bar */}
+      <MobileBottomNav
+        activeView={activeView}
+        onNavigate={handleNavigate}
+        onOpenMenu={() => setMobileSidebarOpen(true)}
+      />
 
       {/* PWA Background Update Prompt */}
       <PWAUpdateNotification />

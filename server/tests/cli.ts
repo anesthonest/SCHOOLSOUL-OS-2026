@@ -10,6 +10,7 @@ import { runV6ProductionCandidateSuite } from './testV6ProductionCandidateSuite'
 import { runLandingFirstScreenAudit } from './testLandingPageFirstScreen';
 import { runInteractiveFlowTests } from './testUserFlowTransitions';
 import { runPWAMarketReadinessSuite } from './testPWAMarketReadinessSuite';
+import { runSubjectsAndQRInvitationSuite } from './testSubjectsAndQRInvitationSuite';
 
 async function main() {
   try {
@@ -98,6 +99,8 @@ async function main() {
       console.log(`${icon} [${res.category} / ${res.testId}] ${res.name}: ${res.details}`);
     }
 
+    const subjectQRResults = await runSubjectsAndQRInvitationSuite();
+
     const failures = results
       .filter(r => r.status === 'FAIL')
       .concat(pesapalResults.filter(r => r.status === 'FAIL') as any)
@@ -110,7 +113,8 @@ async function main() {
       .concat(v6Results.filter(r => r.status === 'FAIL') as any)
       .concat(landingResults.filter(r => r.status === 'FAIL') as any)
       .concat(flowResults.filter(r => r.status === 'FAIL') as any)
-      .concat(pwaResults.filter(r => r.status === 'FAIL') as any);
+      .concat(pwaResults.filter(r => r.status === 'FAIL') as any)
+      .concat(subjectQRResults.filter(r => r.status === 'FAIL') as any);
 
     if (failures.length > 0) {
       console.error(`\n❌ Suite failed with ${failures.length} test failures.`);

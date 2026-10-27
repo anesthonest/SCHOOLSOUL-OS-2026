@@ -19,7 +19,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import jsQR from 'jsqr';
-import { verifyUniversalQR, type QRVerificationResult } from '../../services/qrApi';
+import { verifyUniversalQR, submitQRJoinRequest, type QRVerificationResult } from '../../services/qrApi';
 
 interface UniversalQRScannerModalProps {
   isOpen: boolean;
@@ -45,6 +45,17 @@ export const UniversalQRScannerModal: React.FC<UniversalQRScannerModalProps> = (
   const [scanResult, setScanResult] = useState<QRVerificationResult | null>(null);
   const [hasTorch, setHasTorch] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+
+  // QR Join Request Flow State
+  const [joinFullName, setJoinFullName] = useState('');
+  const [joinPhone, setJoinPhone] = useState('');
+  const [joinEmail, setJoinEmail] = useState('');
+  const [joinRole, setJoinRole] = useState('Teacher');
+  const [joinIdNumber, setJoinIdNumber] = useState('');
+  const [joinNotes, setJoinNotes] = useState('');
+  const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
+  const [joinSuccessMessage, setJoinSuccessMessage] = useState<string | null>(null);
+  const [joinErrorMessage, setJoinErrorMessage] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -96,6 +107,32 @@ export const UniversalQRScannerModal: React.FC<UniversalQRScannerModalProps> = (
       setIsVerifying(false);
     }
   }, [workflowContext, playScanBeep]);
+
+  const handleJoinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scanResult?.invitation?.token) return;
+    setIsSubmittingJoin(true);
+    setJoinErrorMessage(null);
+    setJoinSuccessMessage(null);
+
+    try {
+      const res = await submitQRJoinRequest({
+        token: scanResult.invitation.token,
+        fullName: joinFullName,
+        phone: joinPhone,
+        email: joinEmail,
+        requestedRole: joinRole,
+        employeeOrStudentNumber: joinIdNumber,
+        notes: joinNotes,
+      });
+
+      setJoinSuccessMessage(res.message || 'Join request submitted! Awaiting administrator approval.');
+    } catch (err: any) {
+      setJoinErrorMessage(err.message || 'Failed to submit join request.');
+    } finally {
+      setIsSubmittingJoin(false);
+    }
+  };
 
   // Stop active video stream
   const stopCamera = useCallback(() => {
@@ -645,6 +682,134 @@ export const UniversalQRScannerModal: React.FC<UniversalQRScannerModalProps> = (
                       <ShoppingBag className="w-3.5 h-3.5" />
                       Confirm Order Pickup
                     </button>
+                  )}
+                </div>
+              )}
+
+              {/* SCHOOL INVITATION & APPROVAL QUEUE JOIN FLOW */}
+              {scanResult.invitation && (
+                <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800 space-y-3 text-xs">
+                  <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        <span className="font-bold text-slate-900 dark:text-white text-sm">
+                          {scanResult.invitation.schoolName}
+                        </span>
+                      </div>
+                      <span className="px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 font-bold text-[10px]">
+                        TOKEN VERIFIED
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      You are applying to join <strong>{scanResult.invitation.schoolName}</strong>. Submit your details below. Your request will enter the administrative approval queue.
+                    </p>
+                  </div>
+
+                  {joinSuccessMessage ? (
+                    <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-center space-y-2 text-emerald-800 dark:text-emerald-200">
+                      <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
+                      <p className="font-bold text-xs">{joinSuccessMessage}</p>
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
+                        The school Headteacher has received your application. Upon approval, you will be notified and access will be activated.
+                      </p>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleJoinSubmit} className="space-y-3 p-3.5 bg-slate-50 dark:bg-slate-950/80 rounded-xl border border-slate-200 dark:border-slate-800">
+                      <h5 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <User className="w-4 h-4 text-purple-600" />
+                        Complete Your Join Request
+                      </h5>
+
+                      {joinErrorMessage && (
+                        <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-700 dark:text-rose-300 text-[11px]">
+                          {joinErrorMessage}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                            Your Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="e.g. Sarah Namugga"
+                            value={joinFullName}
+                            onChange={(e) => setJoinFullName(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                            Phone Number *
+                          </label>
+                          <input
+                            type="tel"
+                            required
+                            placeholder="+256 700 000000"
+                            value={joinPhone}
+                            onChange={(e) => setJoinPhone(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                            Email (Optional)
+                          </label>
+                          <input
+                            type="email"
+                            placeholder="user@school.org"
+                            value={joinEmail}
+                            onChange={(e) => setJoinEmail(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                            Requested Role *
+                          </label>
+                          <select
+                            value={joinRole}
+                            onChange={(e) => setJoinRole(e.target.value)}
+                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-semibold"
+                          >
+                            <option value="Teacher">Teacher / Educator</option>
+                            <option value="Student">Student</option>
+                            <option value="Parent">Parent / Guardian</option>
+                            <option value="Staff">School Staff</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                          Staff ID / Student LIN (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. EMP-2026 or LIN-1042"
+                          value={joinIdNumber}
+                          onChange={(e) => setJoinIdNumber(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isSubmittingJoin}
+                        className="w-full min-h-[44px] py-2 px-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>{isSubmittingJoin ? 'Submitting Application...' : 'Submit Join Request for Approval'}</span>
+                      </button>
+                    </form>
                   )}
                 </div>
               )}

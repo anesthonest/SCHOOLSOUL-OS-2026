@@ -1,4 +1,5 @@
 import { db } from '../db/indexedDB';
+import { API_BASE, getAuthHeaders } from './api';
 import type {
   AcademicYearConfig,
   AcademicTermConfig,
@@ -338,22 +339,162 @@ export async function getAcademicClubs(): Promise<AcademicClub[]> {
 
 export async function getSubjects(): Promise<Subject[]> {
   await initializeAcademicsData();
-  return db.subjects.toArray();
+  const localList = await db.subjects.toArray();
+
+  // If online, perform background sync with server
+  if (navigator.onLine) {
+    try {
+      const res = await fetch(`${API_BASE}/academics/subjects`, {
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.subjects && Array.isArray(data.subjects) && data.subjects.length > 0) {
+          await db.subjects.bulkPut(data.subjects);
+          return await db.subjects.toArray();
+        }
+      }
+    } catch {
+      // Offline fallback: rely on local IndexedDB
+    }
+  }
+
+  return localList;
 }
 
 export async function addSubject(subj: Omit<Subject, 'id'>): Promise<Subject> {
-  const id = `subj-${Date.now()}`;
-  const newSubj: Subject = { ...subj, id };
+  const existing = await db.subjects.toArray();
+  const normalizedCode = subj.subjectCode.trim().toUpperCase();
+  const duplicate = existing.find(
+    (s) => s.subjectCode.toUpperCase() === normalizedCode
+  );
+
+  if (duplicate) {
+    throw new Error(`Subject code "${normalizedCode}" already exists for "${duplicate.subjectName}". Codes must be unique.`);
+  }
+
+  const id = `subj-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const now = new Date().toISOString();
+  const newSubj: Subject = {
+    ...subj,
+    id,
+    subjectCode: normalizedCode,
+    subjectName: subj.subjectName.trim(),
+    department: subj.department.trim(),
+    isActive: subj.isActive ?? true,
+    createdAt: now,
+    updatedAt: now,
+  };
+
   await db.subjects.add(newSubj);
+
+  // Enqueue for background sync
+  try {
+    await db.syncQueue.add({
+      id: `sync-subj-${Date.now()}`,
+      entity: 'subject',
+      entityId: id,
+      action: 'CREATE',
+      payload: newSubj,
+      status: 'pending',
+      retryCount: 0,
+      timestamp: now,
+    });
+  } catch {
+    // Ignore queue failure
+  }
+
+  // Attempt direct server sync if connected
+  if (navigator.onLine) {
+    try {
+      await fetch(`${API_BASE}/academics/subjects`, {
+        method: 'POST',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newSubj),
+      });
+    } catch {
+      // Kept in syncQueue
+    }
+  }
+
   return newSubj;
 }
 
 export async function updateSubject(id: string, updates: Partial<Subject>): Promise<void> {
-  await db.subjects.update(id, updates);
+  const now = new Date().toISOString();
+  const payload = { ...updates, updatedAt: now };
+  await db.subjects.update(id, payload);
+
+  try {
+    await db.syncQueue.add({
+      id: `sync-subj-upd-${Date.now()}`,
+      entity: 'subject',
+      entityId: id,
+      action: 'UPDATE',
+      payload,
+      status: 'pending',
+      retryCount: 0,
+      timestamp: now,
+    });
+  } catch {
+    // Handled
+  }
+
+  if (navigator.onLine) {
+    try {
+      await fetch(`${API_BASE}/academics/subjects/${id}`, {
+        method: 'PUT',
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch {
+      // Handled
+    }
+  }
 }
 
 export async function deleteSubject(id: string): Promise<void> {
+  // Check if subject is allocated in timetable slots
+  const slots = await db.timetableSlots.where('subjectId').equals(id).count();
+  if (slots > 0) {
+    // Soft-deactivate to prevent timetable dangling references
+    await updateSubject(id, { isActive: false });
+    return;
+  }
+
   await db.subjects.delete(id);
+
+  try {
+    await db.syncQueue.add({
+      id: `sync-subj-del-${Date.now()}`,
+      entity: 'subject',
+      entityId: id,
+      action: 'DELETE',
+      payload: { id },
+      status: 'pending',
+      retryCount: 0,
+      timestamp: new Date().toISOString(),
+    });
+  } catch {
+    // Handled
+  }
+
+  if (navigator.onLine) {
+    try {
+      await fetch(`${API_BASE}/academics/subjects/${id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+    } catch {
+      // Handled
+    }
+  }
 }
 
 export async function updateSchoolClass(id: string, updates: Partial<SchoolClass>): Promise<void> {

@@ -44,6 +44,8 @@ export interface ServerDBData {
   academicTerms: any[];
   schoolClasses: any[];
   subjects: any[];
+  timetableSlots: any[];
+  schoolInvitations: any[];
   // Digital Community & Safeguarding collections
   communityGroups: any[];
   groupMemberships: any[];
@@ -163,6 +165,8 @@ const initialData: ServerDBData = {
   academicTerms: [],
   schoolClasses: [],
   subjects: [],
+  timetableSlots: [],
+  schoolInvitations: [],
   communityGroups: [],
   groupMemberships: [],
   groupMembershipRequests: [],
