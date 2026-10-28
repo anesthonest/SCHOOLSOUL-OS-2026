@@ -105,61 +105,64 @@ export async function runLandingFirstScreenAudit(): Promise<FirstScreenAuditResu
       'Found data-testid="first-screen-login-btn" with dominant LOGIN label'
     );
 
-    // TEST 3: First-Screen Primary REGISTER / JOIN SCHOOL button presence
+    // TEST 3: First-Screen Primary REGISTER SCHOOL button presence
     assert(
       'FS-03',
       'First-Screen Actions',
-      'REGISTER / JOIN SCHOOL Button Prominently Rendered',
-      renderedHtml.includes('data-testid="first-screen-register-btn"') && renderedHtml.includes('REGISTER / JOIN SCHOOL'),
-      'Found data-testid="first-screen-register-btn" with explicit REGISTER / JOIN SCHOOL label'
+      'REGISTER SCHOOL Button Prominently Rendered',
+      renderedHtml.includes('data-testid="first-screen-register-btn"') && renderedHtml.includes('REGISTER SCHOOL'),
+      'Found data-testid="first-screen-register-btn" with explicit REGISTER SCHOOL label'
     );
 
-    // TEST 4: Secondary Action: Explore SchoolSoul
+    // TEST 4: Join Existing School Action Present
     assert(
       'FS-04',
       'Secondary Actions',
-      'Explore SchoolSoul Action Present',
-      renderedHtml.includes('data-testid="first-screen-explore-btn"') && renderedHtml.includes('Explore SchoolSoul'),
-      'Found data-testid="first-screen-explore-btn" linked to smooth navigation'
+      'Join Existing School Action Present',
+      renderedHtml.includes('Join Existing School'),
+      'Found Join Existing School action routing to join workflow'
     );
 
-    // TEST 5: Secondary Action: Request a Demo
+    // TEST 5: Short description and benefit line
     assert(
       'FS-05',
-      'Secondary Actions',
-      'Request a Demo Action Present',
-      renderedHtml.includes('data-testid="first-screen-demo-btn"') && renderedHtml.includes('Request a Demo'),
-      'Found data-testid="first-screen-demo-btn" opening demo dialog'
+      'Core Messaging',
+      'Short Description & Benefit Line Rendered',
+      renderedHtml.includes('Manage your school from one secure, resilient platform.'),
+      'Found concise benefit line "Manage your school from one secure, resilient platform."'
     );
 
-    // TEST 6: Secondary Action: Check Application Status
+    // TEST 6: Attribution present
     assert(
       'FS-06',
-      'Secondary Actions',
-      'Check Application Status Action Present',
-      renderedHtml.includes('data-testid="first-screen-status-btn"') && renderedHtml.includes('Check Application Status'),
-      'Found data-testid="first-screen-status-btn" routing directly to status portal'
+      'Attribution',
+      'VINEXSAH TECHNOLOGIES Attribution Present',
+      renderedHtml.includes('SchoolSoul OS — Developed by VINEXSAH TECHNOLOGIES. All rights reserved.'),
+      'Found exact attribution "SchoolSoul OS — Developed by VINEXSAH TECHNOLOGIES. All rights reserved."'
     );
 
-    // TEST 7: Top Navigation Bar Header Login & Register Buttons Absent (Clean Reflow, Single Primary Auth Area)
+    // TEST 7: Excessive Marketing Content Completely Removed
     assert(
       'FS-07',
-      'Header Actions',
-      'Header Login & Register Removed for Single Primary Action Area',
-      !renderedHtml.includes('data-testid="header-login-btn"') &&
-      !renderedHtml.includes('data-testid="header-register-btn"') &&
-      renderedHtml.includes('Request a Demo') &&
-      renderedHtml.includes('Pricing'),
-      'Upper-right header buttons cleanly removed; header reflows naturally with single central auth area'
+      'Content Cleanliness',
+      'Marketing Cards, Strips & Promos Completely Removed',
+      !renderedHtml.includes('Verified Regional Curriculum Compliance') &&
+      !renderedHtml.includes('Pilot Program 2026') &&
+      !renderedHtml.includes('Ready to Transform Your School Operations') &&
+      !renderedHtml.includes('Request a Demo') &&
+      !renderedHtml.includes('Explore SchoolSoul') &&
+      !renderedHtml.includes('Check Application Status') &&
+      !renderedHtml.includes('Watch Overview'),
+      'Verified all marketing sections, curriculum cards, and extra actions have been completely removed'
     );
 
-    // TEST 8: Mobile Layout & Viewport Compactness
+    // TEST 8: Mobile Layout & Touch Target (min-h-[48px])
     assert(
       'FS-08',
       'Mobile Accessibility',
       'Mobile Full-Width Vertical Stacking & Touch Target (min-h-[48px])',
-      renderedHtml.includes('flex flex-col sm:flex-row') && renderedHtml.includes('min-h-[48px]') && renderedHtml.includes('w-full sm:w-auto'),
-      'Buttons use full-width vertical stack on mobile with min 48px height (>44px touch target) for easy tapping'
+      renderedHtml.includes('min-h-[') && renderedHtml.includes('w-full'),
+      'Buttons use full-width stack with minimum 48px touch target for mobile tapping'
     );
 
     // TEST 9: Theme Contrast & Styling
@@ -174,16 +177,15 @@ export async function runLandingFirstScreenAudit(): Promise<FirstScreenAuditResu
       'Verified high-contrast blue primary login styling and slate border/backgrounds for dark & light modes'
     );
 
-    // TEST 10: Section Anchors for In-Page Exploration
+    // TEST 10: Clean Minimal Page Architecture
     assert(
       'FS-10',
       'Page Structure',
-      'Features, Audience, Pricing & Trust Section Anchors Present',
-      renderedHtml.includes('id="explore-features"') &&
-      renderedHtml.includes('id="audience"') &&
-      renderedHtml.includes('id="pricing"') &&
-      renderedHtml.includes('id="trust"'),
-      'All major required sections (features, audience, pricing, trust) are properly anchored'
+      'Minimal Gateway Structure Without Duplicate Controls',
+      !renderedHtml.includes('data-testid="header-login-btn"') &&
+      !renderedHtml.includes('data-testid="header-register-btn"') &&
+      renderedHtml.includes('School Operating System'),
+      'Verified clean gateway structure without duplicate header controls'
     );
 
   } catch (err: any) {

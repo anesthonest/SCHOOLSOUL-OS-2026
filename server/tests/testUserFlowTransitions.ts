@@ -235,9 +235,8 @@ export async function runInteractiveFlowTests(): Promise<UserFlowAuditResult[]> 
     'Header Login and Register Actions Removed Without Gaps',
     !landingHtml.includes('data-testid="header-login-btn"') &&
     !landingHtml.includes('data-testid="header-register-btn"') &&
-    landingHtml.includes('Pricing') &&
-    landingHtml.includes('Request a Demo'),
-    'Upper-right login/register header buttons are absent and header reflows naturally with Pricing anchor and Request a Demo'
+    !landingHtml.includes('Request a Demo'),
+    'Upper-right login/register header buttons and extraneous demo links are absent with clean single auth gateway'
   );
 
   // TEST 12: Final Landing Page UI Cleanup - Central Hero Action Group
@@ -247,20 +246,20 @@ export async function runInteractiveFlowTests(): Promise<UserFlowAuditResult[]> 
     'Single Central Action Area Preserved in Hero',
     landingHtml.includes('data-testid="first-screen-login-btn"') &&
     landingHtml.includes('data-testid="first-screen-register-btn"') &&
-    landingHtml.includes('data-testid="first-screen-explore-btn"') &&
-    landingHtml.includes('data-testid="first-screen-demo-btn"'),
-    'Hero section maintains primary LOGIN and REGISTER / JOIN SCHOOL buttons with secondary actions below'
+    landingHtml.includes('Join Existing School'),
+    'Hero section maintains dominant LOGIN and REGISTER SCHOOL buttons with Join Existing School action below'
   );
 
-  // TEST 13: Commercial Monetization - Tiered Plans Rendered
+  // TEST 13: Commercial Monetization - Tiered Plans Configured
   testAssert(
     'MONETIZATION',
     'MON-01',
     'All Commercial Plans Present (Foundation, Professional, Enterprise)',
-    landingHtml.includes('Foundation') &&
-    landingHtml.includes('Professional') &&
-    landingHtml.includes('Multi-Campus Enterprise'),
-    'Landing page pricing section renders all 3 commercial tiers: Foundation (Starter), Professional (Standard), and Multi-Campus Enterprise'
+    STUDENT_PRICING_PLANS.length >= 3 &&
+    STUDENT_PRICING_PLANS.some(p => p.name.includes('Foundation')) &&
+    STUDENT_PRICING_PLANS.some(p => p.name.includes('Professional')) &&
+    STUDENT_PRICING_PLANS.some(p => p.name.includes('Multi-Campus Enterprise')),
+    'Commercial plans configured: Foundation (Starter), Professional (Standard), and Multi-Campus Enterprise'
   );
 
   // TEST 14: Student Capacity Scaling & Pricing Math

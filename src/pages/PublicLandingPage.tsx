@@ -1,60 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  ShieldCheck,
-  GraduationCap,
-  Sparkles,
-  WifiOff,
-  CreditCard,
-  BookOpen,
-  Users,
-  CheckCircle2,
-  ArrowRight,
-  School,
   Lock,
-  Phone,
-  Mail,
-  Building2,
-  Globe2,
-  HeartHandshake,
-  Layers,
+  UserPlus,
   ChevronRight,
   Sun,
   Moon,
-  MessageSquare,
-  FileCheck,
-  Video,
-  Award,
-  ChevronDown,
-  UserPlus,
-  Compass,
-  Play,
-  Activity,
-  Server,
-  HelpCircle,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { Modal } from '../components/common/Modal';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
-import { Textarea } from '../components/ui/Textarea';
 import { SchoolSoulMarkSVG } from '../components/common/SchoolSoulLogo';
-import { PWAInstallBanner, PWAInstallButton } from '../components/common/PWAInstallBanner';
-import { ProductShowcase } from '../components/landing/ProductShowcase';
-import { ROIEstimator } from '../components/landing/ROIEstimator';
-import { PlanComparisonTable } from '../components/landing/PlanComparisonTable';
-import { ExploreSandboxModal } from '../components/landing/ExploreSandboxModal';
-import { VideoWalkthroughModal } from '../components/landing/VideoWalkthroughModal';
-import { SystemStatusModal } from '../components/landing/SystemStatusModal';
-import { LanDeploymentModal } from '../components/landing/LanDeploymentModal';
-import { CaseStudiesAndPilotSection } from '../components/landing/CaseStudiesAndPilotSection';
+import { PWAInstallButton } from '../components/common/PWAInstallBanner';
 import { useTheme } from '../context/ThemeContext';
-import { useToast } from '../context/ToastContext';
-import {
-  STUDENT_PRICING_PLANS,
-  SUPPORTED_CURRENCY_RATES,
-  COMMERCIAL_ADDONS,
-  calculateStudentSubscriptionQuote,
-} from '../services/pricingEngineService';
 
 interface PublicLandingPageProps {
   onGoToAuth: (initialTab?: 'LOGIN' | 'REGISTER' | 'STATUS') => void;
@@ -70,72 +25,26 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
   schoolLogo,
 }) => {
   const { theme, toggleTheme } = useTheme();
-  const { showSuccess } = useToast();
-
-  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
-  const [isExploreModalOpen, setIsExploreModalOpen] = useState(false);
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
-  const [isLanModalOpen, setIsLanModalOpen] = useState(false);
-
-  const [demoForm, setDemoForm] = useState({
-    schoolName: '',
-    contactPerson: '',
-    role: 'Headteacher / Principal',
-    email: '',
-    phone: '+256 ',
-    preferredContact: 'WhatsApp',
-    country: 'Uganda',
-    estimatedStudents: '500-1000',
-    notes: '',
-  });
-  const [demoSubmitted, setDemoSubmitted] = useState(false);
-  const [demoSubmitting, setDemoSubmitting] = useState(false);
-
-  // Student-based Pricing Calculator State
-  const [calcStudents, setCalcStudents] = useState<number>(500);
-  const [calcCycle, setCalcCycle] = useState<'Annual' | 'Monthly'>('Annual');
-  const [calcCurrency, setCalcCurrency] = useState<string>('UGX');
-  const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
-
-  const handleDemoSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setDemoSubmitting(true);
-    setTimeout(() => {
-      setDemoSubmitting(false);
-      setDemoSubmitted(true);
-      showSuccess('Demo Request Received', 'A SchoolSoul education specialist will contact you shortly.');
-    }, 600);
-  };
-
-  const toggleAddon = (id: string) => {
-    setSelectedAddons((prev) =>
-      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]
-    );
-  };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-500 selection:text-white transition-colors duration-200">
-      {/* 0. Top PWA Install Banner */}
-      <PWAInstallBanner onOpenApp={() => onGoToAuth('LOGIN')} />
-
-      {/* 1. Public Top Navigation Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-500 selection:text-white transition-colors duration-200">
+      {/* 1. Compact Header */}
+      <header className="shrink-0 h-14 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto h-full flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             {schoolLogo ? (
               <img
                 src={schoolLogo}
                 alt={schoolName}
-                className="w-9 h-9 rounded-xl object-contain bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700 shadow-xs"
+                className="w-8 h-8 rounded-lg object-contain bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200 dark:border-slate-700 shadow-2xs"
               />
             ) : (
-              <div className="w-9 h-9 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center shadow-xs">
-                <SchoolSoulMarkSVG size={26} idPrefix="ss-landing-brand" />
+              <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shadow-2xs">
+                <SchoolSoulMarkSVG size={22} idPrefix="ss-header-brand" />
               </div>
             )}
             <div>
-              <span className="font-extrabold text-base tracking-tight text-slate-900 dark:text-slate-100 uppercase">
+              <span className="font-extrabold text-sm tracking-tight text-slate-900 dark:text-slate-100 uppercase">
                 {schoolName}
               </span>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wider uppercase">
@@ -144,31 +53,8 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             </div>
           </div>
 
-          {/* Header Quick Actions */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => setIsVideoModalOpen(true)}
-              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 text-blue-600" />
-              <span>Watch Video</span>
-            </button>
-
-            <a
-              href="#pricing"
-              onClick={(e) => {
-                e.preventDefault();
-                const el = document.getElementById('pricing');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="hidden sm:inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              Pricing
-            </a>
-
+          <div className="flex items-center gap-2">
             <PWAInstallButton className="hidden sm:inline-flex" />
-
             <button
               onClick={toggleTheme}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -176,993 +62,103 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             >
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsDemoModalOpen(true)}
-              className="inline-flex text-xs font-semibold"
-            >
-              Request a Demo
-            </Button>
           </div>
         </div>
       </header>
 
-      {/* 2. Hero Section - The Critical First Visible Screen */}
-      <section className="relative overflow-hidden pt-4 pb-8 sm:pt-6 sm:pb-10 border-b border-slate-200 dark:border-slate-800 bg-linear-to-b from-white via-slate-50 to-slate-100/50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3 sm:space-y-3.5">
-          {/* Top Brand Tag */}
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-blue-700 dark:text-blue-400">
-            <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-            <span className="tracking-wide">SCHOOLSOUL OS 2026</span>
-            <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-            <span>EAST AFRICAN SCHOOL OPERATING SYSTEM</span>
-          </div>
-
-          <div>
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-tight uppercase">
+      {/* 2. Main Centered Application Entry Viewport */}
+      <main className="grow flex items-center justify-center px-4 sm:px-6 py-6 sm:py-8">
+        <div className="w-full max-w-md mx-auto text-center space-y-5 sm:space-y-6">
+          {/* Identity */}
+          <div className="space-y-1.5">
+            <div className="w-12 h-12 rounded-2xl bg-slate-900 dark:bg-slate-800 border border-slate-800 dark:border-slate-700 flex items-center justify-center mx-auto shadow-sm">
+              <SchoolSoulMarkSVG size={32} idPrefix="ss-landing-mark" />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-tight uppercase pt-1">
               SchoolSoul OS
             </h1>
-            <p className="text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 tracking-wider uppercase mt-1">
+            <p className="text-xs font-bold text-blue-600 dark:text-blue-400 tracking-wider uppercase">
               School Operating System
             </p>
           </div>
 
-          <div className="space-y-1.5 max-w-3xl mx-auto">
-            <h2 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
-              Run your school from one secure, resilient platform.
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic">
+          {/* Short Description */}
+          <div className="space-y-1 max-w-sm mx-auto">
+            <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200">
               "One operating system for the modern school."
             </p>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed pt-0.5">
-              Built for schools that need reliable administration, learning operations, payments and communication — even when connectivity is limited.
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Manage your school from one secure, resilient platform.
             </p>
           </div>
 
-          {/* PRIMARY FIRST-SCREEN ACTIONS */}
-          <div className="pt-2 sm:pt-2.5">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto">
-              <Button
-                variant="primary"
-                size="lg"
-                data-testid="first-screen-register-btn"
-                onClick={() => (onGoToRegisterSchool ? onGoToRegisterSchool() : onGoToAuth('REGISTER'))}
-                iconLeading={<UserPlus className="w-5 h-5" />}
-                className="w-full sm:w-auto px-8 py-3.5 text-base font-extrabold tracking-wide uppercase bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25 ring-2 ring-blue-500/50 cursor-pointer min-h-[48px]"
-              >
-                REGISTER / JOIN SCHOOL
-              </Button>
-
-              <Button
-                variant="secondary"
-                size="lg"
-                data-testid="first-screen-login-btn"
-                onClick={() => onGoToAuth('LOGIN')}
-                iconLeading={<Lock className="w-5 h-5" />}
-                iconTrailing={<ArrowRight className="w-5 h-5" />}
-                className="w-full sm:w-auto px-8 py-3.5 text-base font-extrabold tracking-wide uppercase border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-white shadow-sm cursor-pointer min-h-[48px]"
-              >
-                LOGIN
-              </Button>
-            </div>
-
-            {/* Secondary Action: Join Existing School */}
-            <div className="mt-2.5 flex items-center justify-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-              <span>Looking for your school?</span>
-              <button
-                type="button"
-                onClick={() => onGoToAuth('REGISTER')}
-                className="font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer inline-flex items-center gap-0.5"
-              >
-                Join Existing School <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Helper Quick Links */}
-            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs">
-              <button
-                type="button"
-                data-testid="first-screen-explore-btn"
-                onClick={() => {
-                  const el = document.getElementById('explore-features');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  else setIsExploreModalOpen(true);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
-              >
-                <Compass className="w-4 h-4 text-blue-500 shrink-0" />
-                <span>Explore SchoolSoul</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              </button>
-
-              <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">·</span>
-
-              <button
-                type="button"
-                data-testid="first-screen-demo-btn"
-                onClick={() => setIsDemoModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
-              >
-                <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
-                <span>Request a Demo</span>
-              </button>
-
-              <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">·</span>
-
-              <button
-                type="button"
-                data-testid="first-screen-status-btn"
-                onClick={() => onGoToAuth('STATUS')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
-              >
-                <FileCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                <span>Check Application Status</span>
-              </button>
-
-              <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">·</span>
-
-              <button
-                type="button"
-                onClick={() => setIsVideoModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
-              >
-                <Play className="w-4 h-4 text-indigo-500 shrink-0" />
-                <span>Watch Overview</span>
-              </button>
-            </div>
-          </div>
-
-          {/* D. 3 Short Benefit Items (compact, not giant cards) */}
-          <div className="pt-4 sm:pt-6 max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
-              <div className="p-3.5 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-2xs">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="p-1.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-                    <WifiOff className="w-3.5 h-3.5" />
-                  </div>
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-slate-100">
-                    OFFLINE-FIRST
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Keep school operations working when connectivity is unreliable.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-2xs">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-                    <School className="w-3.5 h-3.5" />
-                  </div>
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-slate-100">
-                    SCHOOL-WIDE
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  One operating system for administration, academics, finance and communication.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-2xs">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="p-1.5 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                  </div>
-                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-slate-100">
-                    SOVEREIGN
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Your school controls its data and deployment.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* E. Small Trust Line */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> 100% Offline-First LAN Mode
-            </span>
-            <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">·</span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> MTN & Airtel MoMo + Pesapal
-            </span>
-            <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">·</span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> CBC, UNEB & Multi-Curriculum
-            </span>
-            <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">·</span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Tamper-Evident Safeguarding Logs
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* 2.5 Product Interface Showcase Section */}
-      <section className="py-14 sm:py-18 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-200 dark:border-slate-800">
-        <div className="text-center max-w-3xl mx-auto mb-10 space-y-2">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span>INTERACTIVE PRODUCT EXPERIENCE</span>
-          </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-            Built for Real East African School Operations
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            Click through key operational stations to see how SchoolSoul handles real-world leadership, CBC marks, fees, and offline attendance.
-          </p>
-        </div>
-        <ProductShowcase />
-      </section>
-
-      {/* 3. Problems Solved & Value Architecture */}
-      <section id="explore-features" className="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16 space-y-2">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-            Designed for Real School Realities
-          </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            SchoolSoul eliminates paperwork bottlenecks, fee leakages, and connectivity failures.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <WifiOff className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Offline-First Architecture
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Schools never stop when the internet drops. Staff enter marks, record fees, and take attendance locally. All updates sync safely when internet resumes.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <CreditCard className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Automated Fee Accounting
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Integrated with Pesapal, MTN Mobile Money, Airtel Money, and bank deposits. Instant parent receipts, automated SMS reminders, and zero cash leakage.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Multi-Curriculum Mastery
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Native support for Competency-Based Curricula (CBC), UNEB grading, KNEC, and international scales. Automated report cards generated in seconds.
-            </p>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-xs space-y-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Child Safeguarding & Auditing
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Confidential incident logging, behavioral records, and tamper-evident audit trails protect both student welfare and school leadership accountability.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. Tailored for Every School Role */}
-      <section id="audience" className="py-16 bg-slate-100/70 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-12 space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              Tailored for Every School Role
-            </h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Granular role-based permissions give everyone exactly what they need without confusion.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-                <School className="w-4 h-4 text-blue-600" /> Headteachers & Principals
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Executive dashboard, staff attendance, compliance, financial health cockpits, and ministry reporting.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-amber-600" /> Bursars & Finance Officers
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Fee structure creation, student fee ledgers, automated MoMo reconciliation, expenditure vouchers, and budgets.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-emerald-600" /> Teachers & Subject Heads
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Digital gradebooks, timetable schedules, homework assignments, lesson planning, and attendance registers.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-                <HeartHandshake className="w-4 h-4 text-rose-600" /> Parents & Guardians
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Transparent student report cards, daily attendance alerts, seamless fee payments via mobile phone, and teacher chat.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-                <Award className="w-4 h-4 text-indigo-600" /> Students
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Opportunity & Skills Passport, homework submissions, virtual classroom sessions, and club activities.
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-cyan-600" /> School Boards & Trustees
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                Strategic financial statements, long-term asset management, academic trend forecasts, and audit integrity reports.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4.5 ROI & Administrative Efficiency Calculator */}
-      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-200 dark:border-slate-800">
-        <ROIEstimator initialCurrency={calcCurrency} />
-      </section>
-
-      {/* 5. Student-Based Pricing Architecture & Live Calculator */}
-      <section id="pricing" className="py-16 sm:py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-200 dark:border-slate-800">
-        <div className="text-center max-w-3xl mx-auto mb-10 space-y-3">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-            <CreditCard className="w-4 h-4 text-emerald-500" />
-            <span>VINEXSAH COMMERCIAL PRICING</span>
-            <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-            <span>Predictable Student-Based Economics</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-            Transparent, Student-Based Pricing for Every School
-          </h2>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-            No hidden setup fees. No arbitrary user limits. Scale smoothly from 100 to over 10,000 students.
-            All plans include a full 30-day trial with complete module access.
-          </p>
-        </div>
-
-        {/* Interactive Controls Bar: Currency, Student Band, and Billing Cycle */}
-        <div className="max-w-4xl mx-auto mb-12 p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-            {/* Currency Selector */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Billing Currency
-              </label>
-              <select
-                value={calcCurrency}
-                onChange={(e) => setCalcCurrency(e.target.value)}
-                className="w-full text-xs font-semibold rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100 py-2.5 px-3 focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              >
-                {Object.values(SUPPORTED_CURRENCY_RATES).map((curr) => (
-                  <option key={curr.currency} value={curr.currency}>
-                    {curr.currency} ({curr.symbol}) — {curr.name} {curr.taxRatePercent > 0 ? `· ${curr.taxLabel}` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Cycle Toggle */}
-            <div className="flex flex-col items-start md:items-end">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                Billing Frequency
-              </label>
-              <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700">
-                <button
-                  type="button"
-                  onClick={() => setCalcCycle('Annual')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    calcCycle === 'Annual'
-                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  Annual (Save 20%)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCalcCycle('Monthly')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                    calcCycle === 'Monthly'
-                      ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-300 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  Monthly
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Student Capacity Slider */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Select Your School's Student Population:
-              </label>
-              <span className="text-base font-black text-blue-600 dark:text-blue-400">
-                {calcStudents.toLocaleString()} Students
-              </span>
-            </div>
-
-            <input
-              type="range"
-              min={100}
-              max={3000}
-              step={50}
-              value={calcStudents}
-              onChange={(e) => setCalcStudents(Number(e.target.value))}
-              className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
-            />
-
-            <div className="flex justify-between text-[11px] text-slate-400">
-              <span>100 Students (Starter)</span>
-              <span>1,000 Students</span>
-              <span>2,000 Students</span>
-              <span>3,000+ Students (Enterprise)</span>
-            </div>
-          </div>
-
-          {/* Optional Add-ons Selection */}
-          <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-2">
-              Optional Add-on Capabilities:
-            </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              {COMMERCIAL_ADDONS.map((addon) => {
-                const isChecked = selectedAddons.includes(addon.id);
-                return (
-                  <label
-                    key={addon.id}
-                    className={`flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition ${
-                      isChecked
-                        ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200'
-                        : 'border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => toggleAddon(addon.id)}
-                      className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-0.5"
-                    />
-                    <div>
-                      <span className="font-semibold block">{addon.name}</span>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400">{addon.description}</span>
-                    </div>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* 3 Tier Pricing Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto items-stretch">
-          {STUDENT_PRICING_PLANS.map((plan) => {
-            const isStandard = plan.id === 'standard';
-            const quote = calculateStudentSubscriptionQuote({
-              planId: plan.id,
-              studentCount: calcStudents,
-              billingCycle: calcCycle,
-              currency: calcCurrency,
-              selectedAddonIds: selectedAddons,
-            });
-
-            return (
-              <div
-                key={plan.id}
-                className={`flex flex-col justify-between p-6 sm:p-8 rounded-3xl transition-all relative ${
-                  isStandard
-                    ? 'bg-white dark:bg-slate-900 border-2 border-blue-600 shadow-2xl ring-4 ring-blue-600/10'
-                    : 'bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-lg'
-                }`}
-              >
-                {isStandard && (
-                  <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-blue-600 text-white shadow-sm">
-                    Recommended for Most Schools
-                  </span>
-                )}
-
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">
-                      {plan.name}
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      {plan.description}
-                    </p>
-                  </div>
-
-                  {/* Calculated Price Display */}
-                  <div className="pt-2 pb-1 border-y border-slate-100 dark:border-slate-800">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        {quote.currencySymbol}
-                      </span>
-                      <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
-                        {quote.totalAmount.toLocaleString()}
-                      </span>
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                        / {quote.billingCycle.toLowerCase()}
-                      </span>
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                      Approximately {quote.currencySymbol} {quote.ratePerStudent.toLocaleString()} per student / {calcCycle === 'Annual' ? 'year' : 'mo'}
-                      {quote.taxRatePercent > 0 ? ` (Includes ${quote.taxRatePercent}% tax)` : ''}
-                    </p>
-
-                    {calcCycle === 'Annual' && quote.annualSavingsAmount > 0 && (
-                      <div className="mt-2 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                        {quote.savingsFormatted}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Feature Checklist */}
-                  <div className="space-y-2 pt-2">
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                      Included Capabilities:
-                    </span>
-                    <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
-                      {plan.features.map((feat, i) => (
-                        <li key={i} className="flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                          <span>{feat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Card Action */}
-                <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800 space-y-2">
-                  <Button
-                    variant={isStandard ? 'primary' : 'outline'}
-                    size="md"
-                    className="w-full justify-center min-h-[44px]"
-                    onClick={() => {
-                      if (plan.isCustom) {
-                        setIsDemoModalOpen(true);
-                      } else if (onGoToRegisterSchool) {
-                        onGoToRegisterSchool();
-                      } else {
-                        onGoToAuth('REGISTER');
-                      }
-                    }}
-                    iconTrailing={<ArrowRight className="w-4 h-4" />}
-                  >
-                    {plan.isCustom ? 'Request Enterprise Quote' : 'Start 30-Day Free Trial'}
-                  </Button>
-                  <p className="text-center text-[10px] text-slate-400 dark:text-slate-500">
-                    Full access · No credit card required to start
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Detailed Plan Feature Comparison */}
-        <div className="mt-16">
-          <PlanComparisonTable
-            onSelectPlan={(planId) => {
-              if (planId === 'enterprise') {
-                setIsDemoModalOpen(true);
-              } else if (onGoToRegisterSchool) {
-                onGoToRegisterSchool();
-              } else {
-                onGoToAuth('REGISTER');
-              }
-            }}
-          />
-        </div>
-      </section>
-
-      {/* 6. Why Schools Trust SchoolSoul (Strictly Honest Trust Architecture) */}
-      <section id="trust" className="py-12 sm:py-16 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-        <div className="space-y-2">
-          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-            Why School Leadership Trusts SchoolSoul
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-            Engineered with strict tenant isolation, cryptographic integrity, and zero vendor lock-in.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">01. Data Sovereignty</span>
-            <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">Your Data Belongs to You</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Export complete school records in standardized CSV and JSON formats anytime. One-click backup and offline restore.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">02. Tamper-Evident Security</span>
-            <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">Bank-Grade Audit Trails</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Every financial modification, grade change, and attendance entry is signed with authoritative audit logs.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">03. Local LAN Ready</span>
-            <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">Zero Internet Dependency</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Deploy on a local school server or laptop and connect teacher tablets over local Wi-Fi without active internet bundles.
-            </p>
-          </div>
-        </div>
-
-        {/* Compact Regional Curriculum Alignment */}
-        <div className="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-left">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-blue-600 shrink-0" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                Verified Regional Curriculum Compliance
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200">
-                Kenya CBC (KICD)
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200">
-                Uganda UNEB / NCDC
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200">
-                Tanzania NECTA
-              </span>
-              <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200">
-                Cambridge &amp; IB
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Compact Ready to start ribbon */}
-        <div className="p-6 rounded-2xl bg-linear-to-r from-blue-700 to-indigo-900 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
-          <div className="space-y-1">
-            <h3 className="text-lg font-black tracking-tight">
-              Ready to Transform Your School Operations?
-            </h3>
-            <p className="text-xs text-blue-100">
-              Get your school started in minutes or schedule a guided walk-through.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => onGoToAuth('LOGIN')}
-              className="min-h-[40px] text-xs font-bold"
-            >
-              Sign In
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsDemoModalOpen(true)}
-              className="text-white border-white/40 hover:bg-white/10 min-h-[40px] text-xs font-bold"
-            >
-              Book School Demo
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. Case Studies & Pilot Cohort Architecture */}
-      <CaseStudiesAndPilotSection
-        onRequestPilot={() => setIsDemoModalOpen(true)}
-        onExploreFeatures={() => setIsExploreModalOpen(true)}
-      />
-
-      {/* 8. About VINEXSAH TECHNOLOGIES */}
-      <section id="about-vinexsah" className="py-10 bg-slate-100/60 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto shadow-xs">
-            <SchoolSoulMarkSVG size={22} idPrefix="ss-about" />
-          </div>
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-            Engineered by VINEXSAH TECHNOLOGIES
-          </h2>
-          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl mx-auto">
-            VINEXSAH TECHNOLOGIES develops resilient digital infrastructure for institutions across East Africa. We prioritize continuous operations, offline autonomy, and learner data sovereignty.
-          </p>
-          <div className="pt-1 flex flex-wrap items-center justify-center gap-3 text-xs font-medium text-slate-500 dark:text-slate-400">
-            <span>📍 Kampala, Uganda / East Africa</span>
-            <span aria-hidden="true">·</span>
-            <span>🔒 Sovereign Student Data</span>
-            <span aria-hidden="true">·</span>
-            <span>⚡ 100% Offline-First LAN</span>
-          </div>
-        </div>
-      </section>
-
-      {/* 9. Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-6 px-4 sm:px-6 lg:px-8 text-xs text-slate-500 dark:text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <SchoolSoulMarkSVG size={18} idPrefix="ss-footer" />
-            <span className="font-bold text-slate-800 dark:text-slate-200">SchoolSoul OS</span>
-            <span>— Developed by VINEXSAH TECHNOLOGIES. All rights reserved.</span>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-medium">
-            <button
-              onClick={() => onGoToAuth('LOGIN')}
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => (onGoToRegisterSchool ? onGoToRegisterSchool() : onGoToAuth('REGISTER'))}
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Register School
-            </button>
-            <button
-              onClick={() => onGoToAuth('REGISTER')}
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Join Existing School
-            </button>
-            <a
-              href="#pricing"
-              onClick={(e) => {
-                e.preventDefault();
-                const el = document.getElementById('pricing');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Pricing
-            </a>
-            <button
-              onClick={() => onGoToAuth('STATUS')}
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Status
-            </button>
-            <button
-              onClick={() => setIsLanModalOpen(true)}
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Documentation
-            </button>
-            <button
-              onClick={() => setIsDemoModalOpen(true)}
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              Contact
-            </button>
-          </div>
-        </div>
-      </footer>
-
-      {/* Interactive Request a Demo Modal */}
-      <Modal
-        isOpen={isDemoModalOpen}
-        onClose={() => {
-          setIsDemoModalOpen(false);
-          setDemoSubmitted(false);
-        }}
-        title="Request a SchoolSoul OS Demo"
-        maxWidth="lg"
-        id="request-demo-modal"
-      >
-        {demoSubmitted ? (
-          <div className="text-center py-6 space-y-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Demo Request Received!
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
-              Thank you for your interest in SchoolSoul OS. Our school implementation team will reach out via WhatsApp and email within 24 hours.
-            </p>
+          {/* Large Primary Action Buttons */}
+          <div className="space-y-3 pt-1 w-full max-w-xs sm:max-w-sm mx-auto">
             <Button
               variant="primary"
-              size="md"
-              onClick={() => {
-                setIsDemoModalOpen(false);
-                setDemoSubmitted(false);
-              }}
+              size="lg"
+              data-testid="first-screen-login-btn"
+              onClick={() => onGoToAuth('LOGIN')}
+              iconLeading={<Lock className="w-5 h-5" />}
+              className="w-full justify-center px-8 py-3.5 sm:py-4 text-base font-extrabold tracking-wide uppercase bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25 ring-2 ring-blue-500/50 cursor-pointer min-h-[50px] rounded-xl"
             >
-              Close
+              LOGIN
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="lg"
+              data-testid="first-screen-register-btn"
+              onClick={() => (onGoToRegisterSchool ? onGoToRegisterSchool() : onGoToAuth('REGISTER'))}
+              iconLeading={<UserPlus className="w-5 h-5" />}
+              className="w-full justify-center px-8 py-3.5 sm:py-4 text-base font-extrabold tracking-wide uppercase border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-white shadow-xs cursor-pointer min-h-[50px] rounded-xl"
+            >
+              REGISTER SCHOOL
             </Button>
           </div>
-        ) : (
-          <form onSubmit={handleDemoSubmit} className="space-y-4">
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Fill in your school details to schedule a tailored presentation or test deployment for your institution.
-            </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input
-                label="School Name"
-                placeholder="e.g. Vinexsah Academy"
-                required
-                value={demoForm.schoolName}
-                onChange={(e) => setDemoForm({ ...demoForm, schoolName: e.target.value })}
-              />
-              <Input
-                label="Contact Person Name"
-                placeholder="e.g. Dr. Sarah Namubiru"
-                required
-                value={demoForm.contactPerson}
-                onChange={(e) => setDemoForm({ ...demoForm, contactPerson: e.target.value })}
-              />
-            </div>
+          {/* Join Existing School */}
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => onGoToAuth('REGISTER')}
+              className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer inline-flex items-center gap-1 transition-colors"
+            >
+              <span>Join Existing School</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      </main>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Input
-                label="Official Email"
-                type="email"
-                placeholder="school@example.com"
-                required
-                value={demoForm.email}
-                onChange={(e) => setDemoForm({ ...demoForm, email: e.target.value })}
-              />
-              <Input
-                label="Phone / WhatsApp Number"
-                placeholder="+256 700 000 000"
-                required
-                value={demoForm.phone}
-                onChange={(e) => setDemoForm({ ...demoForm, phone: e.target.value })}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Select
-                label="Your Role / Designation"
-                value={demoForm.role}
-                onChange={(e) => setDemoForm({ ...demoForm, role: e.target.value })}
-                options={[
-                  { value: 'Headteacher / Principal', label: 'Headteacher / Principal' },
-                  { value: 'Director / School Owner', label: 'Director / School Owner' },
-                  { value: 'Bursar / Finance Officer', label: 'Bursar / Finance Officer' },
-                  { value: 'Academic Registrar / Dean', label: 'Academic Registrar / Dean' },
-                  { value: 'ICT Lead / Systems Admin', label: 'ICT Lead / Systems Admin' },
-                  { value: 'Board / Trustee Member', label: 'Board / Trustee Member' },
-                ]}
-              />
-
-              <Select
-                label="Preferred Contact Method"
-                value={demoForm.preferredContact}
-                onChange={(e) => setDemoForm({ ...demoForm, preferredContact: e.target.value })}
-                options={[
-                  { value: 'WhatsApp', label: 'WhatsApp Message' },
-                  { value: 'Phone Call', label: 'Phone Call' },
-                  { value: 'Email', label: 'Official Email' },
-                ]}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Select
-                label="Country"
-                value={demoForm.country}
-                onChange={(e) => setDemoForm({ ...demoForm, country: e.target.value })}
-                options={[
-                  { value: 'Uganda', label: 'Uganda' },
-                  { value: 'Kenya', label: 'Kenya' },
-                  { value: 'Tanzania', label: 'Tanzania' },
-                  { value: 'Rwanda', label: 'Rwanda' },
-                  { value: 'Nigeria', label: 'Nigeria' },
-                  { value: 'Ghana', label: 'Ghana' },
-                  { value: 'South Africa', label: 'South Africa' },
-                  { value: 'Other', label: 'Other Country' },
-                ]}
-              />
-
-              <Select
-                label="Estimated Student Population"
-                value={demoForm.estimatedStudents}
-                onChange={(e) => setDemoForm({ ...demoForm, estimatedStudents: e.target.value })}
-                options={[
-                  { value: '100-300', label: '100 - 300 Students' },
-                  { value: '300-800', label: '300 - 800 Students' },
-                  { value: '800-2000', label: '800 - 2,000 Students' },
-                  { value: '2000+', label: '2,000+ Students' },
-                ]}
-              />
-            </div>
-
-            <Textarea
-              label="Special Inquiries or Current Bottlenecks"
-              placeholder="e.g., We need offline LAN grading for 60 teachers and MTN/Airtel fee collection..."
-              value={demoForm.notes}
-              onChange={(e) => setDemoForm({ ...demoForm, notes: e.target.value })}
-              rows={2}
-            />
-
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-              <Button
-                variant="outline"
-                size="md"
-                onClick={() => setIsDemoModalOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                size="md"
-                isLoading={demoSubmitting}
-                loadingText="Submitting..."
-              >
-                Submit Demo Request
-              </Button>
-            </div>
-          </form>
-        )}
-      </Modal>
-
-      {/* Guided Product Architecture Explorer Modal */}
-      <ExploreSandboxModal
-        isOpen={isExploreModalOpen}
-        onClose={() => setIsExploreModalOpen(false)}
-        onGoToAuth={onGoToAuth}
-        onGoToRegisterSchool={onGoToRegisterSchool}
-      />
-
-      {/* Institutional Demo Video Walkthrough Modal */}
-      <VideoWalkthroughModal
-        isOpen={isVideoModalOpen}
-        onClose={() => setIsVideoModalOpen(false)}
-        onGoToRegisterSchool={onGoToRegisterSchool}
-      />
-
-      {/* System Infrastructure Status Modal */}
-      <SystemStatusModal
-        isOpen={isStatusModalOpen}
-        onClose={() => setIsStatusModalOpen(false)}
-      />
-
-      {/* On-Premise Local Server & LAN Setup Guide Modal */}
-      <LanDeploymentModal
-        isOpen={isLanModalOpen}
-        onClose={() => setIsLanModalOpen(false)}
-      />
+      {/* 3. Small Footer with Attribution & Essential Actions */}
+      <footer className="shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-4 px-4 text-center space-y-2 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 font-medium">
+          <button
+            onClick={() => onGoToAuth('LOGIN')}
+            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+          >
+            Sign In
+          </button>
+          <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+          <button
+            onClick={() => (onGoToRegisterSchool ? onGoToRegisterSchool() : onGoToAuth('REGISTER'))}
+            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+          >
+            Register School
+          </button>
+          <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
+          <button
+            onClick={() => onGoToAuth('REGISTER')}
+            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+          >
+            Join Existing School
+          </button>
+        </div>
+        <p className="text-[11px] text-slate-400 dark:text-slate-500">
+          SchoolSoul OS — Developed by VINEXSAH TECHNOLOGIES. All rights reserved.
+        </p>
+      </footer>
     </div>
   );
 };
