@@ -300,9 +300,9 @@ export interface SchoolProfile {
   schoolMotto: string;
   schoolType: 'Primary' | 'Secondary' | 'Comprehensive' | 'TVET' | 'Tertiary' | 'International' | 'Vocational' | 'College' | 'University' | 'Specialized';
   schoolLevel: 'National' | 'Regional' | 'District' | 'International';
-  registrationNumber: string;
+  registrationNumber?: string;
   schoolLogo?: string;
-  physicalAddress: string;
+  physicalAddress?: string;
   district: string;
   region: string;
   country: string;

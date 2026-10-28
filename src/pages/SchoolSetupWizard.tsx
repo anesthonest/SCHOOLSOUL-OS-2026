@@ -89,15 +89,15 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
     schoolLogo: '',
   });
 
-  // STEP 2 — Administrator
+  // STEP 2 — School Email, Institutional Contact & Administrator Setup
   const [adminData, setAdminData] = useState({
-    fullName: 'Headteacher Administrator',
+    fullName: 'School Administrator',
     email: '',
     phone: '+256 ',
-    username: 'headteacher',
+    username: 'admin',
     password: '',
     confirmPassword: '',
-    employeeNumber: 'EMP-001',
+    employeeNumber: 'ADM-001',
   });
 
   // STEP 3 — Education Configuration
@@ -253,6 +253,19 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
         return;
       }
     } else if (step === 2) {
+      if (!schoolData.email || !schoolData.email.trim()) {
+        setError('Official School Email is required.');
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(schoolData.email.trim())) {
+        setError('Please enter a valid School Email address (e.g. info@school.ac.ug).');
+        return;
+      }
+      if (!schoolData.telephone || !schoolData.telephone.trim() || schoolData.telephone.trim() === activeCountryInfo.phonePrefix.trim()) {
+        setError('Official School Contact telephone number is required.');
+        return;
+      }
       if (!adminData.fullName.trim() || !adminData.username.trim() || !adminData.password) {
         setError('Administrator Name, Username, and Password are required.');
         return;
@@ -331,12 +344,12 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
         countryId: activeCountryInfo.code,
         educationFrameworkId: activePack.countryCode,
         curriculumId: schoolData.curriculumId || activePack.availableCurricula[0]?.id,
-        registrationNumber: schoolData.registrationNumber || `REG-${activeCountryInfo.code}-${Date.now().toString().slice(-4)}`,
-        physicalAddress: schoolData.physicalAddress || `${schoolData.cityTown}, ${activeCountryInfo.name}`,
-        district: schoolData.cityTown,
-        region: schoolData.regionStateProvince,
-        telephone: schoolData.telephone,
-        email: schoolData.email || `info@${schoolData.schoolName.toLowerCase().replace(/[^a-z0-9]/g, '')}.edu`,
+        registrationNumber: schoolData.registrationNumber?.trim() || '',
+        physicalAddress: schoolData.physicalAddress?.trim() || '',
+        district: schoolData.cityTown || 'District Center',
+        region: schoolData.regionStateProvince || 'Central',
+        telephone: schoolData.telephone?.trim() || '',
+        email: schoolData.email?.trim() || '',
         website: schoolData.website,
         schoolLogo: schoolData.schoolLogo,
         academicYear: educationConfig.academicYear,
@@ -394,7 +407,7 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
 
   const stepsList = [
     { num: 1, label: 'School Info', icon: Building2 },
-    { num: 2, label: 'Administrator', icon: UserCheck },
+    { num: 2, label: 'School Email', icon: Mail },
     { num: 3, label: 'Education Config', icon: BookOpen },
     { num: 4, label: 'Localization', icon: Globe2 },
     { num: 5, label: 'Payment & Billing Rails', icon: CreditCard },
@@ -693,14 +706,14 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
                   </select>
                 </div>
 
-                {/* School Registration / ID Number */}
+                {/* School Registration / ID Number (Optional) */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    School Registration / Center Number
+                    School Registration / Center Number <span className="text-slate-400 font-normal">(Optional)</span>
                   </label>
                   <input
                     type="text"
-                    placeholder={`e.g. ${activeCountryInfo.code}-REG-8902 / EMIS-1049`}
+                    placeholder={`e.g. ${activeCountryInfo.code}-REG-8902 / EMIS-1049 (Optional)`}
                     value={schoolData.registrationNumber}
                     onChange={(e) => setSchoolData({ ...schoolData, registrationNumber: e.target.value })}
                     className="w-full px-4 py-2.5 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
@@ -730,7 +743,11 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
                     type="email"
                     placeholder="info@yourschool.edu"
                     value={schoolData.email}
-                    onChange={(e) => setSchoolData({ ...schoolData, email: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSchoolData({ ...schoolData, email: val });
+                      setAdminData((prev) => ({ ...prev, email: val }));
+                    }}
                     className="w-full px-4 py-2.5 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
@@ -744,19 +761,23 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
                     type="text"
                     placeholder={`${activeCountryInfo.phonePrefix} 700 000 000`}
                     value={schoolData.telephone}
-                    onChange={(e) => setSchoolData({ ...schoolData, telephone: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSchoolData({ ...schoolData, telephone: val });
+                      setAdminData((prev) => ({ ...prev, phone: val }));
+                    }}
                     className="w-full px-4 py-2.5 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
-                {/* Physical Address */}
+                {/* Physical Address (Optional) */}
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Physical Address / Campus Location
+                    Physical Address / Campus Location <span className="text-slate-400 font-normal">(Optional)</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Plot / Street / Area / Campus Road"
+                    placeholder="Plot / Street / Area / Campus Road (Optional)"
                     value={schoolData.physicalAddress}
                     onChange={(e) => setSchoolData({ ...schoolData, physicalAddress: e.target.value })}
                     className="w-full px-4 py-2.5 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
@@ -832,28 +853,91 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
           )}
 
           {/* ================================================================= */}
-          {/* STEP 2: ADMINISTRATOR */}
+          {/* STEP 2: SCHOOL EMAIL & INSTITUTIONAL CONTACT                      */}
           {/* ================================================================= */}
           {step === 2 && !isCompleted && (
-            <div className="space-y-5 animate-in fade-in duration-200">
-              <div className="border-b border-slate-800 pb-3">
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-blue-400" />
-                  Step 2 — Super Administrator Account Setup
+            <div className="space-y-4 sm:space-y-5 animate-in fade-in duration-200">
+              <div className="border-b border-slate-800 pb-2.5 sm:pb-3">
+                <h2 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-blue-400" />
+                  Step 2 — School Email & Institutional Contact
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Create the root administrative credential for managing school policies, academic staff, and system RBAC.
+                <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+                  Establish the school's official institutional email and primary telephone contact, along with administrator login credentials.
                 </p>
               </div>
 
+              {/* Institutional Email & Contact Highlight Card */}
               <div className="p-3.5 bg-blue-950/40 border border-blue-800/60 rounded-2xl text-xs text-blue-200 flex items-start gap-2.5">
-                <Lock className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                <ShieldCheck className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <span>
-                  This account is granted full Headteacher / Super Administrator authority with end-to-end audit logging, cryptographic password hashing, and zero-knowledge offline synchronization.
+                  The <strong>School Email</strong> serves as the institution's authoritative identity for official correspondence, system alerts, licensing verification, and administrative notifications across SchoolSoul OS.
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+                {/* School Email Field */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Official School Email *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. info@yourschool.edu / administration@school.ac.ug"
+                      value={schoolData.email}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSchoolData({ ...schoolData, email: val });
+                        setAdminData((prev) => ({ ...prev, email: val }));
+                      }}
+                      className="w-full px-4 py-2.5 pl-10 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Institutional contact email used for all formal school communications, invoices, and password resets.
+                  </p>
+                </div>
+
+                {/* School Contact Prompt & Phone */}
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    Official School Contact (Primary Telephone) *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      placeholder={`${activeCountryInfo.phonePrefix} 700 000 000`}
+                      value={schoolData.telephone}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSchoolData({ ...schoolData, telephone: val });
+                        setAdminData((prev) => ({ ...prev, phone: val }));
+                      }}
+                      className="w-full px-4 py-2.5 pl-10 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-hidden focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    />
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" />
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Direct line for administrative communications, guardian emergency alerts, and system SMS notifications.
+                  </p>
+                </div>
+
+                {/* Subheading: Administrator Access Credentials */}
+                <div className="sm:col-span-2 pt-2 border-t border-slate-800/80">
+                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                    <UserCheck className="w-3.5 h-3.5 text-blue-400" />
+                    Administrator Login Credentials
+                  </h3>
+                  <p className="text-[11px] text-slate-400">
+                    Administrative access credentials linked to this school institutional contact.
+                  </p>
+                </div>
+
+                {/* Administrator Full Name */}
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
                     Administrator Full Name *
@@ -861,39 +945,14 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Dr. Arthur Ssemwogerere"
+                    placeholder="e.g. School Administrator / Principal"
                     value={adminData.fullName}
                     onChange={(e) => setAdminData({ ...adminData, fullName: e.target.value })}
                     className="w-full px-4 py-2.5 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Administrator Email
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="headteacher@school.ac.ug"
-                    value={adminData.email}
-                    onChange={(e) => setAdminData({ ...adminData, email: e.target.value })}
-                    className="w-full px-4 py-2.5 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Administrator Phone
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={`${activeCountryInfo.phonePrefix} 770 000 000`}
-                    value={adminData.phone}
-                    onChange={(e) => setAdminData({ ...adminData, phone: e.target.value })}
-                    className="w-full px-4 py-2.5 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
-                  />
-                </div>
-
+                {/* Login Username */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
                     Login Username *
@@ -901,26 +960,28 @@ export const SchoolSetupWizard: React.FC<SchoolSetupWizardProps> = ({
                   <input
                     type="text"
                     required
-                    placeholder="e.g. headteacher / admin"
+                    placeholder="e.g. admin"
                     value={adminData.username}
                     onChange={(e) => setAdminData({ ...adminData, username: e.target.value.toLowerCase() })}
                     className="w-full px-4 py-2.5 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white font-mono placeholder-slate-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
+                {/* Staff Identifier */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Staff / Employee Identifier
+                    Staff / Employee Identifier <span className="text-slate-400 font-normal">(Optional)</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. EMP-001"
+                    placeholder="e.g. ADM-001"
                     value={adminData.employeeNumber}
                     onChange={(e) => setAdminData({ ...adminData, employeeNumber: e.target.value })}
                     className="w-full px-4 py-2.5 text-sm bg-slate-900 border border-slate-700 rounded-xl text-white font-mono placeholder-slate-500 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
 
+                {/* Password & Confirm */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">
                     Secure Password * (Min 8 Characters)

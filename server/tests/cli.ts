@@ -11,6 +11,7 @@ import { runLandingFirstScreenAudit } from './testLandingPageFirstScreen';
 import { runInteractiveFlowTests } from './testUserFlowTransitions';
 import { runPWAMarketReadinessSuite } from './testPWAMarketReadinessSuite';
 import { runSubjectsAndQRInvitationSuite } from './testSubjectsAndQRInvitationSuite';
+import { runRegistrationPatchAndRenderBuildAudit } from './testRegistrationPatchAndRenderBuild';
 
 async function main() {
   try {
@@ -100,6 +101,7 @@ async function main() {
     }
 
     const subjectQRResults = await runSubjectsAndQRInvitationSuite();
+    const patchResults = await runRegistrationPatchAndRenderBuildAudit();
 
     const failures = results
       .filter(r => r.status === 'FAIL')
@@ -114,7 +116,8 @@ async function main() {
       .concat(landingResults.filter(r => r.status === 'FAIL') as any)
       .concat(flowResults.filter(r => r.status === 'FAIL') as any)
       .concat(pwaResults.filter(r => r.status === 'FAIL') as any)
-      .concat(subjectQRResults.filter(r => r.status === 'FAIL') as any);
+      .concat(subjectQRResults.filter(r => r.status === 'FAIL') as any)
+      .concat(patchResults.filter(r => r.status === 'FAIL') as any);
 
     if (failures.length > 0) {
       console.error(`\n❌ Suite failed with ${failures.length} test failures.`);
