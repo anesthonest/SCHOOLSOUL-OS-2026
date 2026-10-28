@@ -190,61 +190,86 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
       </header>
 
       {/* 2. Hero Section - The Critical First Visible Screen */}
-      <section className="relative overflow-hidden pt-4 pb-8 sm:pt-8 sm:pb-12 border-b border-slate-200 dark:border-slate-800 bg-linear-to-b from-white via-slate-50 to-slate-100/50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3 sm:space-y-4">
-          {/* Natural Editorial Badge */}
+      <section className="relative overflow-hidden pt-4 pb-8 sm:pt-6 sm:pb-10 border-b border-slate-200 dark:border-slate-800 bg-linear-to-b from-white via-slate-50 to-slate-100/50 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3 sm:space-y-3.5">
+          {/* Top Brand Tag */}
           <div className="inline-flex items-center gap-2 text-xs font-semibold text-blue-700 dark:text-blue-400">
             <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
             <span className="tracking-wide">SCHOOLSOUL OS 2026</span>
             <span aria-hidden="true" className="text-slate-300 dark:text-slate-700">·</span>
-            <span>UNIFIED SCHOOL OPERATING SYSTEM</span>
+            <span>EAST AFRICAN SCHOOL OPERATING SYSTEM</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-tight uppercase">
-            SchoolSoul OS
-          </h1>
+          <div>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-slate-900 dark:text-slate-50 tracking-tight leading-tight uppercase">
+              SchoolSoul OS
+            </h1>
+            <p className="text-xs sm:text-sm font-extrabold text-blue-600 dark:text-blue-400 tracking-wider uppercase mt-1">
+              School Operating System
+            </p>
+          </div>
 
-          <p className="text-lg sm:text-2xl font-bold text-slate-800 dark:text-slate-200 max-w-3xl mx-auto">
-            "One operating system for the modern school."
-          </p>
-
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            A modern school operating system designed to help schools manage their people, academics, operations, communication, finance and digital learning environment.
-          </p>
+          <div className="space-y-1.5 max-w-3xl mx-auto">
+            <h2 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-slate-100">
+              Run your school from one secure, resilient platform.
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic">
+              "One operating system for the modern school."
+            </p>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed pt-0.5">
+              Built for schools that need reliable administration, learning operations, payments and communication — even when connectivity is limited.
+            </p>
+          </div>
 
           {/* PRIMARY FIRST-SCREEN ACTIONS */}
-          <div className="pt-1 sm:pt-2">
+          <div className="pt-2 sm:pt-2.5">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4 max-w-md sm:max-w-none mx-auto">
               <Button
                 variant="primary"
                 size="lg"
-                data-testid="first-screen-login-btn"
-                onClick={() => onGoToAuth('LOGIN')}
-                iconLeading={<Lock className="w-5 h-5" />}
-                iconTrailing={<ArrowRight className="w-5 h-5" />}
+                data-testid="first-screen-register-btn"
+                onClick={() => (onGoToRegisterSchool ? onGoToRegisterSchool() : onGoToAuth('REGISTER'))}
+                iconLeading={<UserPlus className="w-5 h-5" />}
                 className="w-full sm:w-auto px-8 py-3.5 text-base font-extrabold tracking-wide uppercase bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/25 ring-2 ring-blue-500/50 cursor-pointer min-h-[48px]"
               >
-                LOGIN
+                REGISTER / JOIN SCHOOL
               </Button>
 
               <Button
                 variant="secondary"
                 size="lg"
-                data-testid="first-screen-register-btn"
-                onClick={() => (onGoToRegisterSchool ? onGoToRegisterSchool() : onGoToAuth('REGISTER'))}
-                iconLeading={<UserPlus className="w-5 h-5" />}
+                data-testid="first-screen-login-btn"
+                onClick={() => onGoToAuth('LOGIN')}
+                iconLeading={<Lock className="w-5 h-5" />}
+                iconTrailing={<ArrowRight className="w-5 h-5" />}
                 className="w-full sm:w-auto px-8 py-3.5 text-base font-extrabold tracking-wide uppercase border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-white shadow-sm cursor-pointer min-h-[48px]"
               >
-                REGISTER / JOIN SCHOOL
+                LOGIN
               </Button>
             </div>
 
-            {/* Secondary Actions */}
-            <div className="mt-3 sm:mt-3.5 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs">
+            {/* Secondary Action: Join Existing School */}
+            <div className="mt-2.5 flex items-center justify-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <span>Looking for your school?</span>
+              <button
+                type="button"
+                onClick={() => onGoToAuth('REGISTER')}
+                className="font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer inline-flex items-center gap-0.5"
+              >
+                Join Existing School <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Helper Quick Links */}
+            <div className="mt-3.5 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs">
               <button
                 type="button"
                 data-testid="first-screen-explore-btn"
-                onClick={() => setIsExploreModalOpen(true)}
+                onClick={() => {
+                  const el = document.getElementById('explore-features');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  else setIsExploreModalOpen(true);
+                }}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
               >
                 <Compass className="w-4 h-4 text-blue-500 shrink-0" />
@@ -289,22 +314,69 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             </div>
           </div>
 
-          {/* Core Trust & Resilience Indicators */}
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
+          {/* D. 3 Short Benefit Items (compact, not giant cards) */}
+          <div className="pt-4 sm:pt-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+              <div className="p-3.5 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="p-1.5 rounded-md bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
+                    <WifiOff className="w-3.5 h-3.5" />
+                  </div>
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-slate-100">
+                    OFFLINE-FIRST
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Keep school operations working when connectivity is unreliable.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="p-1.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                    <School className="w-3.5 h-3.5" />
+                  </div>
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-slate-100">
+                    SCHOOL-WIDE
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  One operating system for administration, academics, finance and communication.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800 shadow-2xs">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="p-1.5 rounded-md bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                  </div>
+                  <h3 className="text-xs font-bold uppercase tracking-wide text-slate-900 dark:text-slate-100">
+                    SOVEREIGN
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Your school controls its data and deployment.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* E. Small Trust Line */}
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> 100% Offline-First LAN Mode
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> 100% Offline-First LAN Mode
             </span>
-            <span aria-hidden="true" className="hidden sm:inline">·</span>
+            <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">·</span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> MTN & Airtel MoMo + Pesapal
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> MTN & Airtel MoMo + Pesapal
             </span>
-            <span aria-hidden="true" className="hidden sm:inline">·</span>
+            <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">·</span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> CBC, UNEB & Multi-Curriculum
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> CBC, UNEB & Multi-Curriculum
             </span>
-            <span aria-hidden="true" className="hidden sm:inline">·</span>
+            <span aria-hidden="true" className="hidden sm:inline text-slate-300 dark:text-slate-700">·</span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" /> Tamper-Evident Safeguarding Logs
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Tamper-Evident Safeguarding Logs
             </span>
           </div>
         </div>
@@ -722,90 +794,92 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
       </section>
 
       {/* 6. Why Schools Trust SchoolSoul (Strictly Honest Trust Architecture) */}
-      <section id="trust" className="py-16 sm:py-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-        <div className="space-y-3">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+      <section id="trust" className="py-12 sm:py-16 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+        <div className="space-y-2">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
             Why School Leadership Trusts SchoolSoul
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-            Engineered with strict tenant isolation, cryptographic integrity, and zero third-party vendor lock-in.
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+            Engineered with strict tenant isolation, cryptographic integrity, and zero vendor lock-in.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">01. Data Sovereignty</span>
-            <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Your Data Belongs to You</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">01. Data Sovereignty</span>
+            <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">Your Data Belongs to You</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               Export complete school records in standardized CSV and JSON formats anytime. One-click backup and offline restore.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400">02. Tamper-Evident Security</span>
-            <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Bank-Grade Audit Trails</h3>
+          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">02. Tamper-Evident Security</span>
+            <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">Bank-Grade Audit Trails</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               Every financial modification, grade change, and attendance entry is signed with authoritative audit logs.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">03. Local LAN Ready</span>
-            <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Zero Internet Dependency</h3>
+          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1.5 shadow-2xs">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">03. Local LAN Ready</span>
+            <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">Zero Internet Dependency</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
               Deploy on a local school server or laptop and connect teacher tablets over local Wi-Fi without active internet bundles.
             </p>
           </div>
         </div>
 
-        {/* Regional Curriculum Alignment Badges */}
-        <div className="p-6 rounded-3xl bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-left space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-blue-600" />
-            Verified Regional Curriculum Compliance
-          </h4>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span className="font-bold block text-slate-900 dark:text-slate-100">Kenya CBC (KICD)</span>
-              <span className="text-[11px] text-slate-500">Formative & Summative Rubrics</span>
+        {/* Compact Regional Curriculum Alignment */}
+        <div className="p-4 rounded-2xl bg-slate-100/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-left">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-blue-600 shrink-0" />
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                Verified Regional Curriculum Compliance
+              </span>
             </div>
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span className="font-bold block text-slate-900 dark:text-slate-100">Uganda UNEB / NCDC</span>
-              <span className="text-[11px] text-slate-500">New Lower Secondary & Primary</span>
-            </div>
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span className="font-bold block text-slate-900 dark:text-slate-100">Tanzania NECTA</span>
-              <span className="text-[11px] text-slate-500">Standard Division Scales</span>
-            </div>
-            <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <span className="font-bold block text-slate-900 dark:text-slate-100">Cambridge & IB</span>
-              <span className="text-[11px] text-slate-500">International Letter Grades</span>
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200">
+                Kenya CBC (KICD)
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200">
+                Uganda UNEB / NCDC
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200">
+                Tanzania NECTA
+              </span>
+              <span className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold text-slate-800 dark:text-slate-200">
+                Cambridge &amp; IB
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Ready to start banner */}
-        <div className="p-8 rounded-3xl bg-linear-to-r from-blue-700 to-indigo-900 text-white shadow-xl space-y-4">
-          <h3 className="text-xl sm:text-2xl font-black tracking-tight">
-            Ready to Transform Your School Operations?
-          </h3>
-          <p className="text-xs sm:text-sm text-blue-100 max-w-lg mx-auto">
-            Get your school started in minutes or schedule a guided walk-through with our education specialists.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+        {/* Compact Ready to start ribbon */}
+        <div className="p-6 rounded-2xl bg-linear-to-r from-blue-700 to-indigo-900 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+          <div className="space-y-1">
+            <h3 className="text-lg font-black tracking-tight">
+              Ready to Transform Your School Operations?
+            </h3>
+            <p className="text-xs text-blue-100">
+              Get your school started in minutes or schedule a guided walk-through.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <Button
               variant="secondary"
-              size="md"
+              size="sm"
               onClick={() => onGoToAuth('LOGIN')}
-              className="min-h-[44px]"
+              className="min-h-[40px] text-xs font-bold"
             >
-              Sign In to Your Account
+              Sign In
             </Button>
             <Button
               variant="outline"
-              size="md"
+              size="sm"
               onClick={() => setIsDemoModalOpen(true)}
-              className="text-white border-white/40 hover:bg-white/10 min-h-[44px]"
+              className="text-white border-white/40 hover:bg-white/10 min-h-[40px] text-xs font-bold"
             >
               Book School Demo
             </Button>
@@ -820,18 +894,18 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
       />
 
       {/* 8. About VINEXSAH TECHNOLOGIES */}
-      <section id="about-vinexsah" className="py-16 bg-slate-100/60 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto shadow-md">
-            <SchoolSoulMarkSVG size={30} idPrefix="ss-about" />
+      <section id="about-vinexsah" className="py-10 bg-slate-100/60 dark:bg-slate-900/40 border-y border-slate-200 dark:border-slate-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3">
+          <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto shadow-xs">
+            <SchoolSoulMarkSVG size={22} idPrefix="ss-about" />
           </div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
             Engineered by VINEXSAH TECHNOLOGIES
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl mx-auto">
-            VINEXSAH TECHNOLOGIES is an African software engineering firm dedicated to building sovereign, resilient digital infrastructure for institutions across the continent. We reject fragile cloud-only architectures and vendor lock-in. Our mission is to ensure every school operates continuously, protects learner data sovereignty, and prospers financially.
+          <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl mx-auto">
+            VINEXSAH TECHNOLOGIES develops resilient digital infrastructure for institutions across East Africa. We prioritize continuous operations, offline autonomy, and learner data sovereignty.
           </p>
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
+          <div className="pt-1 flex flex-wrap items-center justify-center gap-3 text-xs font-medium text-slate-500 dark:text-slate-400">
             <span>📍 Kampala, Uganda / East Africa</span>
             <span aria-hidden="true">·</span>
             <span>🔒 Sovereign Student Data</span>
@@ -841,11 +915,11 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
         </div>
       </section>
 
-      {/* 8. Footer */}
-      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-8 px-4 sm:px-6 lg:px-8 text-xs text-slate-500 dark:text-slate-400">
+      {/* 9. Footer */}
+      <footer className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 py-6 px-4 sm:px-6 lg:px-8 text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <SchoolSoulMarkSVG size={20} idPrefix="ss-footer" />
+            <SchoolSoulMarkSVG size={18} idPrefix="ss-footer" />
             <span className="font-bold text-slate-800 dark:text-slate-200">SchoolSoul OS</span>
             <span>— Developed by VINEXSAH TECHNOLOGIES. All rights reserved.</span>
           </div>
@@ -869,29 +943,34 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({
             >
               Join Existing School
             </button>
+            <a
+              href="#pricing"
+              onClick={(e) => {
+                e.preventDefault();
+                const el = document.getElementById('pricing');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="hover:text-blue-600 transition-colors cursor-pointer"
+            >
+              Pricing
+            </a>
             <button
               onClick={() => onGoToAuth('STATUS')}
               className="hover:text-blue-600 transition-colors cursor-pointer"
             >
-              Check Status
-            </button>
-            <button
-              onClick={() => setIsStatusModalOpen(true)}
-              className="hover:text-blue-600 transition-colors cursor-pointer"
-            >
-              System Status
+              Status
             </button>
             <button
               onClick={() => setIsLanModalOpen(true)}
               className="hover:text-blue-600 transition-colors cursor-pointer"
             >
-              Local LAN Guide
+              Documentation
             </button>
             <button
               onClick={() => setIsDemoModalOpen(true)}
               className="hover:text-blue-600 transition-colors cursor-pointer"
             >
-              Request Demo
+              Contact
             </button>
           </div>
         </div>

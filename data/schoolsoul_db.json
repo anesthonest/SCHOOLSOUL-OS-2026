@@ -1,6 +1,6 @@
 {
   "schoolProfile": {
-    "id": "school-acceptance-1793216369918",
+    "id": "school-acceptance-1793218579550",
     "name": "St. Jude International Academy & Technical Institute",
     "country": "Uganda",
     "countryCode": "UG",
@@ -17,10 +17,10 @@
     "contactEmail": "admin@stjude.academy.ug",
     "contactPhone": "+256 700 123456",
     "status": "ACTIVE",
-    "createdAt": "2026-10-28T19:39:29.918Z",
-    "updatedAt": "2026-10-28T19:39:34.243Z",
-    "currentHeadteacherId": "usr-head-1793216374042",
-    "currentHeadteacherName": "Prof. Grace Nakimera 1793216374042"
+    "createdAt": "2026-10-28T20:16:19.550Z",
+    "updatedAt": "2026-10-28T20:16:24.051Z",
+    "currentHeadteacherId": "usr-head-1793218583830",
+    "currentHeadteacherName": "Prof. Grace Nakimera 1793218583830"
   },
   "users": [
     {
@@ -924,14 +924,14 @@
       "email": "grace.nakimera.1793214281535@school.ac.ug",
       "phone": "+256702998811",
       "nationalIdOrNin": "CM75098765432B",
-      "role": "Headteacher",
+      "role": "Former Headteacher",
       "status": "Active",
       "approvalStatus": "APPROVED",
       "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$Wj5mbg6+aRROtauB2ZSLMg$mlikYySy+Cp/wuQiz4bw4rlCIeus4PJg1c50SGPX62s",
       "failedLoginAttempts": 0,
       "schoolId": "school-acceptance-1793214277234",
       "createdAt": "2026-10-28T19:04:41.734Z",
-      "updatedAt": "2026-10-28T19:04:41.734Z"
+      "updatedAt": "2026-10-28T20:11:48.822Z"
     },
     {
       "id": "usr-head-1793216356251",
@@ -940,86 +940,14 @@
       "email": "grace.nakimera.1793216356251@school.ac.ug",
       "phone": "+256702998811",
       "nationalIdOrNin": "CM75098765432B",
-      "role": "Headteacher",
+      "role": "Former Headteacher",
       "status": "Active",
       "approvalStatus": "APPROVED",
       "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$sbkKoqrA7oT2JCts0qwDUQ$KUNHDVaiz4aWharEHVnjIOdhBOcduMXwnHDN6LHMt6o",
       "failedLoginAttempts": 0,
       "schoolId": "school-acceptance-1793216352121",
       "createdAt": "2026-10-28T19:39:16.448Z",
-      "updatedAt": "2026-10-28T19:39:16.448Z"
-    },
-    {
-      "id": "usr-admin-test",
-      "schoolId": "school-acceptance-1793216369918",
-      "username": "admin_test",
-      "email": "admin@stjude.ug",
-      "fullName": "Test Administrator User",
-      "role": "Administrator",
-      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$Q0ACqxQXRv6PdZfQbowYcQ$Y6v3m5cfVtuTfm6sA9BeDtj9EnfgAaFlFGGP052SUE4",
-      "isActive": true,
-      "createdAt": "2026-10-28T19:39:30.209Z",
-      "updatedAt": "2026-10-28T19:39:30.209Z"
-    },
-    {
-      "id": "usr-dos-test",
-      "schoolId": "school-acceptance-1793216369918",
-      "username": "dos_test",
-      "email": "dos@stjude.ug",
-      "fullName": "Test Director of Studies (DOS) User",
-      "role": "Director of Studies (DOS)",
-      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$zqsb7o+wtHYQBPqpZw/Otw$JdofUDd96bIRtj6xkH+Rlyv84Xn5IovEHWimQg2i7lI",
-      "isActive": true,
-      "createdAt": "2026-10-28T19:39:30.423Z",
-      "updatedAt": "2026-10-28T19:39:30.423Z"
-    },
-    {
-      "id": "usr-teacher-test",
-      "schoolId": "school-acceptance-1793216369918",
-      "username": "teacher_test",
-      "email": "teacher@stjude.ug",
-      "fullName": "Test Teacher User",
-      "role": "Teacher",
-      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$69v1n3iKsgFw61cCzlzdKA$bUFeawgAOKi2KYgSJ7yYoZvmzNQyS7hvw5Kw1xU6a8I",
-      "isActive": true,
-      "createdAt": "2026-10-28T19:39:30.631Z",
-      "updatedAt": "2026-10-28T19:39:30.631Z"
-    },
-    {
-      "id": "usr-bursar-test",
-      "schoolId": "school-acceptance-1793216369918",
-      "username": "bursar_test",
-      "email": "bursar@stjude.ug",
-      "fullName": "Test Bursar User",
-      "role": "Bursar",
-      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$fcO71i0ikYUbyfHgPTxBqQ$63LAAiJ200Hwz4jd06CZv9oWA0lSibO1fl47jAq1iiI",
-      "isActive": true,
-      "createdAt": "2026-10-28T19:39:30.871Z",
-      "updatedAt": "2026-10-28T19:39:30.871Z"
-    },
-    {
-      "id": "usr-parent-test",
-      "schoolId": "school-acceptance-1793216369918",
-      "username": "parent_test",
-      "email": "parent@stjude.ug",
-      "fullName": "Test Parent User",
-      "role": "Parent",
-      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$hk1UHegWMWvB5j0vb16pBg$/do3XTlc8HB3qqMnjzgNu3Cnl9qnBs2EHkn4cqqGHPU",
-      "isActive": true,
-      "createdAt": "2026-10-28T19:39:31.108Z",
-      "updatedAt": "2026-10-28T19:39:31.108Z"
-    },
-    {
-      "id": "usr-student-test",
-      "schoolId": "school-acceptance-1793216369918",
-      "username": "student_test",
-      "email": "student@stjude.ug",
-      "fullName": "Test Student User",
-      "role": "Student",
-      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$F9kAn1D77b0MuFNF4QCNzg$zHtv0spNY0eA1d8VsiVztP4QHbkF25D77y4JHbFSUog",
-      "isActive": true,
-      "createdAt": "2026-10-28T19:39:31.313Z",
-      "updatedAt": "2026-10-28T19:39:31.313Z"
+      "updatedAt": "2026-10-28T20:16:24.051Z"
     },
     {
       "id": "usr-head-1793216374042",
@@ -1036,11 +964,259 @@
       "schoolId": "school-acceptance-1793216369918",
       "createdAt": "2026-10-28T19:39:34.243Z",
       "updatedAt": "2026-10-28T19:39:34.243Z"
+    },
+    {
+      "id": "usr-head-1793218308608",
+      "fullName": "Prof. Grace Nakimera 1793218308608",
+      "username": "headteacher.nakimera.1793218308608",
+      "email": "grace.nakimera.1793218308608@school.ac.ug",
+      "phone": "+256702998811",
+      "nationalIdOrNin": "CM75098765432B",
+      "role": "Headteacher",
+      "status": "Active",
+      "approvalStatus": "APPROVED",
+      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$rzn3Q1YkJ5Eai0+4MZtmZA$O38GUUXijU3cRw3HsL9cBcapjI93/etFwRzx40Kfw8o",
+      "failedLoginAttempts": 0,
+      "schoolId": "school-acceptance-1793218304367",
+      "createdAt": "2026-10-28T20:11:48.822Z",
+      "updatedAt": "2026-10-28T20:11:48.822Z"
+    },
+    {
+      "id": "usr-admin-test",
+      "schoolId": "school-acceptance-1793218579550",
+      "username": "admin_test",
+      "email": "admin@stjude.ug",
+      "fullName": "Test Administrator User",
+      "role": "Administrator",
+      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$+J9g6lsnboiOVjVG83wMvg$4RLlsbShQ6tm2g4sIeI3BpclKKIJ1sgnhrspu5o5DVg",
+      "isActive": true,
+      "createdAt": "2026-10-28T20:16:19.839Z",
+      "updatedAt": "2026-10-28T20:16:19.839Z"
+    },
+    {
+      "id": "usr-dos-test",
+      "schoolId": "school-acceptance-1793218579550",
+      "username": "dos_test",
+      "email": "dos@stjude.ug",
+      "fullName": "Test Director of Studies (DOS) User",
+      "role": "Director of Studies (DOS)",
+      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$5oNAGp27+gQkcaF7mnz5nA$rxAE4va+rDrIgsmZiNsBGi656Ageuaai3dtK9kB7Mnw",
+      "isActive": true,
+      "createdAt": "2026-10-28T20:16:20.029Z",
+      "updatedAt": "2026-10-28T20:16:20.029Z"
+    },
+    {
+      "id": "usr-teacher-test",
+      "schoolId": "school-acceptance-1793218579550",
+      "username": "teacher_test",
+      "email": "teacher@stjude.ug",
+      "fullName": "Test Teacher User",
+      "role": "Teacher",
+      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$V70+dYMcY43rpl40+g02UA$SexQBsTj0KvvPuoO02pUElOGXQpe369+FeJ/I2kQw20",
+      "isActive": true,
+      "createdAt": "2026-10-28T20:16:20.242Z",
+      "updatedAt": "2026-10-28T20:16:20.242Z"
+    },
+    {
+      "id": "usr-bursar-test",
+      "schoolId": "school-acceptance-1793218579550",
+      "username": "bursar_test",
+      "email": "bursar@stjude.ug",
+      "fullName": "Test Bursar User",
+      "role": "Bursar",
+      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$3saXqz8wqAoKMCPc7IUMOQ$aRkCP/f+jiLzFgSVa6Bo6YyBqt7K/6SZc68HIZSSZNU",
+      "isActive": true,
+      "createdAt": "2026-10-28T20:16:20.497Z",
+      "updatedAt": "2026-10-28T20:16:20.497Z"
+    },
+    {
+      "id": "usr-parent-test",
+      "schoolId": "school-acceptance-1793218579550",
+      "username": "parent_test",
+      "email": "parent@stjude.ug",
+      "fullName": "Test Parent User",
+      "role": "Parent",
+      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$aNO/l89Uy2KVzDPpxVlRvg$1QNX/FBiuV8P+j41VyHYKQfRGx9KlQ1XH4XIMKKFmqo",
+      "isActive": true,
+      "createdAt": "2026-10-28T20:16:20.718Z",
+      "updatedAt": "2026-10-28T20:16:20.718Z"
+    },
+    {
+      "id": "usr-student-test",
+      "schoolId": "school-acceptance-1793218579550",
+      "username": "student_test",
+      "email": "student@stjude.ug",
+      "fullName": "Test Student User",
+      "role": "Student",
+      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$iHrYP/V1im5rCiTJ6wpJFA$curMKTXb4GV1qdsi3jKZIgsWQ0toXd6G6+ULnWfQbzM",
+      "isActive": true,
+      "createdAt": "2026-10-28T20:16:20.927Z",
+      "updatedAt": "2026-10-28T20:16:20.927Z"
+    },
+    {
+      "id": "usr-head-1793218583830",
+      "fullName": "Prof. Grace Nakimera 1793218583830",
+      "username": "headteacher.nakimera.1793218583830",
+      "email": "grace.nakimera.1793218583830@school.ac.ug",
+      "phone": "+256702998811",
+      "nationalIdOrNin": "CM75098765432B",
+      "role": "Headteacher",
+      "status": "Active",
+      "approvalStatus": "APPROVED",
+      "passwordHash": "$argon2id$v=19$m=65536,p=4,t=3$V1uuDhFNGbdXxw0jQrbvMQ$bBpuXvrvbZigQGpujPwySLcmCFE8yDfE5iiLYie4f0Q",
+      "failedLoginAttempts": 0,
+      "schoolId": "school-acceptance-1793218579550",
+      "createdAt": "2026-10-28T20:16:24.051Z",
+      "updatedAt": "2026-10-28T20:16:24.051Z"
     }
   ],
   "roles": [],
   "settings": null,
   "auditLogs": [
+    {
+      "id": "audit-1793218584205",
+      "timestamp": "2026-10-28T20:16:24.205Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-8770] Level 1 HardwarePrinterBridge: FAILED (Verification: FAILED)"
+    },
+    {
+      "id": "audit-1793218584190",
+      "timestamp": "2026-10-28T20:16:24.190Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-1412] Level 1 HardwarePrinterBridge: ROLLED_BACK (Verification: FAILED)"
+    },
+    {
+      "id": "audit-1793218584148",
+      "timestamp": "2026-10-28T20:16:24.148Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-9630] Level 3 AuthoritativeDataProtection:feeStructure: QUARANTINED (Verification: PASSED)"
+    },
+    {
+      "id": "audit-1793218584141",
+      "timestamp": "2026-10-28T20:16:24.141Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-4322] Level 1 FileSystemStorage: SUCCESS (Verification: PASSED)"
+    },
+    {
+      "id": "audit-1793218584134",
+      "timestamp": "2026-10-28T20:16:24.127Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-2437] Level 1 SyncEngine: SUCCESS (Verification: PASSED)"
+    },
+    {
+      "id": "audit-1793218584119",
+      "timestamp": "2026-10-28T20:16:24.119Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-4869] Level 1 BackgroundWorker: SUCCESS (Verification: PASSED)"
+    },
+    {
+      "id": "audit-1793218584102",
+      "timestamp": "2026-10-28T20:16:24.102Z",
+      "userId": "test-admin",
+      "username": "Tester",
+      "userRole": "Administrator",
+      "action": "CONFLICT_RESOLVED",
+      "details": "Administrator resolved conflict CONF-20261028-8338 on student:stud-conf-1793218584087 with KEEP_EXISTING"
+    },
+    {
+      "id": "audit-1793218584095",
+      "timestamp": "2026-10-28T20:16:24.094Z",
+      "userId": "usr-registrar",
+      "username": "Registrar",
+      "userRole": "Registrar",
+      "action": "SYNC_CONFLICT_QUARANTINED",
+      "details": "Critical student record conflict quarantined (CONF-20261028-8338). Preserved authoritative copy."
+    },
+    {
+      "id": "audit-1793218308975",
+      "timestamp": "2026-10-28T20:11:48.975Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-8325] Level 1 HardwarePrinterBridge: FAILED (Verification: FAILED)"
+    },
+    {
+      "id": "audit-1793218308959",
+      "timestamp": "2026-10-28T20:11:48.959Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-1614] Level 1 HardwarePrinterBridge: ROLLED_BACK (Verification: FAILED)"
+    },
+    {
+      "id": "audit-1793218308924",
+      "timestamp": "2026-10-28T20:11:48.924Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-7063] Level 3 AuthoritativeDataProtection:feeStructure: QUARANTINED (Verification: PASSED)"
+    },
+    {
+      "id": "audit-1793218308916",
+      "timestamp": "2026-10-28T20:11:48.916Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-7544] Level 1 FileSystemStorage: SUCCESS (Verification: PASSED)"
+    },
+    {
+      "id": "audit-1793218308909",
+      "timestamp": "2026-10-28T20:11:48.900Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-1790] Level 1 SyncEngine: SUCCESS (Verification: PASSED)"
+    },
+    {
+      "id": "audit-1793218308891",
+      "timestamp": "2026-10-28T20:11:48.891Z",
+      "userId": "ResilienceEngine",
+      "username": "AutonomousSelfHealing",
+      "userRole": "System",
+      "action": "SELF_HEALING_EVENT",
+      "details": "[HEAL-20261028-9214] Level 1 BackgroundWorker: SUCCESS (Verification: PASSED)"
+    },
+    {
+      "id": "audit-1793218308876",
+      "timestamp": "2026-10-28T20:11:48.876Z",
+      "userId": "test-admin",
+      "username": "Tester",
+      "userRole": "Administrator",
+      "action": "CONFLICT_RESOLVED",
+      "details": "Administrator resolved conflict CONF-20261028-9349 on student:stud-conf-1793218308860 with KEEP_EXISTING"
+    },
+    {
+      "id": "audit-1793218308868",
+      "timestamp": "2026-10-28T20:11:48.867Z",
+      "userId": "usr-registrar",
+      "username": "Registrar",
+      "userRole": "Registrar",
+      "action": "SYNC_CONFLICT_QUARANTINED",
+      "details": "Critical student record conflict quarantined (CONF-20261028-9349). Preserved authoritative copy."
+    },
     {
       "id": "audit-1793216374390",
       "timestamp": "2026-10-28T19:39:34.390Z",
@@ -4343,6 +4519,196 @@
     }
   ],
   "syncQueue": [
+    {
+      "operationId": "OP-E2E-PAY-1793218584268",
+      "schoolId": "default",
+      "deviceId": "dev-bursar",
+      "userId": "usr-bursar-e2e",
+      "userRole": "Administrator",
+      "entityType": "paymentRecord",
+      "entityId": "pay-e2e-1793218584268",
+      "action": "CREATE",
+      "version": 1,
+      "timestamp": "2026-10-28T20:16:24.268Z",
+      "payload": {
+        "id": "pay-e2e-1793218584268",
+        "studentId": "stud-e2e-1793218584262",
+        "amount": 650000,
+        "currency": "UGX",
+        "method": "CASH",
+        "receiptNumber": "REC-1793218584268",
+        "status": "VERIFIED",
+        "schoolId": "default"
+      },
+      "checksum": "2de42ce1b49cfbd0fed42d8445b8a8dcf4d449f02e551060c338a47b9197e7bd",
+      "status": "SYNCED",
+      "retryCount": 0,
+      "createdAt": "2026-10-28T20:16:24.262Z",
+      "processedAt": "2026-10-28T20:16:24.269Z"
+    },
+    {
+      "operationId": "OP-E2E-STUD-1793218584262",
+      "schoolId": "default",
+      "deviceId": "dev-school-office",
+      "userId": "usr-admin-e2e",
+      "userRole": "Administrator",
+      "entityType": "student",
+      "entityId": "stud-e2e-1793218584262",
+      "action": "CREATE",
+      "version": 1,
+      "timestamp": "2026-10-28T20:16:24.262Z",
+      "payload": {
+        "id": "stud-e2e-1793218584262",
+        "fullName": "V6 Candidate Student",
+        "classGrade": "Senior 1",
+        "admissionNumber": "ADM-4262",
+        "status": "ACTIVE",
+        "schoolId": "default"
+      },
+      "checksum": "8ffa1e88d49ed4b534ff821bfc9b50b39b7a84906fa60d9b7f2bcbe18847f8d5",
+      "status": "SYNCED",
+      "retryCount": 0,
+      "createdAt": "2026-10-28T20:16:24.262Z",
+      "processedAt": "2026-10-28T20:16:24.262Z"
+    },
+    {
+      "operationId": "OP-ATTACK-1793218584231",
+      "schoolId": "default",
+      "deviceId": "dev-attacker",
+      "userId": "usr-attacker",
+      "userRole": "Administrator",
+      "entityType": "student",
+      "entityId": "stud-replay-1793218584231",
+      "action": "CREATE",
+      "version": 1,
+      "timestamp": "2026-10-28T20:16:24.231Z",
+      "payload": {
+        "id": "stud-replay-1793218584231",
+        "fullName": "Legit Operation"
+      },
+      "checksum": "be23df48016b222d207356d31d3e713370ac7830492c5f38ce9e1f54846a3f84",
+      "status": "SYNCED",
+      "retryCount": 0,
+      "createdAt": "2026-10-28T20:16:24.231Z",
+      "processedAt": "2026-10-28T20:16:24.231Z"
+    },
+    {
+      "operationId": "OP-1793218584073-TEST",
+      "schoolId": "sch-primary-1",
+      "deviceId": "dev-001",
+      "userId": "usr-admin",
+      "userRole": "Administrator",
+      "entityType": "student",
+      "entityId": "stud-test-1793218584073",
+      "action": "CREATE",
+      "version": 1,
+      "timestamp": "2026-10-28T20:16:24.073Z",
+      "payload": {
+        "id": "stud-test-1793218584073",
+        "fullName": "Test Student",
+        "admissionNumber": "ADM-TEST-1"
+      },
+      "checksum": "ea0efbc18e6ba9adb0d2baa2f9bdf7719027f97463b65d044782329afa96c253",
+      "status": "SYNCED",
+      "retryCount": 0,
+      "createdAt": "2026-10-28T20:16:24.073Z",
+      "processedAt": "2026-10-28T20:16:24.074Z"
+    },
+    {
+      "operationId": "OP-E2E-PAY-1793218309034",
+      "schoolId": "default",
+      "deviceId": "dev-bursar",
+      "userId": "usr-bursar-e2e",
+      "userRole": "Administrator",
+      "entityType": "paymentRecord",
+      "entityId": "pay-e2e-1793218309034",
+      "action": "CREATE",
+      "version": 1,
+      "timestamp": "2026-10-28T20:11:49.034Z",
+      "payload": {
+        "id": "pay-e2e-1793218309034",
+        "studentId": "stud-e2e-1793218309027",
+        "amount": 650000,
+        "currency": "UGX",
+        "method": "CASH",
+        "receiptNumber": "REC-1793218309034",
+        "status": "VERIFIED",
+        "schoolId": "default"
+      },
+      "checksum": "8d39b154fa6d4cda6b52d6c904c1b6f46cecf2ec95a17cfd6734e66ca66fdd5c",
+      "status": "SYNCED",
+      "retryCount": 0,
+      "createdAt": "2026-10-28T20:11:49.027Z",
+      "processedAt": "2026-10-28T20:11:49.034Z"
+    },
+    {
+      "operationId": "OP-E2E-STUD-1793218309027",
+      "schoolId": "default",
+      "deviceId": "dev-school-office",
+      "userId": "usr-admin-e2e",
+      "userRole": "Administrator",
+      "entityType": "student",
+      "entityId": "stud-e2e-1793218309027",
+      "action": "CREATE",
+      "version": 1,
+      "timestamp": "2026-10-28T20:11:49.027Z",
+      "payload": {
+        "id": "stud-e2e-1793218309027",
+        "fullName": "V6 Candidate Student",
+        "classGrade": "Senior 1",
+        "admissionNumber": "ADM-9027",
+        "status": "ACTIVE",
+        "schoolId": "default"
+      },
+      "checksum": "a4b8a77500abaff7b1d2b6876affbd89cf0fa7c849b2012feb65b3eb79d28c30",
+      "status": "SYNCED",
+      "retryCount": 0,
+      "createdAt": "2026-10-28T20:11:49.027Z",
+      "processedAt": "2026-10-28T20:11:49.027Z"
+    },
+    {
+      "operationId": "OP-ATTACK-1793218308999",
+      "schoolId": "default",
+      "deviceId": "dev-attacker",
+      "userId": "usr-attacker",
+      "userRole": "Administrator",
+      "entityType": "student",
+      "entityId": "stud-replay-1793218308999",
+      "action": "CREATE",
+      "version": 1,
+      "timestamp": "2026-10-28T20:11:48.999Z",
+      "payload": {
+        "id": "stud-replay-1793218308999",
+        "fullName": "Legit Operation"
+      },
+      "checksum": "a09ae7c030354b4f3d1fdbd6612f9914da974aeca708a3df54dc00d7af000f7c",
+      "status": "SYNCED",
+      "retryCount": 0,
+      "createdAt": "2026-10-28T20:11:48.999Z",
+      "processedAt": "2026-10-28T20:11:48.999Z"
+    },
+    {
+      "operationId": "OP-1793218308844-TEST",
+      "schoolId": "sch-primary-1",
+      "deviceId": "dev-001",
+      "userId": "usr-admin",
+      "userRole": "Administrator",
+      "entityType": "student",
+      "entityId": "stud-test-1793218308844",
+      "action": "CREATE",
+      "version": 1,
+      "timestamp": "2026-10-28T20:11:48.844Z",
+      "payload": {
+        "id": "stud-test-1793218308844",
+        "fullName": "Test Student",
+        "admissionNumber": "ADM-TEST-1"
+      },
+      "checksum": "ccd05f524f870db53fe7c6562807f4f8fd087950e68798f59cc150fb69eabfc9",
+      "status": "SYNCED",
+      "retryCount": 0,
+      "createdAt": "2026-10-28T20:11:48.844Z",
+      "processedAt": "2026-10-28T20:11:48.844Z"
+    },
     {
       "operationId": "OP-E2E-PAY-1793216374440",
       "schoolId": "default",
@@ -8194,6 +8560,88 @@
   "accountRequests": [],
   "accountRecoveryRequests": [
     {
+      "id": "rec-esc-1793218583812",
+      "recoveryType": "LOST_BOTH_CONTACTS",
+      "targetUserId": "usr-test-rec-1793218582911",
+      "identifier": "teacher.sarah",
+      "fullName": "Sarah Mirembe",
+      "schoolId": "school-acceptance-1793218579550",
+      "schoolName": "St. Jude International Academy & Technical Institute",
+      "userRole": "Teacher",
+      "contactProvided": "None (SIM lost & email domain changed)",
+      "newEmail": "sarah.new@education.go.ug",
+      "newPhone": "+256701998877",
+      "nationalIdOrNin": "CM89012345678A",
+      "recoveryNotes": "Physical SIM card destroyed in flood. Physical national ID presented to Headteacher.",
+      "otpAttempts": 0,
+      "status": "COMPLETED",
+      "requestedAt": "2026-10-28T20:16:23.812Z",
+      "createdAt": "2026-10-28T20:16:23.812Z",
+      "updatedAt": "2026-10-28T20:16:23.812Z",
+      "resolutionAction": "CONTACT_UPDATED",
+      "reviewedBy": "usr-headteacher-001",
+      "reviewedAt": "2026-10-28T20:16:23.818Z"
+    },
+    {
+      "id": "rec-1793218583125-e43ab8cf",
+      "recoveryType": "FORGOT_PASSWORD",
+      "targetUserId": "usr-test-rec-1793218582911",
+      "identifier": "teacher.sarah",
+      "fullName": "Sarah Mirembe",
+      "schoolId": "school-acceptance-1793218579550",
+      "schoolName": "SchoolSoul OS",
+      "userRole": "Teacher",
+      "contactProvided": "sarah.mirembe@school.ac.ug",
+      "otpExpiry": "2026-10-28T20:31:23.125Z",
+      "otpAttempts": 1,
+      "status": "COMPLETED",
+      "requestedAt": "2026-10-28T20:16:23.125Z",
+      "createdAt": "2026-10-28T20:16:23.125Z",
+      "updatedAt": "2026-10-28T20:16:23.125Z",
+      "resetTokenExpiry": "2026-10-28T20:46:23.132Z"
+    },
+    {
+      "id": "rec-esc-1793218308547",
+      "recoveryType": "LOST_BOTH_CONTACTS",
+      "targetUserId": "usr-test-rec-1793218307656",
+      "identifier": "teacher.sarah",
+      "fullName": "Sarah Mirembe",
+      "schoolId": "school-acceptance-1793218304367",
+      "schoolName": "St. Jude International Academy & Technical Institute",
+      "userRole": "Teacher",
+      "contactProvided": "None (SIM lost & email domain changed)",
+      "newEmail": "sarah.new@education.go.ug",
+      "newPhone": "+256701998877",
+      "nationalIdOrNin": "CM89012345678A",
+      "recoveryNotes": "Physical SIM card destroyed in flood. Physical national ID presented to Headteacher.",
+      "otpAttempts": 0,
+      "status": "COMPLETED",
+      "requestedAt": "2026-10-28T20:11:48.547Z",
+      "createdAt": "2026-10-28T20:11:48.547Z",
+      "updatedAt": "2026-10-28T20:11:48.547Z",
+      "resolutionAction": "CONTACT_UPDATED",
+      "reviewedBy": "usr-headteacher-001",
+      "reviewedAt": "2026-10-28T20:11:48.554Z"
+    },
+    {
+      "id": "rec-1793218307915-b44141bb",
+      "recoveryType": "FORGOT_PASSWORD",
+      "targetUserId": "usr-test-rec-1793218307656",
+      "identifier": "teacher.sarah",
+      "fullName": "Sarah Mirembe",
+      "schoolId": "school-acceptance-1793218304367",
+      "schoolName": "SchoolSoul OS",
+      "userRole": "Teacher",
+      "contactProvided": "sarah.mirembe@school.ac.ug",
+      "otpExpiry": "2026-10-28T20:26:47.915Z",
+      "otpAttempts": 1,
+      "status": "COMPLETED",
+      "requestedAt": "2026-10-28T20:11:47.915Z",
+      "createdAt": "2026-10-28T20:11:47.915Z",
+      "updatedAt": "2026-10-28T20:11:47.915Z",
+      "resetTokenExpiry": "2026-10-28T20:41:47.922Z"
+    },
+    {
       "id": "rec-esc-1793216374022",
       "recoveryType": "LOST_BOTH_CONTACTS",
       "targetUserId": "usr-test-rec-1793216373220",
@@ -10533,6 +10981,48 @@
   ],
   "headteacherSuccessionRequests": [
     {
+      "id": "succ-1793218583830",
+      "schoolId": "school-acceptance-1793218579550",
+      "schoolName": "St. Jude International Academy & Technical Institute",
+      "currentHeadteacherUserId": "usr-head-1793216356251",
+      "currentHeadteacherName": "Prof. Grace Nakimera 1793216356251",
+      "incomingFullName": "Prof. Grace Nakimera 1793218583830",
+      "incomingUsername": "headteacher.nakimera.1793218583830",
+      "incomingEmail": "grace.nakimera.1793218583830@school.ac.ug",
+      "incomingPhone": "+256702998811",
+      "incomingNationalIdOrNin": "CM75098765432B",
+      "incomingTeacherRegNumber": "MOES/GT/2026/889",
+      "incomingPasswordHash": "$argon2id$v=19$m=65536,p=4,t=3$V1uuDhFNGbdXxw0jQrbvMQ$bBpuXvrvbZigQGpujPwySLcmCFE8yDfE5iiLYie4f0Q",
+      "reasonForSuccession": "Statutory Retirement of Outgoing Leader; Board of Governors Resolution #2026/04",
+      "handoverDocumentRef": "DOC-BOG-2026-HANDOVER-04",
+      "effectiveDate": "2026-10-28",
+      "status": "SUCCESSION_COMPLETED",
+      "requestedAt": "2026-10-28T20:16:24.045Z",
+      "createdAt": "2026-10-28T20:16:24.045Z",
+      "updatedAt": "2026-10-28T20:16:24.045Z"
+    },
+    {
+      "id": "succ-1793218308608",
+      "schoolId": "school-acceptance-1793218304367",
+      "schoolName": "St. Jude International Academy & Technical Institute",
+      "currentHeadteacherUserId": "usr-head-1793214281535",
+      "currentHeadteacherName": "Prof. Grace Nakimera 1793214281535",
+      "incomingFullName": "Prof. Grace Nakimera 1793218308608",
+      "incomingUsername": "headteacher.nakimera.1793218308608",
+      "incomingEmail": "grace.nakimera.1793218308608@school.ac.ug",
+      "incomingPhone": "+256702998811",
+      "incomingNationalIdOrNin": "CM75098765432B",
+      "incomingTeacherRegNumber": "MOES/GT/2026/889",
+      "incomingPasswordHash": "$argon2id$v=19$m=65536,p=4,t=3$rzn3Q1YkJ5Eai0+4MZtmZA$O38GUUXijU3cRw3HsL9cBcapjI93/etFwRzx40Kfw8o",
+      "reasonForSuccession": "Statutory Retirement of Outgoing Leader; Board of Governors Resolution #2026/04",
+      "handoverDocumentRef": "DOC-BOG-2026-HANDOVER-04",
+      "effectiveDate": "2026-10-28",
+      "status": "SUCCESSION_COMPLETED",
+      "requestedAt": "2026-10-28T20:11:48.815Z",
+      "createdAt": "2026-10-28T20:11:48.815Z",
+      "updatedAt": "2026-10-28T20:11:48.815Z"
+    },
+    {
       "id": "succ-1793216374042",
       "schoolId": "school-acceptance-1793216369918",
       "schoolName": "St. Jude International Academy & Technical Institute",
@@ -11732,6 +12222,40 @@
   ],
   "headteacherHistory": [
     {
+      "id": "hth-1793218583830",
+      "schoolId": "school-acceptance-1793218579550",
+      "headteacherUserId": "usr-head-1793218583830",
+      "fullName": "Prof. Grace Nakimera 1793218583830",
+      "username": "headteacher.nakimera.1793218583830",
+      "email": "grace.nakimera.1793218583830@school.ac.ug",
+      "phone": "+256702998811",
+      "startDate": "2026-10-28",
+      "isCurrent": true,
+      "transitionType": "FORMAL_SUCCESSION",
+      "approvedByUserId": "usr-board-chair",
+      "approvedByUsername": "School Board of Governors",
+      "handoverNotes": "Succession ratified by Board of Governors.",
+      "createdAt": "2026-10-28T20:16:24.051Z"
+    },
+    {
+      "id": "hth-1793218308608",
+      "schoolId": "school-acceptance-1793218304367",
+      "headteacherUserId": "usr-head-1793218308608",
+      "fullName": "Prof. Grace Nakimera 1793218308608",
+      "username": "headteacher.nakimera.1793218308608",
+      "email": "grace.nakimera.1793218308608@school.ac.ug",
+      "phone": "+256702998811",
+      "startDate": "2026-10-28",
+      "isCurrent": false,
+      "transitionType": "FORMAL_SUCCESSION",
+      "approvedByUserId": "usr-board-chair",
+      "approvedByUsername": "School Board of Governors",
+      "handoverNotes": "Succession ratified by Board of Governors.",
+      "createdAt": "2026-10-28T20:11:48.822Z",
+      "endDate": "2026-10-28",
+      "successionReason": "Statutory Retirement of Outgoing Leader; Board of Governors Resolution #2026/04"
+    },
+    {
       "id": "hth-1793216374042",
       "schoolId": "school-acceptance-1793216369918",
       "headteacherUserId": "usr-head-1793216374042",
@@ -11740,12 +12264,14 @@
       "email": "grace.nakimera.1793216374042@school.ac.ug",
       "phone": "+256702998811",
       "startDate": "2026-10-28",
-      "isCurrent": true,
+      "isCurrent": false,
       "transitionType": "FORMAL_SUCCESSION",
       "approvedByUserId": "usr-board-chair",
       "approvedByUsername": "School Board of Governors",
       "handoverNotes": "Succession ratified by Board of Governors.",
-      "createdAt": "2026-10-28T19:39:34.243Z"
+      "createdAt": "2026-10-28T19:39:34.243Z",
+      "endDate": "2026-10-28",
+      "successionReason": "Statutory Retirement of Outgoing Leader; Board of Governors Resolution #2026/04"
     },
     {
       "id": "hth-1793216356251",
@@ -12775,6 +13301,64 @@
   "systemFeedback": [],
   "systemErrors": [],
   "conflictRecords": [
+    {
+      "conflictId": "CONF-20261028-8338",
+      "operationId": "OP-CONF-1793218584094",
+      "schoolId": "school-acceptance-1793218579550",
+      "entityType": "student",
+      "entityId": "stud-conf-1793218584087",
+      "detectedAt": "2026-10-28T20:16:24.094Z",
+      "existingVersion": 2,
+      "incomingVersion": 1,
+      "existingPayload": {
+        "id": "stud-conf-1793218584087",
+        "fullName": "Original Student Name",
+        "classGrade": "Grade 5",
+        "version": 2
+      },
+      "incomingPayload": {
+        "id": "stud-conf-1793218584087",
+        "fullName": "Diverged Conflict Name",
+        "classGrade": "Grade 6",
+        "version": 1
+      },
+      "resolutionStatus": "RESOLVED_EXISTING",
+      "auditTrail": [
+        "[2026-10-28T20:16:24.094Z] Conflict detected by SyncEngine on critical record student:stud-conf-1793218584087. Both versions preserved safely.",
+        "[2026-10-28T20:16:24.102Z] Resolved by Tester with decision: KEEP_EXISTING"
+      ],
+      "resolvedBy": "Tester (Administrator)",
+      "resolvedAt": "2026-10-28T20:16:24.102Z"
+    },
+    {
+      "conflictId": "CONF-20261028-9349",
+      "operationId": "OP-CONF-1793218308867",
+      "schoolId": "school-acceptance-1793218304367",
+      "entityType": "student",
+      "entityId": "stud-conf-1793218308860",
+      "detectedAt": "2026-10-28T20:11:48.867Z",
+      "existingVersion": 2,
+      "incomingVersion": 1,
+      "existingPayload": {
+        "id": "stud-conf-1793218308860",
+        "fullName": "Original Student Name",
+        "classGrade": "Grade 5",
+        "version": 2
+      },
+      "incomingPayload": {
+        "id": "stud-conf-1793218308860",
+        "fullName": "Diverged Conflict Name",
+        "classGrade": "Grade 6",
+        "version": 1
+      },
+      "resolutionStatus": "RESOLVED_EXISTING",
+      "auditTrail": [
+        "[2026-10-28T20:11:48.867Z] Conflict detected by SyncEngine on critical record student:stud-conf-1793218308860. Both versions preserved safely.",
+        "[2026-10-28T20:11:48.876Z] Resolved by Tester with decision: KEEP_EXISTING"
+      ],
+      "resolvedBy": "Tester (Administrator)",
+      "resolvedAt": "2026-10-28T20:11:48.876Z"
+    },
     {
       "conflictId": "CONF-20261028-7231",
       "operationId": "OP-CONF-1793216374298",
@@ -14228,6 +14812,58 @@
     }
   ],
   "quarantinedOperations": [
+    {
+      "operationId": "OP-CONF-1793218584094",
+      "schoolId": "school-acceptance-1793218579550",
+      "deviceId": "dev-conf-01",
+      "userId": "usr-registrar",
+      "userRole": "Registrar",
+      "entityType": "student",
+      "entityId": "stud-conf-1793218584087",
+      "action": "UPDATE",
+      "version": 1,
+      "timestamp": "2026-10-28T20:16:24.094Z",
+      "payload": {
+        "id": "stud-conf-1793218584087",
+        "fullName": "Diverged Conflict Name",
+        "classGrade": "Grade 6",
+        "version": 1
+      },
+      "checksum": "e54dba6fe7fc8fd9ddaa5690d7fed55667645c25965ebb39debddbb2e63a36df",
+      "status": "SYNCED",
+      "retryCount": 0,
+      "createdAt": "2026-10-28T20:16:24.094Z",
+      "conflictId": "CONF-20261028-8338",
+      "lastAttemptAt": "2026-10-28T20:16:24.094Z",
+      "errorState": "CRITICAL_RECORD_VERSION_CONFLICT",
+      "resolvedAt": "2026-10-28T20:16:24.102Z"
+    },
+    {
+      "operationId": "OP-CONF-1793218308867",
+      "schoolId": "school-acceptance-1793218304367",
+      "deviceId": "dev-conf-01",
+      "userId": "usr-registrar",
+      "userRole": "Registrar",
+      "entityType": "student",
+      "entityId": "stud-conf-1793218308860",
+      "action": "UPDATE",
+      "version": 1,
+      "timestamp": "2026-10-28T20:11:48.867Z",
+      "payload": {
+        "id": "stud-conf-1793218308860",
+        "fullName": "Diverged Conflict Name",
+        "classGrade": "Grade 6",
+        "version": 1
+      },
+      "checksum": "2b46326fb188b11fdab01951fe2c010cbdf975bbaec27222b09661f903e2427f",
+      "status": "SYNCED",
+      "retryCount": 0,
+      "createdAt": "2026-10-28T20:11:48.867Z",
+      "conflictId": "CONF-20261028-9349",
+      "lastAttemptAt": "2026-10-28T20:11:48.867Z",
+      "errorState": "CRITICAL_RECORD_VERSION_CONFLICT",
+      "resolvedAt": "2026-10-28T20:11:48.876Z"
+    },
     {
       "operationId": "OP-CONF-1793216374298",
       "schoolId": "school-acceptance-1793216369918",
@@ -15855,6 +16491,216 @@
     }
   ],
   "resilienceEvents": [
+    {
+      "healId": "HEAL-20261028-8770",
+      "errorId": "ERR-20261028-6811",
+      "timestamp": "2026-10-28T20:16:24.205Z",
+      "schoolId": "default",
+      "module": "HardwarePrinterBridge",
+      "failure": "Unable to establish serial communication handshake",
+      "diagnosis": "Infinite repair loop prevented: Maximum attempt threshold (1) reached without successful verification.",
+      "repairLevel": 1,
+      "action": "Autonomous repair halted to prevent infinite loop. Escalated to Administrator.",
+      "verification": "FAILED",
+      "result": "FAILED",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "ADMIN_APPROVAL_REQUIRED"
+    },
+    {
+      "healId": "HEAL-20261028-1412",
+      "errorId": "ERR-20261028-2357",
+      "timestamp": "2026-10-28T20:16:24.190Z",
+      "schoolId": "default",
+      "module": "HardwarePrinterBridge",
+      "failure": "Unable to establish serial communication handshake",
+      "diagnosis": "Automated health evaluation detected subsystem abnormality",
+      "repairLevel": 1,
+      "action": "Initiated guarded repair attempt #1 (Repair threw exception: Hardware connection timeout (Device not ready)) -> Verification FAILED: Safely executed rollback procedure",
+      "verification": "FAILED",
+      "result": "ROLLED_BACK",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "ADMIN_APPROVAL_REQUIRED"
+    },
+    {
+      "healId": "HEAL-20261028-9630",
+      "errorId": "ERR-20261028-2043",
+      "timestamp": "2026-10-28T20:16:24.148Z",
+      "schoolId": "default",
+      "module": "AuthoritativeDataProtection:feeStructure",
+      "failure": "Discrepancy detected in authoritative record feeStructure:fee-term-1",
+      "diagnosis": "Discrepancy detected between cashier receipt and student fee account",
+      "repairLevel": 3,
+      "action": "Automatic modification blocked. Record quarantined with evidence preserved.",
+      "verification": "PASSED",
+      "result": "QUARANTINED",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "ADMIN_APPROVAL_REQUIRED"
+    },
+    {
+      "healId": "HEAL-20261028-4322",
+      "errorId": "ERR-20261028-6029",
+      "timestamp": "2026-10-28T20:16:24.141Z",
+      "schoolId": "default",
+      "module": "FileSystemStorage",
+      "failure": "Residual temporary .tmp files detected in data directory",
+      "diagnosis": "Interrupted atomic write or process restart during flush",
+      "repairLevel": 1,
+      "action": "Identified and purged stale .tmp files older than 15 minutes (Purged 0 stale .tmp files)",
+      "verification": "PASSED",
+      "result": "SUCCESS",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "NONE"
+    },
+    {
+      "healId": "HEAL-20261028-2437",
+      "errorId": "ERR-20261028-6593",
+      "timestamp": "2026-10-28T20:16:24.127Z",
+      "schoolId": "default",
+      "module": "SyncEngine",
+      "failure": "Sync operations stuck in SYNCING state beyond timeout window (>5 mins)",
+      "diagnosis": "Client disconnect or interrupted network transfer during sync push",
+      "repairLevel": 1,
+      "action": "Reset stuck SYNCING operations back to PENDING with exponential retry backoff (Reset 0 items to PENDING)",
+      "verification": "PASSED",
+      "result": "SUCCESS",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "NONE"
+    },
+    {
+      "healId": "HEAL-20261028-4869",
+      "errorId": "ERR-20261028-8072",
+      "timestamp": "2026-10-28T20:16:24.119Z",
+      "schoolId": "default",
+      "module": "BackgroundWorker",
+      "failure": "Background worker timer stopped or unhandled tick timeout",
+      "diagnosis": "Worker loop halted during scheduled pass",
+      "repairLevel": 1,
+      "action": "Terminated stale timer handle and reinitialized worker with clean 60s interval",
+      "verification": "PASSED",
+      "result": "SUCCESS",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "NONE"
+    },
+    {
+      "healId": "HEAL-20261028-3799",
+      "errorId": "ERR-20261028-8613",
+      "timestamp": "2026-10-28T20:16:24.119Z",
+      "schoolId": "default",
+      "module": "LocalStorageEngine",
+      "failure": "Detected in-memory cache drift or invalid reference integrity",
+      "diagnosis": "Volatile in-memory cache desynchronized from persistent store",
+      "repairLevel": 1,
+      "action": "Flushed in-memory cache and performed authoritative reload from disk/PostgreSQL",
+      "verification": "PASSED",
+      "result": "SUCCESS",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "NONE"
+    },
+    {
+      "healId": "HEAL-20261028-8325",
+      "errorId": "ERR-20261028-5101",
+      "timestamp": "2026-10-28T20:11:48.975Z",
+      "schoolId": "default",
+      "module": "HardwarePrinterBridge",
+      "failure": "Unable to establish serial communication handshake",
+      "diagnosis": "Infinite repair loop prevented: Maximum attempt threshold (1) reached without successful verification.",
+      "repairLevel": 1,
+      "action": "Autonomous repair halted to prevent infinite loop. Escalated to Administrator.",
+      "verification": "FAILED",
+      "result": "FAILED",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "ADMIN_APPROVAL_REQUIRED"
+    },
+    {
+      "healId": "HEAL-20261028-1614",
+      "errorId": "ERR-20261028-3608",
+      "timestamp": "2026-10-28T20:11:48.959Z",
+      "schoolId": "default",
+      "module": "HardwarePrinterBridge",
+      "failure": "Unable to establish serial communication handshake",
+      "diagnosis": "Automated health evaluation detected subsystem abnormality",
+      "repairLevel": 1,
+      "action": "Initiated guarded repair attempt #1 (Repair threw exception: Hardware connection timeout (Device not ready)) -> Verification FAILED: Safely executed rollback procedure",
+      "verification": "FAILED",
+      "result": "ROLLED_BACK",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "ADMIN_APPROVAL_REQUIRED"
+    },
+    {
+      "healId": "HEAL-20261028-7063",
+      "errorId": "ERR-20261028-7639",
+      "timestamp": "2026-10-28T20:11:48.924Z",
+      "schoolId": "default",
+      "module": "AuthoritativeDataProtection:feeStructure",
+      "failure": "Discrepancy detected in authoritative record feeStructure:fee-term-1",
+      "diagnosis": "Discrepancy detected between cashier receipt and student fee account",
+      "repairLevel": 3,
+      "action": "Automatic modification blocked. Record quarantined with evidence preserved.",
+      "verification": "PASSED",
+      "result": "QUARANTINED",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "ADMIN_APPROVAL_REQUIRED"
+    },
+    {
+      "healId": "HEAL-20261028-7544",
+      "errorId": "ERR-20261028-6436",
+      "timestamp": "2026-10-28T20:11:48.916Z",
+      "schoolId": "default",
+      "module": "FileSystemStorage",
+      "failure": "Residual temporary .tmp files detected in data directory",
+      "diagnosis": "Interrupted atomic write or process restart during flush",
+      "repairLevel": 1,
+      "action": "Identified and purged stale .tmp files older than 15 minutes (Purged 0 stale .tmp files)",
+      "verification": "PASSED",
+      "result": "SUCCESS",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "NONE"
+    },
+    {
+      "healId": "HEAL-20261028-1790",
+      "errorId": "ERR-20261028-6214",
+      "timestamp": "2026-10-28T20:11:48.900Z",
+      "schoolId": "default",
+      "module": "SyncEngine",
+      "failure": "Sync operations stuck in SYNCING state beyond timeout window (>5 mins)",
+      "diagnosis": "Client disconnect or interrupted network transfer during sync push",
+      "repairLevel": 1,
+      "action": "Reset stuck SYNCING operations back to PENDING with exponential retry backoff (Reset 0 items to PENDING)",
+      "verification": "PASSED",
+      "result": "SUCCESS",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "NONE"
+    },
+    {
+      "healId": "HEAL-20261028-9214",
+      "errorId": "ERR-20261028-3054",
+      "timestamp": "2026-10-28T20:11:48.891Z",
+      "schoolId": "default",
+      "module": "BackgroundWorker",
+      "failure": "Background worker timer stopped or unhandled tick timeout",
+      "diagnosis": "Worker loop halted during scheduled pass",
+      "repairLevel": 1,
+      "action": "Terminated stale timer handle and reinitialized worker with clean 60s interval",
+      "verification": "PASSED",
+      "result": "SUCCESS",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "NONE"
+    },
+    {
+      "healId": "HEAL-20261028-8895",
+      "errorId": "ERR-20261028-6595",
+      "timestamp": "2026-10-28T20:11:48.890Z",
+      "schoolId": "default",
+      "module": "LocalStorageEngine",
+      "failure": "Detected in-memory cache drift or invalid reference integrity",
+      "diagnosis": "Volatile in-memory cache desynchronized from persistent store",
+      "repairLevel": 1,
+      "action": "Flushed in-memory cache and performed authoritative reload from disk/PostgreSQL",
+      "verification": "PASSED",
+      "result": "SUCCESS",
+      "dataLossStatus": "NONE",
+      "adminRequirement": "NONE"
+    },
     {
       "healId": "HEAL-20261028-8329",
       "errorId": "ERR-20261028-2953",
@@ -22091,7 +22937,57 @@
       "status": "ACTIVE"
     },
     {
-      "id": "stu-test-single-1793216373194",
+      "id": "stud-test-1793216374263",
+      "fullName": "Test Student",
+      "admissionNumber": "ADM-TEST-1"
+    },
+    {
+      "id": "stud-e2e-1793216374434",
+      "fullName": "V6 Candidate Student",
+      "classGrade": "Senior 1",
+      "admissionNumber": "ADM-4434",
+      "status": "ACTIVE",
+      "schoolId": "default"
+    },
+    {
+      "id": "std-test-rec-1",
+      "schoolId": "school-acceptance-1793218304367",
+      "userId": "usr-student-test",
+      "firstName": "Emmanuel",
+      "lastName": "Mugisha",
+      "parentContact": "parent@stjude.ug",
+      "parentUserId": "usr-parent-test",
+      "classGrade": "Senior 4",
+      "stream": "North",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "stud-test-1793218308844",
+      "fullName": "Test Student",
+      "admissionNumber": "ADM-TEST-1"
+    },
+    {
+      "id": "stud-e2e-1793218309027",
+      "fullName": "V6 Candidate Student",
+      "classGrade": "Senior 1",
+      "admissionNumber": "ADM-9027",
+      "status": "ACTIVE",
+      "schoolId": "default"
+    },
+    {
+      "id": "std-test-rec-1",
+      "schoolId": "school-acceptance-1793218579550",
+      "userId": "usr-student-test",
+      "firstName": "Emmanuel",
+      "lastName": "Mugisha",
+      "parentContact": "parent@stjude.ug",
+      "parentUserId": "usr-parent-test",
+      "classGrade": "Senior 4",
+      "stream": "North",
+      "status": "ACTIVE"
+    },
+    {
+      "id": "stu-test-single-1793218582851",
       "studentId": "LIN-2026-9001",
       "admissionNumber": "ADM-2026-9001",
       "firstName": "Kwame",
@@ -22106,7 +23002,7 @@
       "status": "Active"
     },
     {
-      "id": "stu-test-two-1793216373194",
+      "id": "stu-test-two-1793218582851",
       "studentId": "LIN-2026-9002",
       "admissionNumber": "ADM-2026-9002",
       "firstName": "John",
@@ -22121,7 +23017,7 @@
       "status": "Active"
     },
     {
-      "id": "stu-test-three-1793216373194",
+      "id": "stu-test-three-1793218582851",
       "studentId": "LIN-2026-9003",
       "admissionNumber": "ADM-2026-9003",
       "firstName": "Sarah",
@@ -22136,7 +23032,7 @@
       "status": "Active"
     },
     {
-      "id": "stu-test-compound-1793216373194",
+      "id": "stu-test-compound-1793218582851",
       "studentId": "LIN-2026-9004",
       "admissionNumber": "ADM-2026-9004",
       "firstName": "Jean-Luc",
@@ -22151,23 +23047,23 @@
       "status": "Active"
     },
     {
-      "id": "stud-test-1793216374263",
+      "id": "stud-test-1793218584073",
       "fullName": "Test Student",
       "admissionNumber": "ADM-TEST-1"
     },
     {
-      "id": "stud-e2e-1793216374434",
+      "id": "stud-e2e-1793218584262",
       "fullName": "V6 Candidate Student",
       "classGrade": "Senior 1",
-      "admissionNumber": "ADM-4434",
+      "admissionNumber": "ADM-4262",
       "status": "ACTIVE",
       "schoolId": "default"
     }
   ],
   "guardians": [
     {
-      "id": "gdn-test-1-1793216373200",
-      "studentId": "stu-test-two-1793216373194",
+      "id": "gdn-test-1-1793218582857",
+      "studentId": "stu-test-two-1793218582851",
       "fullName": "Mary Doe",
       "relationship": "Mother",
       "phoneNumber": "+256 701 112 233",
@@ -22177,8 +23073,8 @@
       "isEmergencyContact": true
     },
     {
-      "id": "gdn-test-2-1793216373201",
-      "studentId": "stu-test-three-1793216373194",
+      "id": "gdn-test-2-1793218582858",
+      "studentId": "stu-test-three-1793218582851",
       "fullName": "Dr. Charles Kigozi Mukasa",
       "relationship": "Father",
       "phoneNumber": "+256 772 445 566",
@@ -22190,7 +23086,7 @@
   ],
   "admissions": [
     {
-      "id": "app-test-1793216373213",
+      "id": "app-test-1793218582899",
       "applicationNumber": "APP-2026-9099",
       "applicantFirstName": "Amina",
       "applicantMiddleName": "",
@@ -22822,6 +23718,20 @@
     {
       "id": "att-test-1793216372647",
       "schoolId": "school-acceptance-1793216369918",
+      "studentId": "std-test-rec-1",
+      "status": "PRESENT",
+      "date": "2026-10-28"
+    },
+    {
+      "id": "att-test-1793218307060",
+      "schoolId": "school-acceptance-1793218304367",
+      "studentId": "std-test-rec-1",
+      "status": "PRESENT",
+      "date": "2026-10-28"
+    },
+    {
+      "id": "att-test-1793218582268",
+      "schoolId": "school-acceptance-1793218579550",
       "studentId": "std-test-rec-1",
       "status": "PRESENT",
       "date": "2026-10-28"
@@ -24291,6 +25201,50 @@
       "receiptNumber": "REC-1793216374440",
       "status": "VERIFIED",
       "schoolId": "default"
+    },
+    {
+      "id": "pay-test-001",
+      "schoolId": "school-acceptance-1793218304367",
+      "studentId": "std-test-rec-1",
+      "amount": 750000,
+      "currency": "UGX",
+      "paymentMethod": "PESAPAL_MOBILE_MONEY",
+      "transactionReference": "TX-PESA-1793218307043",
+      "status": "PAID",
+      "recordedBy": "usr-bursar-test",
+      "timestamp": "2026-10-28T20:11:47.043Z"
+    },
+    {
+      "id": "pay-e2e-1793218309034",
+      "studentId": "stud-e2e-1793218309027",
+      "amount": 650000,
+      "currency": "UGX",
+      "method": "CASH",
+      "receiptNumber": "REC-1793218309034",
+      "status": "VERIFIED",
+      "schoolId": "default"
+    },
+    {
+      "id": "pay-test-001",
+      "schoolId": "school-acceptance-1793218579550",
+      "studentId": "std-test-rec-1",
+      "amount": 750000,
+      "currency": "UGX",
+      "paymentMethod": "PESAPAL_MOBILE_MONEY",
+      "transactionReference": "TX-PESA-1793218582251",
+      "status": "PAID",
+      "recordedBy": "usr-bursar-test",
+      "timestamp": "2026-10-28T20:16:22.251Z"
+    },
+    {
+      "id": "pay-e2e-1793218584268",
+      "studentId": "stud-e2e-1793218584262",
+      "amount": 650000,
+      "currency": "UGX",
+      "method": "CASH",
+      "receiptNumber": "REC-1793218584268",
+      "status": "VERIFIED",
+      "schoolId": "default"
     }
   ],
   "scholarships": [],
@@ -25547,6 +26501,34 @@
       "memberCount": 1,
       "createdAt": "2026-10-28T19:39:32.640Z",
       "updatedAt": "2026-10-28T19:39:32.640Z"
+    },
+    {
+      "id": "grp-acceptance-debate",
+      "schoolId": "school-acceptance-1793218304367",
+      "name": "National Inter-School Debate Society",
+      "type": "CLUB",
+      "visibility": "SCHOOL_DISCOVERABLE",
+      "status": "ACTIVE",
+      "ownerId": "usr-teacher-test",
+      "ownerName": "Test Teacher User",
+      "ownerRole": "Teacher",
+      "memberCount": 1,
+      "createdAt": "2026-10-28T20:11:47.053Z",
+      "updatedAt": "2026-10-28T20:11:47.053Z"
+    },
+    {
+      "id": "grp-acceptance-debate",
+      "schoolId": "school-acceptance-1793218579550",
+      "name": "National Inter-School Debate Society",
+      "type": "CLUB",
+      "visibility": "SCHOOL_DISCOVERABLE",
+      "status": "ACTIVE",
+      "ownerId": "usr-teacher-test",
+      "ownerName": "Test Teacher User",
+      "ownerRole": "Teacher",
+      "memberCount": 1,
+      "createdAt": "2026-10-28T20:16:22.261Z",
+      "updatedAt": "2026-10-28T20:16:22.261Z"
     }
   ],
   "groupMemberships": [],
@@ -26521,6 +27503,28 @@
       "content": "Looking forward to the national parliamentary debate tournament on Friday!",
       "status": "ACTIVE",
       "createdAt": "2026-10-28T19:39:32.640Z"
+    },
+    {
+      "id": "msg-test-safe",
+      "schoolId": "school-acceptance-1793218304367",
+      "groupId": "grp-acceptance-debate",
+      "senderId": "usr-student-test",
+      "senderName": "Test Student User",
+      "senderRole": "Student",
+      "content": "Looking forward to the national parliamentary debate tournament on Friday!",
+      "status": "ACTIVE",
+      "createdAt": "2026-10-28T20:11:47.053Z"
+    },
+    {
+      "id": "msg-test-safe",
+      "schoolId": "school-acceptance-1793218579550",
+      "groupId": "grp-acceptance-debate",
+      "senderId": "usr-student-test",
+      "senderName": "Test Student User",
+      "senderRole": "Student",
+      "content": "Looking forward to the national parliamentary debate tournament on Friday!",
+      "status": "ACTIVE",
+      "createdAt": "2026-10-28T20:16:22.261Z"
     }
   ],
   "communityAnnouncements": [],
@@ -27316,6 +28320,24 @@
       "category": "STEM & Robotics",
       "status": "SUBMITTED",
       "createdAt": "2026-10-28T19:39:32.616Z"
+    },
+    {
+      "id": "prj-test-101",
+      "schoolId": "school-acceptance-1793218304367",
+      "studentId": "usr-student-test",
+      "title": "Solar Powered Automated Irrigation Model",
+      "category": "STEM & Robotics",
+      "status": "SUBMITTED",
+      "createdAt": "2026-10-28T20:11:47.027Z"
+    },
+    {
+      "id": "prj-test-101",
+      "schoolId": "school-acceptance-1793218579550",
+      "studentId": "usr-student-test",
+      "title": "Solar Powered Automated Irrigation Model",
+      "category": "STEM & Robotics",
+      "status": "SUBMITTED",
+      "createdAt": "2026-10-28T20:16:22.235Z"
     }
   ],
   "communityReports": [],
@@ -27344,6 +28366,22 @@
       "scansCount": 0,
       "createdAt": "2026-10-28T19:31:11.334Z",
       "rotatedAt": "2026-10-28T19:31:11.334Z",
+      "createdBy": "System Root Authority"
+    },
+    {
+      "id": "qr-school-acceptance-1793216369918",
+      "schoolId": "school-acceptance-1793216369918",
+      "code": "SCH-ID-UG-schoolacceptance1793216369918",
+      "accessIdentifier": "ACC-7DBDE04DB75BACB6",
+      "endpointUrl": "https://schoolsoul.org/verify/school?id=school-acceptance-1793216369918&sig=7DBDE04DB75BACB6",
+      "signature": "7DBDE04DB75BACB6",
+      "version": "2026.1.0",
+      "status": "ACTIVE",
+      "scope": "UNIVERSAL_DISCOVERY",
+      "description": "Official Universal Digital Verification Identity for undefined",
+      "scansCount": 0,
+      "createdAt": "2026-10-28T20:09:56.139Z",
+      "rotatedAt": "2026-10-28T20:09:56.139Z",
       "createdBy": "System Root Authority"
     }
   ],
@@ -33872,6 +34910,170 @@
       ],
       "createdAt": "2026-10-28T19:39:33.139Z",
       "updatedAt": "2026-10-28T19:39:33.139Z"
+    },
+    {
+      "id": "mkt-test-draft-school-b",
+      "schoolId": "school-market-tenant-B",
+      "title": "School B Secret Invention Prototype",
+      "category": "Innovation Product",
+      "price": 150000,
+      "currency": "UGX",
+      "inventoryCount": 1,
+      "studentCreator": "Student B",
+      "grade": "Form 4",
+      "description": "Confidential draft.",
+      "status": "Pending Moderation",
+      "isPublished": false,
+      "qrCode": "SCH-B-PROT-01",
+      "sellerId": "usr-student-b",
+      "orders": []
+    },
+    {
+      "id": "mkt-test-pub-school-b",
+      "schoolId": "school-market-tenant-B",
+      "title": "School B Honey Jar",
+      "category": "Agricultural Produce",
+      "price": 30000,
+      "currency": "UGX",
+      "inventoryCount": 5,
+      "studentCreator": "Student B",
+      "grade": "Form 4",
+      "description": "School B honey.",
+      "status": "Active",
+      "isPublished": true,
+      "qrCode": "SCH-B-HONEY-01",
+      "sellerId": "usr-student-b",
+      "orders": []
+    },
+    {
+      "id": "mkt-test-prod-lifecycle-1",
+      "schoolId": "school-market-tenant-A",
+      "title": "School Apiary Pure Honey Jar (500g)",
+      "category": "Agricultural Produce",
+      "price": 25000,
+      "currency": "UGX",
+      "inventoryCount": 18,
+      "studentCreator": "Senior 3 Agri Club",
+      "grade": "Senior 3 Stream A",
+      "description": "Fresh organic honey from school apiary.",
+      "status": "Active",
+      "isPublished": true,
+      "qrCode": "SCH-MKT-HONEY-001",
+      "sellerId": "usr-student-seller-1",
+      "sellerName": "Student Agri Lead",
+      "primaryImage": "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+      "images": [
+        "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+        "data:image/jpeg;base64,/9j/4AAQSkZJRg=="
+      ],
+      "mediaImages": [
+        {
+          "id": "img-1-honey-front",
+          "url": "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+          "thumbnailUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+          "isPrimary": true,
+          "caption": "Front Jar Label",
+          "fileSizeBytes": 1024,
+          "mimeType": "image/jpeg"
+        }
+      ],
+      "orders": [
+        {
+          "id": "ord-test-1",
+          "orderNumber": "ORD-SCH-2026-7887",
+          "buyerName": "Mrs. Grace Mukasa (Parent)",
+          "buyerPhone": "+256 772 000111",
+          "quantity": 2,
+          "totalPrice": 50000,
+          "status": "Approved & Scheduled",
+          "collectionDate": "2026-08-25",
+          "qrCollectionToken": "QR-PICKUP-ORD-SCH-2026-7887"
+        }
+      ],
+      "createdAt": "2026-10-28T20:11:47.559Z",
+      "updatedAt": "2026-10-28T20:11:47.559Z"
+    },
+    {
+      "id": "mkt-test-draft-school-b",
+      "schoolId": "school-market-tenant-B",
+      "title": "School B Secret Invention Prototype",
+      "category": "Innovation Product",
+      "price": 150000,
+      "currency": "UGX",
+      "inventoryCount": 1,
+      "studentCreator": "Student B",
+      "grade": "Form 4",
+      "description": "Confidential draft.",
+      "status": "Pending Moderation",
+      "isPublished": false,
+      "qrCode": "SCH-B-PROT-01",
+      "sellerId": "usr-student-b",
+      "orders": []
+    },
+    {
+      "id": "mkt-test-pub-school-b",
+      "schoolId": "school-market-tenant-B",
+      "title": "School B Honey Jar",
+      "category": "Agricultural Produce",
+      "price": 30000,
+      "currency": "UGX",
+      "inventoryCount": 5,
+      "studentCreator": "Student B",
+      "grade": "Form 4",
+      "description": "School B honey.",
+      "status": "Active",
+      "isPublished": true,
+      "qrCode": "SCH-B-HONEY-01",
+      "sellerId": "usr-student-b",
+      "orders": []
+    },
+    {
+      "id": "mkt-test-prod-lifecycle-1",
+      "schoolId": "school-market-tenant-A",
+      "title": "School Apiary Pure Honey Jar (500g)",
+      "category": "Agricultural Produce",
+      "price": 25000,
+      "currency": "UGX",
+      "inventoryCount": 18,
+      "studentCreator": "Senior 3 Agri Club",
+      "grade": "Senior 3 Stream A",
+      "description": "Fresh organic honey from school apiary.",
+      "status": "Active",
+      "isPublished": true,
+      "qrCode": "SCH-MKT-HONEY-001",
+      "sellerId": "usr-student-seller-1",
+      "sellerName": "Student Agri Lead",
+      "primaryImage": "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+      "images": [
+        "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+        "data:image/jpeg;base64,/9j/4AAQSkZJRg=="
+      ],
+      "mediaImages": [
+        {
+          "id": "img-1-honey-front",
+          "url": "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+          "thumbnailUrl": "data:image/jpeg;base64,/9j/4AAQSkZJRg==",
+          "isPrimary": true,
+          "caption": "Front Jar Label",
+          "fileSizeBytes": 1024,
+          "mimeType": "image/jpeg"
+        }
+      ],
+      "orders": [
+        {
+          "id": "ord-test-1",
+          "orderNumber": "ORD-SCH-2026-1340",
+          "buyerName": "Mrs. Grace Mukasa (Parent)",
+          "buyerPhone": "+256 772 000111",
+          "quantity": 2,
+          "totalPrice": 50000,
+          "status": "Approved & Scheduled",
+          "collectionDate": "2026-08-25",
+          "qrCollectionToken": "QR-PICKUP-ORD-SCH-2026-1340"
+        }
+      ],
+      "createdAt": "2026-10-28T20:16:22.787Z",
+      "updatedAt": "2026-10-28T20:16:22.787Z"
     }
   ],
   "marketOrders": [],
@@ -33902,6 +35104,30 @@
   "systemHealthLogs": [],
   "schoolGatewaySettings": [],
   "backups": [
+    {
+      "backupId": "bkp-1793218582275",
+      "schoolId": "school-acceptance-1793218579550",
+      "timestamp": "2026-10-28T20:16:22.275Z",
+      "entityCounts": {
+        "users": 66,
+        "students": 208,
+        "attendance": 90,
+        "payments": 131
+      },
+      "checksum": "sha256-1793218582275"
+    },
+    {
+      "backupId": "bkp-1793218307067",
+      "schoolId": "school-acceptance-1793218304367",
+      "timestamp": "2026-10-28T20:11:47.067Z",
+      "entityCounts": {
+        "users": 65,
+        "students": 205,
+        "attendance": 89,
+        "payments": 129
+      },
+      "checksum": "sha256-1793218307067"
+    },
     {
       "backupId": "bkp-1793216372654",
       "schoolId": "school-acceptance-1793216369918",
@@ -34961,7 +36187,7 @@
   ],
   "staffProfiles": [
     {
-      "id": "stf-test-1-1793216373207",
+      "id": "stf-test-1-1793218582866",
       "staffCode": "STF-TEST-001",
       "fullName": "Esther Nalubega",
       "email": "esther.nalubega@school.ug",
@@ -34973,7 +36199,7 @@
       "status": "Active"
     },
     {
-      "id": "stf-test-2-1793216373207",
+      "id": "stf-test-2-1793218582866",
       "staffCode": "STF-TEST-002",
       "fullName": "David Patrick Semwogerere",
       "email": "david.semwogerere@school.ug",
