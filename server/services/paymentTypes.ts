@@ -3,9 +3,10 @@
  * Provider-Agnostic Payment Contract & Data Types
  */
 
-export type PaymentGatewayType = 'PESAPAL' | 'FLUTTERWAVE' | 'STRIPE' | 'SANDBOX';
+export type PaymentGatewayType = 'PESAPAL' | 'FLUTTERWAVE' | 'STRIPE' | 'MTN_MOMO' | 'AIRTEL_MONEY' | 'BANK_TRANSFER' | 'BANK_PAYMENT' | 'SANDBOX';
 
 export type PaymentLifecycleStatus =
+  | 'INITIATED'
   | 'CREATED'
   | 'PENDING'
   | 'PROCESSING'
@@ -31,16 +32,18 @@ export interface UnifiedPaymentMethod {
 export interface UnifiedPaymentRequest {
   idempotencyKey?: string;
   schoolId: string;
+  schoolName?: string;
   invoiceId: string;
   subscriptionId?: string;
   amount: number;
   currency: string;
-  countryCode: string;
+  countryCode?: string;
   description: string;
-  customerEmail: string;
+  customerEmail?: string;
   customerName: string;
   customerPhone?: string;
   paymentMethod?: string;
+  paymentMethodId?: string;
   callbackUrl?: string;
   metadata?: Record<string, any>;
 }
@@ -58,6 +61,7 @@ export interface UnifiedPaymentResponse {
   instructions: string;
   isIdempotentReplay?: boolean;
   signatureSha256?: string;
+  errorMessage?: string;
   rawResponse?: any;
 }
 
@@ -76,6 +80,7 @@ export interface UnifiedVerificationResult {
   receiptNumber?: string;
   signatureSha256?: string;
   failureReason?: string;
+  isSettled?: boolean;
   rawDetails?: any;
 }
 
@@ -90,6 +95,7 @@ export interface UnifiedWebhookResult {
   signatureValid: boolean;
   schoolId?: string;
   message?: string;
+  eventType?: string;
 }
 
 export interface UnifiedRefundResult {

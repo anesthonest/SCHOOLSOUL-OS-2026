@@ -24,6 +24,7 @@ import {
   formatUGX,
   recalculateStudentAccount,
 } from '../services/financeApi';
+import { UniversalPaymentSelector } from '../components/billing/UniversalPaymentSelector';
 import type { StudentFeeAccount, PaymentRecord, ScholarshipRecord } from '../types';
 
 export const StudentFeeAccountsPage: React.FC = () => {
@@ -38,6 +39,7 @@ export const StudentFeeAccountsPage: React.FC = () => {
   const [accountPayments, setAccountPayments] = useState<PaymentRecord[]>([]);
   const [accountScholarships, setAccountScholarships] = useState<ScholarshipRecord[]>([]);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   useEffect(() => {
     loadAccounts();
@@ -337,23 +339,60 @@ export const StudentFeeAccountsPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Print Statement Button */}
-              <div className="pt-4 border-t border-slate-800 flex justify-end gap-3">
-                <button
-                  onClick={() => window.print()}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2"
-                >
-                  <Printer className="w-4 h-4" /> Print Fee Statement
-                </button>
-                <button
-                  onClick={() => setIsDetailOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
-                >
-                  Done
-                </button>
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                {selectedAccount.outstandingBalanceUGX > 0 && (
+                  <button
+                    onClick={() => setIsPaymentModalOpen(true)}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-emerald-600/20 cursor-pointer min-h-[48px]"
+                  >
+                    <CreditCard className="w-4 h-4" /> Pay Fees via Mobile Money / Pesapal
+                  </button>
+                )}
+                <div className="flex items-center gap-2 ml-auto">
+                  <button
+                    onClick={() => window.print()}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-2 min-h-[48px]"
+                  >
+                    <Printer className="w-4 h-4" /> Print Fee Statement
+                  </button>
+                  <button
+                    onClick={() => setIsDetailOpen(false)}
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold min-h-[48px]"
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Online Fee Payment Modal */}
+      {isPaymentModalOpen && selectedAccount && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <UniversalPaymentSelector
+            item={{
+              purpose: 'STUDENT_FEES',
+              title: `School Fee Settlement`,
+              subtitle: `Student: ${selectedAccount.studentName} (${selectedAccount.admissionNumber})`,
+              studentId: selectedAccount.studentId,
+              studentName: selectedAccount.studentName,
+              schoolId: (selectedAccount as any).schoolId || 'sch-stmarys-ug',
+              schoolName: 'St. Mary’s College Kisubi',
+              amount: selectedAccount.outstandingBalanceUGX,
+              currency: 'UGX',
+            }}
+            initialMethod="MTN_MOMO"
+            onSuccess={async (receipt) => {
+              setIsPaymentModalOpen(false);
+              // Refresh this student account and accounts list
+              await handleOpenDetail(selectedAccount);
+              await loadAccounts();
+            }}
+            onCancel={() => setIsPaymentModalOpen(false)}
+          />
         </div>
       )}
     </div>

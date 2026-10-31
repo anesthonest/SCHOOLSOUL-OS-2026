@@ -17,12 +17,15 @@ import { API_BASE, getAuthHeaders } from '../../services/api';
 interface JoinRequest {
   id: string;
   schoolId: string;
+  schoolName?: string;
   fullName: string;
   username: string;
   email?: string;
   phone?: string;
+  memberCategory?: string;
   requestedRole: string;
   effectiveRole?: string;
+  approvedRole?: string;
   status: 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
   requestOrigin?: string;
   invitationToken?: string;
@@ -30,6 +33,23 @@ interface JoinRequest {
   notes?: string;
   requestedAt: string;
   reviewerComment?: string;
+  decisionReason?: string;
+  // Role-specific fields
+  dateOfBirth?: string;
+  classGrade?: string;
+  stream?: string;
+  admissionNumber?: string;
+  relationship?: string;
+  childName?: string;
+  childAdmissionNumber?: string;
+  childClass?: string;
+  department?: string;
+  subjectsTaught?: string | string[];
+  staffCategory?: string;
+  jobTitle?: string;
+  staffId?: string;
+  position?: string;
+  requiresAdminVerification?: boolean;
 }
 
 interface SchoolJoinRequestsModalProps {
@@ -286,9 +306,60 @@ export const SchoolJoinRequestsModal: React.FC<SchoolJoinRequestsModalProps> = (
                         <span>Requested: {new Date(r.requestedAt).toLocaleDateString()}</span>
                       </div>
 
+                      {/* Role-Specific Credential Breakdown */}
+                      <div className="mt-2 p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] space-y-1">
+                        {r.memberCategory === 'Student' && (
+                          <div className="flex items-center gap-3 flex-wrap text-blue-700 dark:text-blue-300">
+                            <span className="font-bold">Student Record:</span>
+                            {r.classGrade && <span>Class: <strong>{r.classGrade}</strong> ({r.stream || 'Stream A'})</span>}
+                            {r.admissionNumber && <span>LIN/Admission: <strong>{r.admissionNumber}</strong></span>}
+                            {r.dateOfBirth && <span>DOB: {r.dateOfBirth}</span>}
+                          </div>
+                        )}
+
+                        {r.memberCategory === 'Parent' && (
+                          <div className="flex items-center gap-3 flex-wrap text-emerald-700 dark:text-emerald-300">
+                            <span className="font-bold">Parent / Guardian:</span>
+                            <span>Relationship: <strong>{r.relationship || 'Guardian'}</strong></span>
+                            {r.childName && <span>Linked Child: <strong>{r.childName}</strong></span>}
+                            {r.childAdmissionNumber && <span>Child LIN: <strong>{r.childAdmissionNumber}</strong></span>}
+                            {r.childClass && <span>Child Class: {r.childClass}</span>}
+                          </div>
+                        )}
+
+                        {r.memberCategory === 'Teacher' && (
+                          <div className="flex items-center gap-3 flex-wrap text-purple-700 dark:text-purple-300">
+                            <span className="font-bold">Teacher Qualifications:</span>
+                            {r.department && <span>Dept: <strong>{r.department}</strong></span>}
+                            {r.subjectsTaught && <span>Subjects: <strong>{Array.isArray(r.subjectsTaught) ? r.subjectsTaught.join(', ') : r.subjectsTaught}</strong></span>}
+                            {r.employeeNumber && <span>Staff No: {r.employeeNumber}</span>}
+                          </div>
+                        )}
+
+                        {r.memberCategory === 'Staff' && (
+                          <div className="flex items-center gap-3 flex-wrap text-amber-700 dark:text-amber-300">
+                            <span className="font-bold">Operational Staff:</span>
+                            {r.staffCategory && <span>Category: <strong>{r.staffCategory}</strong></span>}
+                            {r.jobTitle && <span>Duties: <strong>{r.jobTitle}</strong></span>}
+                            {r.employeeNumber && <span>Staff ID: {r.employeeNumber}</span>}
+                          </div>
+                        )}
+
+                        {r.memberCategory === 'Administrator' && (
+                          <div className="flex items-center gap-3 flex-wrap text-rose-700 dark:text-rose-300">
+                            <span className="font-bold">Executive / Leadership:</span>
+                            {r.position && <span>Designation: <strong>{r.position}</strong></span>}
+                            {r.staffId && <span>Staff ID: {r.staffId}</span>}
+                            <span className="px-1.5 py-0.5 rounded bg-rose-100 dark:bg-rose-950 font-bold text-[10px]">
+                              Requires In-Person Clearance
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
                       {r.notes && (
-                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
-                          {r.notes}
+                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 bg-slate-100 dark:bg-slate-900/60 p-2 rounded-lg border border-slate-200 dark:border-slate-800 italic">
+                          "{r.notes}"
                         </p>
                       )}
                     </div>

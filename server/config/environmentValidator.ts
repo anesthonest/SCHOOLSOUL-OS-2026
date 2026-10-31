@@ -23,6 +23,21 @@ export interface SystemConfigReport {
     paymentsEnabled: boolean;
     status: 'READY' | 'SANDBOX_CONFIG_REQUIRED' | 'PRODUCTION_CONFIG_REQUIRED' | 'IPN_REGISTRATION_REQUIRED' | 'DISABLED';
   };
+  mtn: {
+    environment: 'sandbox' | 'production';
+    subscriptionKeyConfigured: boolean;
+    apiUserConfigured: boolean;
+    apiKeyConfigured: boolean;
+    paymentsEnabled: boolean;
+    status: 'READY' | 'SANDBOX_CONFIG_REQUIRED' | 'PRODUCTION_CONFIG_REQUIRED' | 'DISABLED';
+  };
+  airtel: {
+    environment: 'sandbox' | 'production';
+    clientIdConfigured: boolean;
+    clientSecretConfigured: boolean;
+    paymentsEnabled: boolean;
+    status: 'READY' | 'SANDBOX_CONFIG_REQUIRED' | 'PRODUCTION_CONFIG_REQUIRED' | 'DISABLED';
+  };
   flutterwave: {
     environment: 'sandbox' | 'production';
     secretKeyConfigured: boolean;
@@ -57,6 +72,37 @@ export function validateEnvironment(): SystemConfigReport {
   const consumerSecret = process.env.PESAPAL_CONSUMER_SECRET || '';
   const ipnId = process.env.PESAPAL_IPN_ID || '';
   const paymentsEnabled = process.env.PAYMENTS_ENABLED === 'true' || process.env.PESAPAL_PAYMENTS_ENABLED === 'true';
+
+  // MTN Mobile Money configuration
+  const mtnEnv = (process.env.MTN_MOMO_ENVIRONMENT?.toLowerCase() === 'production' ? 'production' : 'sandbox') as 'sandbox' | 'production';
+  const mtnSubKey = process.env.MTN_MOMO_SUBSCRIPTION_KEY || '';
+  const mtnApiUser = process.env.MTN_MOMO_API_USER || '';
+  const mtnApiKey = process.env.MTN_MOMO_API_KEY || '';
+  const mtnPaymentsEnabled = process.env.MTN_MOMO_ENABLED === 'true' || process.env.MTN_PAYMENTS_ENABLED === 'true' || paymentsEnabled;
+
+  let mtnStatus: SystemConfigReport['mtn']['status'] = 'DISABLED';
+  if (!mtnSubKey || !mtnApiUser || !mtnApiKey) {
+    mtnStatus = mtnEnv === 'production' ? 'PRODUCTION_CONFIG_REQUIRED' : 'SANDBOX_CONFIG_REQUIRED';
+  } else if (mtnPaymentsEnabled) {
+    mtnStatus = 'READY';
+  } else {
+    mtnStatus = 'DISABLED';
+  }
+
+  // Airtel Money configuration
+  const airtelEnv = (process.env.AIRTEL_MONEY_ENVIRONMENT?.toLowerCase() === 'production' ? 'production' : 'sandbox') as 'sandbox' | 'production';
+  const airtelClientId = process.env.AIRTEL_MONEY_CLIENT_ID || '';
+  const airtelClientSecret = process.env.AIRTEL_MONEY_CLIENT_SECRET || '';
+  const airtelPaymentsEnabled = process.env.AIRTEL_MONEY_ENABLED === 'true' || process.env.AIRTEL_PAYMENTS_ENABLED === 'true' || paymentsEnabled;
+
+  let airtelStatus: SystemConfigReport['airtel']['status'] = 'DISABLED';
+  if (!airtelClientId || !airtelClientSecret) {
+    airtelStatus = airtelEnv === 'production' ? 'PRODUCTION_CONFIG_REQUIRED' : 'SANDBOX_CONFIG_REQUIRED';
+  } else if (airtelPaymentsEnabled) {
+    airtelStatus = 'READY';
+  } else {
+    airtelStatus = 'DISABLED';
+  }
 
   // Flutterwave configuration (Registered Provider Abstraction - Disabled for Production Release)
   const flwEnv = (process.env.FLW_ENVIRONMENT?.toLowerCase() === 'production' || process.env.FLUTTERWAVE_ENVIRONMENT?.toLowerCase() === 'production') ? 'production' : 'sandbox';
@@ -117,6 +163,21 @@ export function validateEnvironment(): SystemConfigReport {
       paymentsEnabled,
       status: pesapalStatus,
     },
+    mtn: {
+      environment: mtnEnv,
+      subscriptionKeyConfigured: Boolean(mtnSubKey),
+      apiUserConfigured: Boolean(mtnApiUser),
+      apiKeyConfigured: Boolean(mtnApiKey),
+      paymentsEnabled: mtnPaymentsEnabled,
+      status: mtnStatus,
+    },
+    airtel: {
+      environment: airtelEnv,
+      clientIdConfigured: Boolean(airtelClientId),
+      clientSecretConfigured: Boolean(airtelClientSecret),
+      paymentsEnabled: airtelPaymentsEnabled,
+      status: airtelStatus,
+    },
     flutterwave: {
       environment: flwEnv,
       secretKeyConfigured: Boolean(flwSecret),
@@ -139,9 +200,11 @@ export function logSystemStartupBanner(report: SystemConfigReport): void {
   console.log(`• Database    : ${report.databaseType} (${report.databaseConfigured ? 'READY' : 'LOCAL STORE'})`);
   console.log(`• App URL     : ${report.appUrl} [${report.isHttps ? 'HTTPS SECURE' : 'HTTP/DEV'}]`);
   console.log(`• JWT Security: ${report.jwtConfigured ? 'CUSTOM HIGH-ENTROPY' : 'STANDARD DEFAULT'}`);
-  console.log(`• Pesapal 3.0 : [${report.pesapal.environment.toUpperCase()}] Status: ${report.pesapal.status} (PRIMARY & ACTIVE)`);
-  console.log(`• Flutterwave : DISABLED / NOT REQUIRED (Pesapal Exclusive Production Mode)`);
-  console.log(`• Gateway Mode: Pesapal 3.0 Production Payment Gateway`);
+  console.log(`• Pesapal 3.0 : [${report.pesapal.environment.toUpperCase()}] Status: ${report.pesapal.status}`);
+  console.log(`• MTN MoMo    : [${report.mtn.environment.toUpperCase()}] Status: ${report.mtn.status}`);
+  console.log(`• Airtel Money: [${report.airtel.environment.toUpperCase()}] Status: ${report.airtel.status}`);
+  console.log(`• Flutterwave : DISABLED / NOT REQUIRED (Pesapal + MoMo Primary Release)`);
+  console.log(`• Gateway Mode: Multi-Rail (MTN Mobile Money, Airtel Money, Pesapal)`);
   if (report.warnings.length > 0) {
     console.log('------------------------------------------------------------');
     console.log('⚠️  DEPLOYMENT NOTICES:');

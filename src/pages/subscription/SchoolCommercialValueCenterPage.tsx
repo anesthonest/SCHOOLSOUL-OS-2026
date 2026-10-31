@@ -81,6 +81,7 @@ import {
   submitParentConsent,
 } from '../../services/documentFormsService';
 import { PesapalGatewayCockpit } from '../../components/billing/PesapalGatewayCockpit';
+import { UniversalPaymentSelector } from '../../components/billing/UniversalPaymentSelector';
 import { PesapalClientService } from '../../services/pesapalClientService';
 import type {
   SchoolCommercialPlan,
@@ -1577,137 +1578,49 @@ export const SchoolCommercialValueCenterPage: React.FC<SchoolCommercialValueCent
         )}
       </div>
 
-      {/* Payment Settlement Modal */}
+      {/* Payment Settlement Modal via Universal Payment Selector */}
       {paymentModalInvoice && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <CreditCard className="w-4 h-4 text-emerald-400" /> Settle Subscription Invoice
-              </h3>
-              <button
-                onClick={() => {
-                  setPaymentModalInvoice(null);
-                  setPesapalOrderRedirectUrl(null);
-                }}
-                className="text-slate-400 hover:text-white text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs space-y-1">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Invoice:</span>
-                <span className="font-mono text-white font-bold">{paymentModalInvoice.invoiceNumber}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Plan & Cycle:</span>
-                <span className="text-slate-200">Standard ({paymentModalInvoice.billingCycle})</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Total Amount:</span>
-                <span className="font-bold text-emerald-400 text-sm">
-                  {paymentModalInvoice.currency} {paymentModalInvoice.totalAmountUGX.toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            {/* Provider Options */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300">Select Payment Provider:</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {[
-                  { id: 'Pesapal', label: 'Pesapal API 3.0 (MoMo / Card / Bank)', badge: 'Recommended' },
-                  { id: 'Card', label: 'Credit / Debit Card' },
-                  { id: 'MobileMoney', label: 'MTN MoMo / Airtel' },
-                  { id: 'SandboxTest', label: 'Instant Verification Sandbox' },
-                ].map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setPaymentProvider(p.id as any)}
-                    className={`p-2.5 rounded-xl text-xs font-bold border transition-all text-left cursor-pointer relative ${
-                      paymentProvider === p.id
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500'
-                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{p.label}</span>
-                    </div>
-                    {p.badge && (
-                      <span className="block text-[9px] text-emerald-400 font-normal mt-0.5 font-mono">
-                        {p.badge}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Contact Details */}
-            <div className="space-y-2 text-xs">
-              <label className="text-slate-300 font-semibold">Payer Contact (Phone or Email):</label>
-              <input
-                type="text"
-                value={payerPhoneOrEmail}
-                onChange={(e) => setPayerPhoneOrEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-emerald-500"
-              />
-            </div>
-
-            {/* Pesapal Direct Link Banner if Order Created */}
-            {pesapalOrderRedirectUrl && (
-              <div className="p-3 bg-emerald-950/70 border border-emerald-500/40 rounded-xl text-xs space-y-2">
-                <div className="flex items-center gap-2 text-emerald-300 font-bold">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Pesapal Order Ready</span>
-                </div>
-                <p className="text-slate-300 text-[11px]">
-                  Click below to open the Pesapal payment gateway in your browser:
-                </p>
-                <div className="flex gap-2">
-                  <a
-                    href={pesapalOrderRedirectUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold rounded-lg flex items-center justify-center gap-1 shadow-md"
-                  >
-                    Open Pesapal Gateway <ArrowRight className="w-3.5 h-3.5" />
-                  </a>
-                  <a
-                    href={`/billing/pesapal/callback?OrderTrackingId=${pesapalOrderTrackingId || ''}`}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1 border border-slate-700"
-                  >
-                    Verify
-                  </a>
-                </div>
-              </div>
-            )}
-
-            <div className="pt-2 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setPaymentModalInvoice(null);
-                  setPesapalOrderRedirectUrl(null);
-                }}
-                className="px-3.5 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold hover:bg-slate-700 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleExecutePayment}
-                disabled={paymentProcessing}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl text-xs font-bold shadow-lg flex items-center gap-1.5 cursor-pointer"
-              >
-                {paymentProcessing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                {paymentProvider === 'Pesapal' ? 'Pay via Pesapal 3.0' : 'Confirm & Settle'}
-              </button>
-            </div>
-          </div>
+          <UniversalPaymentSelector
+            item={{
+              purpose: 'SUBSCRIPTION_RENEWAL',
+              title: `Settle Invoice ${paymentModalInvoice.invoiceNumber}`,
+              subtitle: `Subscription Tier: Standard (${paymentModalInvoice.billingCycle})`,
+              schoolId: paymentModalInvoice.schoolId || 'sch-stmarys-ug',
+              schoolName: schoolProfile?.schoolName || 'St. Mary’s College Kisubi',
+              amount: paymentModalInvoice.totalAmountUGX,
+              currency: paymentModalInvoice.currency || 'UGX',
+              invoiceId: paymentModalInvoice.id,
+              billingCycle: paymentModalInvoice.billingCycle,
+              studentCount: subscription?.activeStudentCount || 1000,
+            }}
+            initialMethod="MTN_MOMO"
+            onSuccess={async (receipt) => {
+              showToast(`Payment successfully settled via ${receipt.paymentMethod}!`, 'success');
+              setPaymentModalInvoice(null);
+              // Update local invoice state
+              setInvoices((prev) =>
+                prev.map((inv) =>
+                  inv.id === paymentModalInvoice.id
+                    ? {
+                        ...inv,
+                        paymentStatus: 'PAID',
+                        paidAt: receipt.paidAt,
+                        paymentReference: receipt.paymentReference,
+                        receiptNumber: receipt.receiptNumber,
+                        signatureSha256: receipt.signatureSha256,
+                      }
+                    : inv
+                )
+              );
+              // Refresh subscription and trial
+              await loadAuthoritativeData();
+            }}
+            onCancel={() => {
+              setPaymentModalInvoice(null);
+              setPesapalOrderRedirectUrl(null);
+            }}
+          />
         </div>
       )}
 

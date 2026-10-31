@@ -180,7 +180,11 @@ router.get('/approval-requests', requireAuth, requireRoles('Administrator', 'Sch
       requests = requests.filter((r: any) => !r.schoolId || r.schoolId === userSchoolId);
     }
     if (statusFilter !== 'ALL') {
-      requests = requests.filter((r) => r.status?.toUpperCase() === statusFilter);
+      if (statusFilter === 'PENDING' || statusFilter === 'PENDING_APPROVAL') {
+        requests = requests.filter((r: any) => !r.status || r.status.toUpperCase() === 'PENDING' || r.status.toUpperCase() === 'PENDING_APPROVAL' || r.status.toUpperCase() === 'PENDING_VERIFICATION');
+      } else {
+        requests = requests.filter((r: any) => r.status?.toUpperCase() === statusFilter);
+      }
     }
 
     res.json({ requests });
@@ -193,7 +197,7 @@ router.get('/approval-requests', requireAuth, requireRoles('Administrator', 'Sch
 router.post('/approval-requests/:id/approve', requireAuth, requireRoles('Administrator', 'School Owner', 'Head Teacher', 'Headteacher'), (req, res) => {
   try {
     const { id } = req.params;
-    const { effectiveRole, comment } = req.body;
+    const { effectiveRole, approvedRole, comment } = req.body;
     const db = readServerDB();
 
     if (!db.accountRequests) db.accountRequests = [];
@@ -201,21 +205,112 @@ router.post('/approval-requests/:id/approve', requireAuth, requireRoles('Adminis
     if (!request) return res.status(404).json({ error: 'Approval request not found.' });
 
     const user = db.users.find((u) => u.id === request.userId || u.username.toLowerCase() === request.username.toLowerCase());
-    const finalRole = effectiveRole || request.requestedRole || 'Teacher';
+    const finalRole = approvedRole || effectiveRole || request.requestedRole || request.memberCategory || 'Teacher';
+
+    const now = new Date().toISOString();
+    const operatorId = (req as any).user?.id || 'admin';
+    const operatorUsername = (req as any).user?.username || 'Headteacher';
 
     request.status = 'APPROVED';
     request.effectiveRole = finalRole;
-    request.reviewedAt = new Date().toISOString();
-    request.reviewedBy = (req as any).user?.id || 'admin';
-    request.reviewerUsername = (req as any).user?.username || 'Headteacher';
+    request.approvedRole = finalRole;
+    request.decision = 'APPROVED';
+    request.decisionReason = comment || 'Approved by School Administration';
+    request.approvedBy = operatorId;
+    request.approvedByUsername = operatorUsername;
+    request.approvedAt = now;
+    request.reviewedAt = now;
+    request.reviewedBy = operatorId;
+    request.reviewerUsername = operatorUsername;
     request.reviewerComment = comment || 'Approved by School Administration';
 
     if (user) {
       user.status = 'Active';
       user.approvalStatus = 'APPROVED';
       user.role = finalRole;
+      user.approvedRole = finalRole;
+      user.approvedBy = operatorId;
+      user.approvedAt = now;
       user.approvalComment = comment || 'Approved by School Administration';
-      user.updatedAt = new Date().toISOString();
+      user.updatedAt = now;
+    }
+
+    // Role-specific record sync & entity activation
+    if (finalRole === 'Student' || request.memberCategory === 'Student') {
+      if (!db.students) db.students = [];
+      const studentIdNum = request.admissionNumber || request.studentIdOrLin || request.employeeNumber || `LIN-${Date.now().toString().slice(-6)}`;
+      let existingStudent = db.students.find((s: any) => s.id === user?.id || s.admissionNumber === studentIdNum || s.studentId === studentIdNum);
+      if (!existingStudent) {
+        db.students.push({
+          id: user?.id || `stu-${Date.now()}`,
+          studentId: studentIdNum,
+          admissionNumber: studentIdNum,
+          schoolId: request.schoolId || db.schoolProfile?.id || 'school-ug-001',
+          fullName: request.fullName,
+          gender: 'Other',
+          classGrade: request.classGrade || 'Senior 1',
+          stream: request.stream || 'A',
+          residenceType: 'Day',
+          status: 'Active',
+          dob: request.dateOfBirth || '',
+          enrollmentDate: now.split('T')[0],
+          createdAt: now,
+          updatedAt: now,
+        });
+      } else {
+        existingStudent.status = 'Active';
+        if (request.classGrade) existingStudent.classGrade = request.classGrade;
+        if (request.stream) existingStudent.stream = request.stream;
+      }
+    }
+
+    if (finalRole === 'Teacher' || request.memberCategory === 'Teacher') {
+      if (!db.staff) db.staff = [];
+      const staffEmpNum = request.employeeNumber || `EMP-${Date.now().toString().slice(-4)}`;
+      let existingStaff = db.staff.find((st: any) => st.id === user?.id || st.employeeNumber === staffEmpNum);
+      if (!existingStaff) {
+        db.staff.push({
+          id: user?.id || `stf-${Date.now()}`,
+          employeeNumber: staffEmpNum,
+          schoolId: request.schoolId || db.schoolProfile?.id || 'school-ug-001',
+          fullName: request.fullName,
+          email: request.email || '',
+          phone: request.phone || '',
+          role: 'Teacher',
+          department: request.department || 'General Academics',
+          subjectsTaught: request.subjectsTaught ? (Array.isArray(request.subjectsTaught) ? request.subjectsTaught : [request.subjectsTaught]) : ['General Studies'],
+          status: 'Active',
+          employmentType: 'Full-Time',
+          createdAt: now,
+          updatedAt: now,
+        });
+      } else {
+        existingStaff.status = 'Active';
+        if (request.department) existingStaff.department = request.department;
+        if (request.subjectsTaught) existingStaff.subjectsTaught = Array.isArray(request.subjectsTaught) ? request.subjectsTaught : [request.subjectsTaught];
+      }
+    }
+
+    if (finalRole === 'Parent' || request.memberCategory === 'Parent') {
+      if (!db.guardians) db.guardians = [];
+      const childIdentifier = request.childAdmissionNumber || request.childLinOrNin || '';
+      let targetStudent = childIdentifier ? db.students?.find((s: any) => s.admissionNumber?.toLowerCase() === childIdentifier.toLowerCase() || s.studentId?.toLowerCase() === childIdentifier.toLowerCase() || s.fullName?.toLowerCase() === request.childName?.toLowerCase()) : null;
+      db.guardians.push({
+        id: `grd-${Date.now()}`,
+        userId: user?.id,
+        studentId: targetStudent?.id || 'unlinked',
+        fullName: request.fullName,
+        relationship: request.relationship || 'Guardian',
+        phoneNumber: request.phone || '',
+        email: request.email || '',
+        isPrimaryContact: true,
+        canPickup: true,
+        schoolId: request.schoolId || db.schoolProfile?.id || 'school-ug-001',
+        createdAt: now,
+      });
+      if (user && targetStudent) {
+        user.linkedChildrenIds = [targetStudent.id];
+      }
     }
 
     // Notify user
@@ -226,23 +321,43 @@ router.post('/approval-requests/:id/approve', requireAuth, requireRoles('Adminis
       message: `Your account request for '${finalRole}' has been approved by the Headteacher. You can now access your dashboard.`,
       type: 'success',
       priority: 'high',
-      createdAt: new Date().toISOString(),
+      createdAt: now,
       read: false,
     });
 
-    // Audit log
+    // Audit logs: ROLE_ASSIGNED, ACCOUNT_APPROVED, ACCOUNT_APPROVE
     db.auditLogs.unshift({
       id: 'audit-' + Date.now(),
-      timestamp: new Date().toISOString(),
-      userId: (req as any).user?.id || 'admin',
-      username: (req as any).user?.username || 'Headteacher',
+      timestamp: now,
+      userId: operatorId,
+      username: operatorUsername,
+      userRole: (req as any).user?.role || 'Headteacher',
+      action: 'ROLE_ASSIGNED',
+      details: `Assigned role '${finalRole}' to ${request.fullName} (${request.username}) upon school membership approval.`,
+    });
+
+    db.auditLogs.unshift({
+      id: 'audit-' + (Date.now() + 1),
+      timestamp: now,
+      userId: operatorId,
+      username: operatorUsername,
+      userRole: (req as any).user?.role || 'Headteacher',
+      action: 'ACCOUNT_APPROVED',
+      details: `Approved membership request for ${request.fullName} (${request.username}) with role '${finalRole}'. Decision reason: ${comment || 'Approved by Administration'}`,
+    });
+
+    db.auditLogs.unshift({
+      id: 'audit-' + (Date.now() + 2),
+      timestamp: now,
+      userId: operatorId,
+      username: operatorUsername,
       userRole: (req as any).user?.role || 'Headteacher',
       action: 'ACCOUNT_APPROVE',
       details: `Approved account request for ${request.fullName} (${request.username}) with role '${finalRole}'`,
     });
 
     writeServerDB(db);
-    res.json({ success: true, request, user: user ? { ...user, passwordHash: undefined } : undefined });
+    res.json({ success: true, request, approvedRole: finalRole, user: user ? { ...user, passwordHash: undefined } : undefined });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -261,27 +376,42 @@ router.post('/approval-requests/:id/reject', requireAuth, requireRoles('Administ
 
     const user = db.users.find((u) => u.id === request.userId || u.username.toLowerCase() === request.username.toLowerCase());
     const rejectionReason = reason || comment || 'Application does not meet current verification criteria.';
+    const now = new Date().toISOString();
+    const operatorId = (req as any).user?.id || 'admin';
+    const operatorUsername = (req as any).user?.username || 'Headteacher';
 
     request.status = 'REJECTED';
+    request.decision = 'REJECTED';
+    request.decisionReason = rejectionReason;
     request.rejectionReason = rejectionReason;
-    request.reviewedAt = new Date().toISOString();
-    request.reviewedBy = (req as any).user?.id || 'admin';
-    request.reviewerUsername = (req as any).user?.username || 'Headteacher';
+    request.reviewedAt = now;
+    request.reviewedBy = operatorId;
+    request.reviewerUsername = operatorUsername;
     request.reviewerComment = comment || rejectionReason;
 
     if (user) {
       user.status = 'REJECTED';
       user.approvalStatus = 'REJECTED';
       user.rejectionReason = rejectionReason;
-      user.updatedAt = new Date().toISOString();
+      user.updatedAt = now;
     }
 
-    // Audit log
+    // Audit logs: ACCOUNT_REJECTED and ACCOUNT_REJECT
     db.auditLogs.unshift({
       id: 'audit-' + Date.now(),
-      timestamp: new Date().toISOString(),
-      userId: (req as any).user?.id || 'admin',
-      username: (req as any).user?.username || 'Headteacher',
+      timestamp: now,
+      userId: operatorId,
+      username: operatorUsername,
+      userRole: (req as any).user?.role || 'Headteacher',
+      action: 'ACCOUNT_REJECTED',
+      details: `Rejected membership request for ${request.fullName} (${request.username}) - Reason: ${rejectionReason}`,
+    });
+
+    db.auditLogs.unshift({
+      id: 'audit-' + (Date.now() + 1),
+      timestamp: now,
+      userId: operatorId,
+      username: operatorUsername,
       userRole: (req as any).user?.role || 'Headteacher',
       action: 'ACCOUNT_REJECT',
       details: `Rejected account request for ${request.fullName} (${request.username}) - Reason: ${rejectionReason}`,

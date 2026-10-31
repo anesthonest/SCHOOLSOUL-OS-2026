@@ -17,6 +17,15 @@ import {
   ExternalLink,
   ChevronRight,
   Sparkles,
+  GraduationCap,
+  HeartHandshake,
+  BookOpen,
+  Briefcase,
+  ShieldAlert,
+  Clock,
+  ArrowRight,
+  ArrowLeft,
+  LogOut,
 } from 'lucide-react';
 import jsQR from 'jsqr';
 import { verifyUniversalQR, submitQRJoinRequest, type QRVerificationResult } from '../../services/qrApi';
@@ -46,14 +55,42 @@ export const UniversalQRScannerModal: React.FC<UniversalQRScannerModalProps> = (
   const [hasTorch, setHasTorch] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
 
-  // QR Join Request Flow State
+  // QR Membership Enrollment Flow State
+  const [qrFlowStep, setQrFlowStep] = useState<'CONFIRM_SCHOOL' | 'MEMBER_TYPE' | 'FORM'>('CONFIRM_SCHOOL');
+  const [memberCategory, setMemberCategory] = useState<'Student' | 'Parent' | 'Teacher' | 'Staff' | 'Administrator'>('Student');
   const [joinFullName, setJoinFullName] = useState('');
   const [joinPhone, setJoinPhone] = useState('');
   const [joinEmail, setJoinEmail] = useState('');
-  const [joinRole, setJoinRole] = useState('Teacher');
-  const [joinIdNumber, setJoinIdNumber] = useState('');
+  const [joinUsername, setJoinUsername] = useState('');
+  const [joinPassword, setJoinPassword] = useState('');
+  const [joinConfirmPassword, setJoinConfirmPassword] = useState('');
   const [joinNotes, setJoinNotes] = useState('');
+
+  // Role-Specific State
+  // Student
+  const [studentDob, setStudentDob] = useState('');
+  const [studentClass, setStudentClass] = useState('Senior 1');
+  const [studentStream, setStudentStream] = useState('A');
+  const [studentAdmission, setStudentAdmission] = useState('');
+  // Parent
+  const [parentRelationship, setParentRelationship] = useState('Mother');
+  const [parentChildName, setParentChildName] = useState('');
+  const [parentChildAdmission, setParentChildAdmission] = useState('');
+  const [parentChildClass, setParentChildClass] = useState('Senior 1');
+  // Teacher
+  const [teacherDepartment, setTeacherDepartment] = useState('Sciences');
+  const [teacherSubjects, setTeacherSubjects] = useState('');
+  const [teacherEmpNumber, setTeacherEmpNumber] = useState('');
+  // Staff
+  const [staffCategory, setStaffCategory] = useState<string>('Office');
+  const [staffJobTitle, setStaffJobTitle] = useState('');
+  const [staffEmpNumber, setStaffEmpNumber] = useState('');
+  // Administrator
+  const [adminPosition, setAdminPosition] = useState('Deputy Headteacher');
+  const [adminStaffId, setAdminStaffId] = useState('');
+
   const [isSubmittingJoin, setIsSubmittingJoin] = useState(false);
+  const [joinSuccessData, setJoinSuccessData] = useState<any | null>(null);
   const [joinSuccessMessage, setJoinSuccessMessage] = useState<string | null>(null);
   const [joinErrorMessage, setJoinErrorMessage] = useState<string | null>(null);
 
@@ -96,6 +133,7 @@ export const UniversalQRScannerModal: React.FC<UniversalQRScannerModalProps> = (
       setScanResult(res);
       if (res.verified) {
         playScanBeep();
+        setQrFlowStep('CONFIRM_SCHOOL');
       }
     } catch (err: any) {
       setScanResult({
@@ -111,21 +149,73 @@ export const UniversalQRScannerModal: React.FC<UniversalQRScannerModalProps> = (
   const handleJoinSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!scanResult?.invitation?.token) return;
+
+    if (joinConfirmPassword && joinPassword !== joinConfirmPassword) {
+      setJoinErrorMessage('Passwords do not match. Please verify that both password fields match.');
+      return;
+    }
+
     setIsSubmittingJoin(true);
     setJoinErrorMessage(null);
     setJoinSuccessMessage(null);
 
     try {
-      const res = await submitQRJoinRequest({
-        token: scanResult.invitation.token,
-        fullName: joinFullName,
-        phone: joinPhone,
-        email: joinEmail,
-        requestedRole: joinRole,
-        employeeOrStudentNumber: joinIdNumber,
-        notes: joinNotes,
-      });
+      let finalRequestedRole = memberCategory as string;
+      if (memberCategory === 'Staff') {
+        finalRequestedRole = staffCategory ? `Staff - ${staffCategory}` : 'Staff';
+      } else if (memberCategory === 'Administrator') {
+        finalRequestedRole = adminPosition || 'Administrator';
+      }
 
+      const payload: any = {
+        token: scanResult.invitation.token,
+        fullName: joinFullName.trim(),
+        phone: joinPhone.trim(),
+        email: joinEmail.trim(),
+        username: joinUsername.trim(),
+        password: joinPassword.trim(),
+        memberCategory,
+        requestedRole: finalRequestedRole,
+        notes: joinNotes || `Self-registered via Universal School QR door for ${scanResult.invitation.schoolName}`,
+      };
+
+      if (memberCategory === 'Student') {
+        payload.dateOfBirth = studentDob;
+        payload.classGrade = studentClass;
+        payload.stream = studentStream;
+        payload.admissionNumber = studentAdmission.trim();
+        payload.employeeOrStudentNumber = studentAdmission.trim();
+      } else if (memberCategory === 'Parent') {
+        payload.relationship = parentRelationship;
+        payload.childName = parentChildName.trim();
+        payload.childAdmissionNumber = parentChildAdmission.trim();
+        payload.childClass = parentChildClass;
+      } else if (memberCategory === 'Teacher') {
+        payload.department = teacherDepartment;
+        payload.subjectsTaught = teacherSubjects.trim();
+        payload.employeeNumber = teacherEmpNumber.trim();
+        payload.employeeOrStudentNumber = teacherEmpNumber.trim();
+      } else if (memberCategory === 'Staff') {
+        payload.staffCategory = staffCategory;
+        payload.jobTitle = staffJobTitle.trim();
+        payload.employeeNumber = staffEmpNumber.trim();
+        payload.employeeOrStudentNumber = staffEmpNumber.trim();
+      } else if (memberCategory === 'Administrator') {
+        payload.position = adminPosition;
+        payload.staffId = adminStaffId.trim();
+        payload.employeeOrStudentNumber = adminStaffId.trim();
+      }
+
+      const res = await submitQRJoinRequest(payload);
+
+      setJoinSuccessData({
+        ...res,
+        fullName: joinFullName.trim(),
+        submittedAt: res.submittedAt || new Date().toISOString(),
+        schoolName: res.schoolName || scanResult.invitation.schoolName,
+        memberCategory,
+        requestedRole: finalRequestedRole,
+      });
       setJoinSuccessMessage(res.message || 'Join request submitted! Awaiting administrator approval.');
     } catch (err: any) {
       setJoinErrorMessage(err.message || 'Failed to submit join request.');
@@ -686,129 +776,636 @@ export const UniversalQRScannerModal: React.FC<UniversalQRScannerModalProps> = (
                 </div>
               )}
 
-              {/* SCHOOL INVITATION & APPROVAL QUEUE JOIN FLOW */}
+              {/* SCHOOL INVITATION & UNIVERSAL QR MEMBERSHIP ENROLLMENT FLOW */}
               {scanResult.invitation && (
                 <div className="mt-3 pt-3 border-t border-slate-200/50 dark:border-slate-800 space-y-3 text-xs">
-                  <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                        <span className="font-bold text-slate-900 dark:text-white text-sm">
-                          {scanResult.invitation.schoolName}
+                  {joinSuccessData ? (
+                    /* CLEAR PENDING APPROVAL STATUS SCREEN */
+                    <div className="p-5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 space-y-4 text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-300 mx-auto flex items-center justify-center shadow-xs">
+                        <Clock className="w-7 h-7 animate-pulse" />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black tracking-widest uppercase text-amber-600 dark:text-amber-400 block">
+                          REQUEST SUBMITTED
+                        </span>
+                        <h4 className="text-lg font-black text-slate-900 dark:text-white">
+                          Your request to join {joinSuccessData.schoolName} has been submitted successfully.
+                        </h4>
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 font-bold text-xs mt-1">
+                          <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                          <span>Status: PENDING APPROVAL</span>
+                        </div>
+                        <p className="text-xs text-slate-600 dark:text-slate-300 max-w-md mx-auto leading-relaxed pt-1">
+                          Your school administrator or headteacher must approve your membership before you can access school services.
+                        </p>
+                      </div>
+
+                      {/* Verification Summary Card */}
+                      <div className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-amber-200/80 dark:border-slate-800 text-left space-y-2 text-xs">
+                        <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                          <span>Applicant:</span>
+                          <span className="font-bold text-slate-900 dark:text-white">{joinSuccessData.fullName}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                          <span>Requested membership:</span>
+                          <span className="font-bold text-purple-700 dark:text-purple-300">
+                            {joinSuccessData.memberCategory}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                          <span>School:</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200">{joinSuccessData.schoolName}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                          <span>Submitted:</span>
+                          <span className="font-mono text-[11px]">{new Date(joinSuccessData.submittedAt).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                          <span>Reference ID:</span>
+                          <span className="font-mono font-bold text-slate-700 dark:text-slate-300">{joinSuccessData.requestId}</span>
+                        </div>
+                      </div>
+
+                      {/* Zero-Leakage Reassurance Banner */}
+                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-2 text-left">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Zero Private Data Disclosure:</strong> No student records, attendance rolls, fees, or operational systems are accessible while your status is <em>Pending Approval</em>.
                         </span>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-950/80 text-purple-700 dark:text-purple-300 font-bold text-[10px]">
-                        TOKEN VERIFIED
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      You are applying to join <strong>{scanResult.invitation.schoolName}</strong>. Submit your details below. Your request will enter the administrative approval queue.
-                    </p>
-                  </div>
 
-                  {joinSuccessMessage ? (
-                    <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-center space-y-2 text-emerald-800 dark:text-emerald-200">
-                      <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
-                      <p className="font-bold text-xs">{joinSuccessMessage}</p>
-                      <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
-                        The school Headteacher has received your application. Upon approval, you will be notified and access will be activated.
-                      </p>
+                      <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setJoinSuccessData(null);
+                            onClose();
+                          }}
+                          className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>SIGN OUT / CLOSE</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : qrFlowStep === 'CONFIRM_SCHOOL' ? (
+                    /* STEP 1: SCHOOL CONFIRMATION */
+                    <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-purple-200 dark:border-purple-800/80 text-center space-y-4">
+                      <div className="w-14 h-14 rounded-2xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 mx-auto flex items-center justify-center shadow-xs">
+                        <Building2 className="w-8 h-8" />
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 tracking-wider uppercase block">
+                          SchoolSoul OS
+                        </span>
+                        <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                          {scanResult.invitation.schoolName}
+                        </h3>
+                        <p className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+                          "You are joining this school's digital system."
+                        </p>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 max-w-sm mx-auto">
+                          Verify that this is your school. Once confirmed, you will select your member type and submit your access request for administrator review.
+                        </p>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 text-[11px] text-purple-800 dark:text-purple-200 flex items-center gap-2 text-left">
+                        <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0" />
+                        <span>Institutional door authenticated. No confidential school information is shown before administrator approval.</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setQrFlowStep('MEMBER_TYPE')}
+                        className="w-full min-h-[48px] py-3 px-5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs uppercase tracking-wide flex items-center justify-center gap-2 shadow-md shadow-purple-600/20 cursor-pointer transition"
+                      >
+                        <span>CONTINUE</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : qrFlowStep === 'MEMBER_TYPE' ? (
+                    /* STEP 2: MEMBER TYPE SCREEN */
+                    <div className="space-y-4 p-4 sm:p-5 bg-slate-50 dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800">
+                      <div>
+                        <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block">
+                          {scanResult.invitation.schoolName}
+                        </span>
+                        <h4 className="text-base font-black text-slate-900 dark:text-white mt-0.5">
+                          Who are you in this school?
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Your school administrator must approve your membership before you can access school services.
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {[
+                          { id: 'Student', label: 'STUDENT', desc: 'Enrolled learner or pupil', icon: GraduationCap },
+                          { id: 'Parent', label: 'PARENT / GUARDIAN', desc: 'Parent, sponsor, or legal guardian', icon: HeartHandshake },
+                          { id: 'Teacher', label: 'TEACHER', desc: 'Educator or subject instructor', icon: BookOpen },
+                          { id: 'Staff', label: 'SCHOOL STAFF', desc: 'Nurse, Canteen, Security, Transport, etc.', icon: Briefcase },
+                          { id: 'Administrator', label: 'SCHOOL MANAGEMENT', desc: 'Requires administrator verification', icon: ShieldAlert, alert: true },
+                        ].map((cat) => {
+                          const IconComp = cat.icon;
+                          return (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => {
+                                setMemberCategory(cat.id as any);
+                                setQrFlowStep('FORM');
+                              }}
+                              className={`p-3.5 rounded-xl border text-left transition flex items-center justify-between min-h-[58px] cursor-pointer hover:border-purple-400 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white hover:shadow-xs ${
+                                cat.id === 'Administrator' ? 'sm:col-span-2 border-amber-300 dark:border-amber-800/80 bg-amber-50/20 dark:bg-amber-950/20' : ''
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                                  cat.alert
+                                    ? 'bg-amber-100 dark:bg-amber-950 text-amber-600'
+                                    : 'bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400'
+                                }`}>
+                                  <IconComp className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <span className="font-extrabold text-xs block tracking-wide">{cat.label}</span>
+                                  <span className="text-[10px] text-slate-500 dark:text-slate-400">{cat.desc}</span>
+                                </div>
+                              </div>
+                              <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-2">
+                        <ShieldCheck className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                        <span>
+                          <strong>Request only:</strong> Selecting a role does not grant immediate privileges. Every account is created in <em>Pending Approval</em> status.
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setQrFlowStep('CONFIRM_SCHOOL')}
+                        className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 inline-flex items-center gap-1 cursor-pointer pt-1"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" /> Back to School Confirmation
+                      </button>
                     </div>
                   ) : (
-                    <form onSubmit={handleJoinSubmit} className="space-y-3 p-3.5 bg-slate-50 dark:bg-slate-950/80 rounded-xl border border-slate-200 dark:border-slate-800">
-                      <h5 className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
-                        <User className="w-4 h-4 text-purple-600" />
-                        Complete Your Join Request
-                      </h5>
+                    /* STEP 3: ROLE-SPECIFIC REGISTRATION & ACCOUNT CREATION FORM */
+                    <form onSubmit={handleJoinSubmit} className="space-y-4 p-4 sm:p-5 bg-slate-50 dark:bg-slate-950/80 rounded-2xl border border-slate-200 dark:border-slate-800">
+                      {/* Form Header with Category Badge */}
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                            Requested Role
+                          </span>
+                          <span className="font-extrabold text-purple-700 dark:text-purple-300 text-sm">
+                            {memberCategory.toUpperCase()}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setQrFlowStep('MEMBER_TYPE')}
+                          className="px-2.5 py-1 text-xs font-semibold text-purple-600 hover:text-purple-700 hover:underline cursor-pointer"
+                        >
+                          Change Role
+                        </button>
+                      </div>
 
                       {joinErrorMessage && (
-                        <div className="p-2.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-700 dark:text-rose-300 text-[11px]">
+                        <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs">
                           {joinErrorMessage}
                         </div>
                       )}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                            Your Full Name *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. Sarah Namugga"
-                            value={joinFullName}
-                            onChange={(e) => setJoinFullName(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
-                          />
+                      {/* Common Personal Information & Credentials */}
+                      <div className="space-y-2.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          Personal Information & Account Credentials
+                        </span>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                              Full Legal Name *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="e.g. Sarah Namugga"
+                              value={joinFullName}
+                              onChange={(e) => setJoinFullName(e.target.value)}
+                              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                              Phone Number *
+                            </label>
+                            <input
+                              type="tel"
+                              required
+                              placeholder="+256 700 000000"
+                              value={joinPhone}
+                              onChange={(e) => setJoinPhone(e.target.value)}
+                              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                            />
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                            Phone Number *
-                          </label>
-                          <input
-                            type="tel"
-                            required
-                            placeholder="+256 700 000000"
-                            value={joinPhone}
-                            onChange={(e) => setJoinPhone(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
-                          />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                              Email (Optional)
+                            </label>
+                            <input
+                              type="email"
+                              placeholder="user@school.org"
+                              value={joinEmail}
+                              onChange={(e) => setJoinEmail(e.target.value)}
+                              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                              Desired Username *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              placeholder="e.g. snamugga"
+                              value={joinUsername}
+                              onChange={(e) => setJoinUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-mono"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                              Account Password *
+                            </label>
+                            <input
+                              type="password"
+                              required
+                              placeholder="At least 6 characters"
+                              value={joinPassword}
+                              onChange={(e) => setJoinPassword(e.target.value)}
+                              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                              Confirm Password *
+                            </label>
+                            <input
+                              type="password"
+                              required
+                              placeholder="Confirm password"
+                              value={joinConfirmPassword}
+                              onChange={(e) => setJoinConfirmPassword(e.target.value)}
+                              className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                            />
+                          </div>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                            Email (Optional)
-                          </label>
-                          <input
-                            type="email"
-                            placeholder="user@school.org"
-                            value={joinEmail}
-                            onChange={(e) => setJoinEmail(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
-                          />
+                      {/* ROLE-SPECIFIC INPUT SECTIONS */}
+                      {/* 1. STUDENT SPECIFIC */}
+                      {memberCategory === 'Student' && (
+                        <div className="space-y-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block flex items-center gap-1">
+                            <GraduationCap className="w-3.5 h-3.5" />
+                            Student Enrollment Details
+                          </span>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Admission No. / LIN *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. LIN-2026-1042 or ADM-889"
+                                value={studentAdmission}
+                                onChange={(e) => setStudentAdmission(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Date of Birth
+                              </label>
+                              <input
+                                type="date"
+                                value={studentDob}
+                                onChange={(e) => setStudentDob(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Class / Form *
+                              </label>
+                              <select
+                                value={studentClass}
+                                onChange={(e) => setStudentClass(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-semibold"
+                              >
+                                <option value="Senior 1">Senior 1 / Grade 7</option>
+                                <option value="Senior 2">Senior 2 / Grade 8</option>
+                                <option value="Senior 3">Senior 3 / Grade 9</option>
+                                <option value="Senior 4">Senior 4 / Grade 10</option>
+                                <option value="Senior 5">Senior 5 / Grade 11</option>
+                                <option value="Senior 6">Senior 6 / Grade 12</option>
+                                <option value="Primary 1">Primary 1</option>
+                                <option value="Primary 6">Primary 6</option>
+                                <option value="Primary 7">Primary 7</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Stream / Section
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Stream A, Blue, East"
+                                value={studentStream}
+                                onChange={(e) => setStudentStream(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                              />
+                            </div>
+                          </div>
                         </div>
+                      )}
 
-                        <div>
-                          <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                            Requested Role *
-                          </label>
-                          <select
-                            value={joinRole}
-                            onChange={(e) => setJoinRole(e.target.value)}
-                            className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-semibold"
-                          >
-                            <option value="Teacher">Teacher / Educator</option>
-                            <option value="Student">Student</option>
-                            <option value="Parent">Parent / Guardian</option>
-                            <option value="Staff">School Staff</option>
-                          </select>
+                      {/* 2. PARENT SPECIFIC */}
+                      {memberCategory === 'Parent' && (
+                        <div className="space-y-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block flex items-center gap-1">
+                            <HeartHandshake className="w-3.5 h-3.5" />
+                            Guardian & Student Linkage Details
+                          </span>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Relationship to Student *
+                              </label>
+                              <select
+                                value={parentRelationship}
+                                onChange={(e) => setParentRelationship(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-semibold"
+                              >
+                                <option value="Mother">Mother</option>
+                                <option value="Father">Father</option>
+                                <option value="Guardian">Legal Guardian</option>
+                                <option value="Sponsor">Education Sponsor</option>
+                                <option value="Other">Other</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Child's Full Name *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. David Mukasa"
+                                value={parentChildName}
+                                onChange={(e) => setParentChildName(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Child's Admission No. / LIN *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. LIN-2026-1042"
+                                value={parentChildAdmission}
+                                onChange={(e) => setParentChildAdmission(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Child's Class
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Senior 1 A"
+                                value={parentChildClass}
+                                onChange={(e) => setParentChildClass(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      <div>
-                        <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
-                          Staff ID / Student LIN (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. EMP-2026 or LIN-1042"
-                          value={joinIdNumber}
-                          onChange={(e) => setJoinIdNumber(e.target.value)}
-                          className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
-                        />
-                      </div>
+                      {/* 3. TEACHER SPECIFIC */}
+                      {memberCategory === 'Teacher' && (
+                        <div className="space-y-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block flex items-center gap-1">
+                            <BookOpen className="w-3.5 h-3.5" />
+                            Academic & Departmental Credentials
+                          </span>
 
-                      <button
-                        type="submit"
-                        disabled={isSubmittingJoin}
-                        className="w-full min-h-[44px] py-2 px-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-purple-600/20 cursor-pointer"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>{isSubmittingJoin ? 'Submitting Application...' : 'Submit Join Request for Approval'}</span>
-                      </button>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Staff / Employee No. *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. EMP-2026-04"
+                                value={teacherEmpNumber}
+                                onChange={(e) => setTeacherEmpNumber(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-mono"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Department *
+                              </label>
+                              <select
+                                value={teacherDepartment}
+                                onChange={(e) => setTeacherDepartment(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-semibold"
+                              >
+                                <option value="Sciences">Sciences & Technology</option>
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="Humanities">Humanities & Social Studies</option>
+                                <option value="Languages">Languages & Literature</option>
+                                <option value="Vocational">Vocational & Business</option>
+                                <option value="Physical Education">Physical Education & Sports</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Subjects Taught *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. Physics & Mathematics"
+                                value={teacherSubjects}
+                                onChange={(e) => setTeacherSubjects(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 4. NON-TEACHING STAFF SPECIFIC */}
+                      {memberCategory === 'Staff' && (
+                        <div className="space-y-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+                          <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider block flex items-center gap-1">
+                            <Briefcase className="w-3.5 h-3.5" />
+                            Staff Operational Role & Category
+                          </span>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Staff Category *
+                              </label>
+                              <select
+                                value={staffCategory}
+                                onChange={(e) => setStaffCategory(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-semibold"
+                              >
+                                <option value="Nurse">School Nurse / Sickbay</option>
+                                <option value="Canteen">Canteen & Catering</option>
+                                <option value="Library">Library</option>
+                                <option value="Security">Campus Security</option>
+                                <option value="Transport">Transport & Driver</option>
+                                <option value="Office">Office / Secretarial</option>
+                                <option value="Cleaner">Grounds & Cleaner</option>
+                                <option value="Technician">IT / Lab Technician</option>
+                                <option value="Other">Other Operational</option>
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Employee Number
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. STF-2026-12"
+                                value={staffEmpNumber}
+                                onChange={(e) => setStaffEmpNumber(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-mono"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Job Title / Primary Duties *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. Sickbay Head Nurse"
+                                value={staffJobTitle}
+                                onChange={(e) => setStaffJobTitle(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 5. SCHOOL ADMINISTRATION / MANAGEMENT SPECIFIC */}
+                      {memberCategory === 'Administrator' && (
+                        <div className="space-y-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
+                          <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/80 text-[11px] text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                            <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                            <div>
+                              <span className="font-bold block">Management access requires administrator verification.</span>
+                              <span>Administrative permissions carry institutional operational authority. Account requests are held in a secure pending queue and require in-person validation by the Headteacher or Board of Governors.</span>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Staff ID *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. ADM-HQ-01"
+                                value={adminStaffId}
+                                onChange={(e) => setAdminStaffId(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white font-mono"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
+                                Position / Designation *
+                              </label>
+                              <input
+                                type="text"
+                                required
+                                placeholder="e.g. Deputy Headteacher or DOS"
+                                value={adminPosition}
+                                onChange={(e) => setAdminPosition(e.target.value)}
+                                className="w-full min-h-[44px] px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs text-slate-900 dark:text-white"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="pt-2 flex flex-col sm:flex-row gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setQrFlowStep('MEMBER_TYPE')}
+                          className="min-h-[48px] py-2.5 px-4 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs transition cursor-pointer"
+                        >
+                          ← Change Role
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSubmittingJoin}
+                          className="flex-1 min-h-[48px] py-2.5 px-4 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-md shadow-purple-600/20 cursor-pointer"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>{isSubmittingJoin ? 'Submitting Application...' : 'CREATE ACCOUNT & REQUEST ACCESS'}</span>
+                          <ArrowRight className="w-4 h-4 ml-1" />
+                        </button>
+                      </div>
                     </form>
                   )}
                 </div>

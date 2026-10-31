@@ -36,6 +36,7 @@ export const SchoolQRInviteCard: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [regenerating, setRegenerating] = useState(false);
+  const [revoking, setRevoking] = useState(false);
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
@@ -110,6 +111,24 @@ export const SchoolQRInviteCard: React.FC = () => {
     }
   };
 
+  const handleRevokeInvite = async () => {
+    if (!invitationData?.token) return;
+    if (!window.confirm('Are you sure you want to revoke this active School Join QR code immediately? Any further scan attempts using this QR will be blocked.')) {
+      return;
+    }
+    setRevoking(true);
+    try {
+      await revokeSchoolInvitation(invitationData.token);
+      setTimeRemaining('Revoked');
+      setInvitationData(prev => prev ? { ...prev, status: 'REVOKED' } : null);
+      await loadAll();
+    } catch (err: any) {
+      alert(err.message || 'Failed to revoke invite QR');
+    } finally {
+      setRevoking(false);
+    }
+  };
+
   const handleCopyInviteLink = () => {
     const link = inviteUrl || (invitationData ? `https://schoolsoul.org/join?token=${invitationData.token}` : '');
     if (!link) return;
@@ -133,13 +152,13 @@ export const SchoolQRInviteCard: React.FC = () => {
             </div>
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                School QR & Join Gateway
+                School Join QR
                 <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">
-                  SECURE
+                  SECURE ENTRY
                 </span>
               </h3>
               <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Institutional ID vs Short-Lived Invitation & Approval Flow
+                Scan this QR to join your school's digital system.
               </p>
             </div>
           </div>
@@ -154,7 +173,7 @@ export const SchoolQRInviteCard: React.FC = () => {
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
               }`}
             >
-              Invite / Join QR
+              School Join QR
             </button>
             <button
               onClick={() => setActiveTab('identity')}
@@ -175,10 +194,10 @@ export const SchoolQRInviteCard: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800/60 text-xs text-purple-900 dark:text-purple-200 leading-relaxed">
               <p className="font-semibold flex items-center gap-1.5 mb-0.5">
                 <ShieldCheck className="w-4 h-4 text-purple-600 dark:text-purple-400 shrink-0" />
-                Short-Lived Token Security Architecture
+                The Digital Door to This School
               </p>
               <p className="text-[11px] text-purple-700 dark:text-purple-300">
-                This QR code gives safe onboarding access. Scanning routes applicants to verify school identity and submit their role request to the Headteacher Approval Queue. Scanning never auto-grants permissions.
+                School members scan this QR code to identify this school, create their credentials, and submit their membership application. Applications are held safely in the Administrator Approval Queue.
               </p>
             </div>
 
@@ -188,7 +207,7 @@ export const SchoolQRInviteCard: React.FC = () => {
                 {inviteQrDataUrl ? (
                   <img
                     src={inviteQrDataUrl}
-                    alt="School Invite QR"
+                    alt="School Join QR Code"
                     className="w-36 h-36 object-contain rounded-lg"
                   />
                 ) : (
@@ -196,20 +215,24 @@ export const SchoolQRInviteCard: React.FC = () => {
                     <RefreshCw className="w-6 h-6 animate-spin text-purple-600" />
                   </div>
                 )}
-                {timeRemaining && timeRemaining !== 'Expired' && (
+                {invitationData?.status === 'REVOKED' ? (
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold whitespace-nowrap shadow-md">
+                    REVOKED
+                  </div>
+                ) : timeRemaining && timeRemaining !== 'Expired' ? (
                   <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-slate-900 text-purple-300 text-[10px] font-mono font-bold whitespace-nowrap shadow-md border border-purple-500/30">
                     {timeRemaining} left
                   </div>
-                )}
+                ) : null}
               </div>
 
               {/* Details & Actions */}
               <div className="space-y-2.5 flex-1 w-full text-xs">
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Invite Token Code</span>
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Join Token Code</span>
                   <div className="font-mono font-extrabold text-slate-900 dark:text-white text-base tracking-wide flex items-center gap-2">
                     {invitationData?.token || 'INV-SCAN-READY'}
-                    {invitationData && (
+                    {invitationData && invitationData.status !== 'REVOKED' && (
                       <span className="px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">
                         15 MIN
                       </span>
@@ -230,7 +253,18 @@ export const SchoolQRInviteCard: React.FC = () => {
                       className="min-h-[44px] px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md shadow-purple-600/20 transition-all flex items-center gap-1.5 cursor-pointer"
                     >
                       <RefreshCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} />
-                      <span>Regenerate QR</span>
+                      <span>Regenerate</span>
+                    </button>
+                  )}
+
+                  {isAdmin && invitationData && invitationData.status !== 'REVOKED' && (
+                    <button
+                      disabled={revoking}
+                      onClick={handleRevokeInvite}
+                      className="min-h-[44px] px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 font-bold text-xs border border-rose-200 dark:border-rose-800 transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                      <span>{revoking ? 'Revoking...' : 'Revoke'}</span>
                     </button>
                   )}
 
@@ -239,7 +273,7 @@ export const SchoolQRInviteCard: React.FC = () => {
                     className="min-h-[44px] px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold text-xs transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copied ? 'Link Copied!' : 'Copy Link'}</span>
+                    <span>{copied ? 'Link Copied!' : 'Copy Join Link'}</span>
                   </button>
 
                   {isAdmin && (
@@ -248,7 +282,7 @@ export const SchoolQRInviteCard: React.FC = () => {
                       className="min-h-[44px] px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300 font-bold text-xs transition-all flex items-center gap-1.5 cursor-pointer relative"
                     >
                       <Users className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>View Requests</span>
+                      <span>View Join Requests</span>
                       {pendingRequestsCount > 0 && (
                         <span className="ml-1 px-1.5 py-0.2 rounded-md bg-rose-500 text-white font-bold text-[10px]">
                           {pendingRequestsCount}

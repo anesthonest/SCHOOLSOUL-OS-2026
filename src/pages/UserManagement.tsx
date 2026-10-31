@@ -930,19 +930,48 @@ export const UserManagement: React.FC = () => {
                         </td>
 
                         <td className="p-3.5">
-                          <Badge variant="primary">{r.requestedRole}</Badge>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Badge variant="primary">{r.requestedRole}</Badge>
+                            {r.memberCategory && r.memberCategory !== r.requestedRole && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-semibold">
+                                {r.memberCategory}
+                              </span>
+                            )}
+                          </div>
                           {r.department && (
                             <p className="text-[11px] text-slate-400 mt-1">Dept: {r.department}</p>
                           )}
+                          {r.subjectsTaught && (
+                            <p className="text-[11px] text-purple-600 dark:text-purple-400">
+                              Subjects: {Array.isArray(r.subjectsTaught) ? r.subjectsTaught.join(', ') : r.subjectsTaught}
+                            </p>
+                          )}
+                          {r.staffCategory && (
+                            <p className="text-[11px] text-amber-600 dark:text-amber-400">Category: {r.staffCategory}</p>
+                          )}
+                          {r.position && (
+                            <p className="text-[11px] text-rose-600 dark:text-rose-400 font-semibold">Position: {r.position}</p>
+                          )}
                         </td>
 
-                        <td className="p-3.5 space-y-0.5 font-mono text-[11px]">
-                          {r.studentIdOrLin && <p className="text-blue-600 dark:text-blue-400">LIN: {r.studentIdOrLin}</p>}
-                          {r.childLinOrNin && <p className="text-amber-600 dark:text-amber-400">Child LIN: {r.childLinOrNin}</p>}
-                          {r.nationalIdOrNin && <p className="text-slate-500">NIN: {r.nationalIdOrNin}</p>}
-                          {r.tinNumber && <p className="text-slate-500">TIN: {r.tinNumber}</p>}
-                          {r.nssfNumber && <p className="text-slate-500">NSSF: {r.nssfNumber}</p>}
-                          {!r.studentIdOrLin && !r.childLinOrNin && !r.nationalIdOrNin && !r.tinNumber && (
+                        <td className="p-3.5 space-y-0.5 text-[11px]">
+                          {(r.studentIdOrLin || r.admissionNumber) && (
+                            <p className="text-blue-600 dark:text-blue-400 font-mono font-semibold">
+                              LIN: {r.admissionNumber || r.studentIdOrLin}
+                              {r.classGrade ? ` (${r.classGrade}${r.stream ? ` - ${r.stream}` : ''})` : ''}
+                            </p>
+                          )}
+                          {r.childName && (
+                            <p className="text-emerald-700 dark:text-emerald-400 font-medium">
+                              Child: {r.childName} ({r.relationship || 'Guardian'})
+                            </p>
+                          )}
+                          {r.childLinOrNin && <p className="text-amber-600 dark:text-amber-400 font-mono">Child LIN: {r.childLinOrNin}</p>}
+                          {r.employeeNumber && <p className="text-slate-600 dark:text-slate-400 font-mono">ID: {r.employeeNumber}</p>}
+                          {r.jobTitle && <p className="text-slate-600 dark:text-slate-400">Duties: {r.jobTitle}</p>}
+                          {r.nationalIdOrNin && <p className="text-slate-500 font-mono">NIN: {r.nationalIdOrNin}</p>}
+                          {r.tinNumber && <p className="text-slate-500 font-mono">TIN: {r.tinNumber}</p>}
+                          {!r.studentIdOrLin && !r.admissionNumber && !r.childLinOrNin && !r.childName && !r.employeeNumber && !r.nationalIdOrNin && (
                             <span className="text-slate-400 italic">No extra credentials</span>
                           )}
                         </td>
@@ -1388,13 +1417,30 @@ export const UserManagement: React.FC = () => {
         title={`Approve Account: ${selectedRequest?.fullName}`}
       >
         <div className="space-y-4 text-xs">
-          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800">
-            <p className="font-semibold text-emerald-800 dark:text-emerald-300">
-              Confirming verification for @{selectedRequest?.username}
-            </p>
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-200 dark:border-emerald-800 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <p className="font-semibold text-emerald-800 dark:text-emerald-300">
+                Confirming verification for @{selectedRequest?.username}
+              </p>
+              {selectedRequest?.memberCategory && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100">
+                  {selectedRequest.memberCategory}
+                </span>
+              )}
+            </div>
             <p className="text-emerald-700 dark:text-emerald-400 mt-0.5">
               Approving this request will immediately activate the account and grant system authorization.
             </p>
+            {/* Role details summary */}
+            {selectedRequest && (
+              <div className="pt-1.5 border-t border-emerald-200/60 dark:border-emerald-800/60 text-[11px] text-emerald-900 dark:text-emerald-200 space-y-0.5">
+                {selectedRequest.admissionNumber && <div>Student LIN: <strong>{selectedRequest.admissionNumber}</strong> {selectedRequest.classGrade ? `(${selectedRequest.classGrade})` : ''}</div>}
+                {selectedRequest.childName && <div>Linked Child: <strong>{selectedRequest.childName}</strong> (Relation: {selectedRequest.relationship || 'Guardian'})</div>}
+                {selectedRequest.department && <div>Department: <strong>{selectedRequest.department}</strong> {selectedRequest.subjectsTaught ? `• Subjects: ${selectedRequest.subjectsTaught}` : ''}</div>}
+                {selectedRequest.staffCategory && <div>Staff Category: <strong>{selectedRequest.staffCategory}</strong> {selectedRequest.jobTitle ? `• Duties: ${selectedRequest.jobTitle}` : ''}</div>}
+                {selectedRequest.position && <div>Leadership Position: <strong>{selectedRequest.position}</strong> (Staff ID: {selectedRequest.staffId || selectedRequest.employeeNumber || 'N/A'})</div>}
+              </div>
+            )}
           </div>
 
           <div>

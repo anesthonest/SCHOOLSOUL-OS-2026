@@ -14,12 +14,18 @@ import type {
   PaymentGatewayType,
 } from './paymentTypes';
 import { pesapalProvider } from './pesapalService';
+import { mtnMoMoProvider } from './mtnMoMoService';
+import { airtelMoneyProvider } from './airtelMoneyService';
+import { bankPaymentProvider } from './bankPaymentService';
 import { flutterwaveProvider } from './flutterwaveService';
 import { readServerDB, writeServerDB } from '../db/store';
 
 export interface SchoolGatewaySettings {
   schoolId: string;
   enablePesapal: boolean;
+  enableMtnMoMo: boolean;
+  enableAirtelMoney: boolean;
+  enableBankPayment?: boolean;
   enableFlutterwave: boolean;
   preferredGateway?: PaymentGatewayType;
   environmentOverride?: 'sandbox' | 'production';
@@ -42,6 +48,10 @@ export class PaymentRoutingService {
 
   constructor() {
     this.providers.set('PESAPAL', pesapalProvider);
+    this.providers.set('MTN_MOMO', mtnMoMoProvider);
+    this.providers.set('AIRTEL_MONEY', airtelMoneyProvider);
+    this.providers.set('BANK_TRANSFER', bankPaymentProvider);
+    this.providers.set('BANK_PAYMENT', bankPaymentProvider);
     this.providers.set('FLUTTERWAVE', flutterwaveProvider);
   }
 
@@ -65,10 +75,12 @@ export class PaymentRoutingService {
       console.warn('[RoutingService] Error reading school gateway settings:', e);
     }
 
-    // Default: Pesapal active and primary, Flutterwave disabled
+    // Default: MTN MoMo, Airtel Money, and Pesapal active
     return {
       schoolId,
       enablePesapal: true,
+      enableMtnMoMo: true,
+      enableAirtelMoney: true,
       enableFlutterwave: false,
       preferredGateway: 'PESAPAL',
     };
@@ -100,21 +112,23 @@ export class PaymentRoutingService {
   }
 
   /**
-   * Resolve the primary and eligible payment gateways for a given country and currency
-   * Production lock: Pesapal 3.0 is the exclusive active gateway.
+   * Resolve the primary and eligible payment gateways for a given country, currency, and user preference
    */
   public resolveGateway(
-    _countryCode: string,
-    _currency: string,
+    countryCode: string,
+    currency: string,
     _schoolId?: string,
-    _requestedGateway?: PaymentGatewayType
+    requestedGateway?: PaymentGatewayType
   ): PaymentProvider {
-    // Production lock: Always resolve to PESAPAL (Flutterwave is disabled for current release)
+    if (requestedGateway && this.providers.has(requestedGateway)) {
+      return this.getProvider(requestedGateway);
+    }
     return this.getProvider('PESAPAL');
   }
 
   /**
    * Get all available gateways and payment methods for a given country and school
+   * First-class payment methods: MTN Mobile Money, Airtel Money, Pesapal
    */
   public async getAvailableGateways(countryCode: string, currency: string, schoolId?: string): Promise<AvailableGatewayOption[]> {
     const c = countryCode.toUpperCase();
@@ -123,15 +137,47 @@ export class PaymentRoutingService {
 
     const options: AvailableGatewayOption[] = [];
 
-    // 1. Pesapal (Active Primary Gateway)
+    // 1. MTN Mobile Money (First-Class Payment Method)
+    const mtn = this.getProvider('MTN_MOMO');
+    const mtnHealth = await mtn.getHealthStatus();
+    const mtnMethods = mtn.getSupportedPaymentMethods(c, cur);
+    const mtnEnabled = !settings || settings.enableMtnMoMo !== false;
+
+    options.push({
+      id: 'MTN_MOMO',
+      name: 'MTN Mobile Money',
+      isAvailable: mtnEnabled && mtnMethods.length > 0,
+      isPrimary: true,
+      supportedCurrencies: mtn.getSupportedCurrencies(),
+      methods: mtnMethods,
+      healthStatus: mtnHealth.status,
+    });
+
+    // 2. Airtel Money (First-Class Payment Method)
+    const airtel = this.getProvider('AIRTEL_MONEY');
+    const airtelHealth = await airtel.getHealthStatus();
+    const airtelMethods = airtel.getSupportedPaymentMethods(c, cur);
+    const airtelEnabled = !settings || settings.enableAirtelMoney !== false;
+
+    options.push({
+      id: 'AIRTEL_MONEY',
+      name: 'Airtel Money',
+      isAvailable: airtelEnabled && airtelMethods.length > 0,
+      isPrimary: true,
+      supportedCurrencies: airtel.getSupportedCurrencies(),
+      methods: airtelMethods,
+      healthStatus: airtelHealth.status,
+    });
+
+    // 3. Pesapal (First-Class Payment Method)
     const pesapal = this.getProvider('PESAPAL');
     const pesapalHealth = await pesapal.getHealthStatus();
     const pesapalMethods = pesapal.getSupportedPaymentMethods(c, cur);
-    const pesapalEnabled = !settings || settings.enablePesapal;
+    const pesapalEnabled = !settings || settings.enablePesapal !== false;
 
     options.push({
       id: 'PESAPAL',
-      name: 'Pesapal East Africa Gateway',
+      name: 'Pesapal',
       isAvailable: pesapalEnabled && pesapalMethods.length > 0,
       isPrimary: true,
       supportedCurrencies: pesapal.getSupportedCurrencies(),
@@ -139,7 +185,23 @@ export class PaymentRoutingService {
       healthStatus: pesapalHealth.status,
     });
 
-    // 2. Flutterwave (Registered Abstraction - Inactive / Disabled for Production Release)
+    // 4. Bank Payment / Manual Bank Transfer (First-Class Payment Method)
+    const bank = this.getProvider('BANK_TRANSFER');
+    const bankHealth = await bank.getHealthStatus();
+    const bankMethods = bank.getSupportedPaymentMethods(c, cur);
+    const bankEnabled = !settings || settings.enableBankPayment !== false;
+
+    options.push({
+      id: 'BANK_TRANSFER',
+      name: 'Bank Payment',
+      isAvailable: bankEnabled && bankMethods.length > 0,
+      isPrimary: false,
+      supportedCurrencies: bank.getSupportedCurrencies(),
+      methods: bankMethods,
+      healthStatus: bankHealth.status,
+    });
+
+    // 4. Flutterwave (Registered Abstraction - Inactive / Disabled for Production Release)
     const flwProvider = this.getProvider('FLUTTERWAVE');
     options.push({
       id: 'FLUTTERWAVE',
@@ -168,7 +230,7 @@ export class PaymentRoutingService {
       return await provider.createPayment(req);
     } catch (err: any) {
       console.warn(`[PaymentRouter] ${provider.name} payment initiation failed: ${err.message}`);
-      throw new Error('Payment service is temporarily unavailable. Please try again.');
+      throw new Error(err.message || 'Payment service is temporarily unavailable. Please try again.');
     }
   }
 

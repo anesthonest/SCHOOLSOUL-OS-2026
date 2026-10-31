@@ -20,6 +20,7 @@ export interface ServerDBData {
   notifications: any[];
   devices: any[];
   students: any[];
+  staff: any[];
   guardians: any[];
   admissions: any[];
   studentDocuments: any[];
@@ -141,6 +142,7 @@ const initialData: ServerDBData = {
   cloudStorageMetadata: [],
   devices: [],
   students: [],
+  staff: [],
   guardians: [],
   admissions: [],
   studentDocuments: [],
@@ -226,6 +228,7 @@ const initialData: ServerDBData = {
 
 // In-Memory Fast Cache for high-performance route resolution
 let inMemoryCache: ServerDBData | null = null;
+let lastDbMtime: number = 0;
 let isPostgresSynced = false;
 
 export async function initServerDatabase(): Promise<void> {
@@ -253,9 +256,14 @@ export async function initServerDatabase(): Promise<void> {
 }
 
 export function readServerDB(): ServerDBData {
-  if (inMemoryCache) {
-    return inMemoryCache;
-  }
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const stat = fs.statSync(DB_FILE);
+      if (inMemoryCache && stat.mtimeMs === lastDbMtime) {
+        return inMemoryCache;
+      }
+    }
+  } catch {}
 
   try {
     if (!fs.existsSync(DATA_DIR)) {
@@ -263,6 +271,9 @@ export function readServerDB(): ServerDBData {
     }
     if (!fs.existsSync(DB_FILE)) {
       writeAtomicFile(DB_FILE, initialData);
+      try {
+        lastDbMtime = fs.statSync(DB_FILE).mtimeMs;
+      } catch {}
       inMemoryCache = { ...initialData };
       return inMemoryCache;
     }
@@ -274,6 +285,9 @@ export function readServerDB(): ServerDBData {
         fs.renameSync(DB_FILE, `${DB_FILE}.corrupt-zero-${Date.now()}`);
       } catch {}
       writeAtomicFile(DB_FILE, initialData);
+      try {
+        lastDbMtime = fs.statSync(DB_FILE).mtimeMs;
+      } catch {}
       inMemoryCache = { ...initialData };
       return inMemoryCache;
     }
@@ -386,6 +400,9 @@ export function readServerDB(): ServerDBData {
       backupHistory: parsed.backupHistory || [],
       cloudStorageMetadata: parsed.cloudStorageMetadata || [],
     };
+    try {
+      lastDbMtime = fs.statSync(DB_FILE).mtimeMs;
+    } catch {}
     return inMemoryCache;
   } catch (error) {
     console.error('Failed to read server DB:', error);
@@ -432,6 +449,9 @@ export function writeServerDB(data: ServerDBData): void {
   // Write atomically to local file system
   try {
     writeAtomicFile(DB_FILE, data);
+    try {
+      lastDbMtime = fs.statSync(DB_FILE).mtimeMs;
+    } catch {}
   } catch (error) {
     console.error('Failed to write server DB locally atomically:', error);
   }

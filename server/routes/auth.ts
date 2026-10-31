@@ -10,16 +10,17 @@ const router = Router();
 // Login Route with lockout protection, rate limiting, and Argon2id verification with auto-upgrade
 router.post('/login', rateLimiter(15, 60000), async (req, res) => {
   try {
-    const { usernameOrEmail, password, rememberMe } = req.body;
-    if (!usernameOrEmail || !password) {
+    const identifier = req.body.usernameOrEmail || req.body.username || req.body.email;
+    const { password, rememberMe } = req.body;
+    if (!identifier || !password) {
       return res.status(400).json({ error: 'Username/Email and Password are required.' });
     }
 
     const db = readServerDB();
     const user = db.users.find(
       (u) =>
-        u.username.toLowerCase() === String(usernameOrEmail).trim().toLowerCase() ||
-        (u.email && u.email.toLowerCase() === String(usernameOrEmail).trim().toLowerCase())
+        u.username.toLowerCase() === String(identifier).trim().toLowerCase() ||
+        (u.email && u.email.toLowerCase() === String(identifier).trim().toLowerCase())
     );
 
     if (!user) {

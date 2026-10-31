@@ -107,7 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         const data = await res.json();
         if (!res.ok) {
-          return { success: false, error: data.error || 'Login failed' };
+          return { success: false, error: data.error || 'Login failed', status: data.status, requestedRole: data.requestedRole };
         }
 
         const loggedUser: User = data.user;

@@ -194,7 +194,7 @@ export async function generateSchoolInvitation(expiresInMinutes: number = 15): P
   return await res.json();
 }
 
-export async function revokeSchoolInvitation(): Promise<{ success: boolean; message: string }> {
+export async function revokeSchoolInvitation(token?: string): Promise<{ success: boolean; message: string }> {
   const headers = getAuthHeaders();
   const res = await fetch(`${API_BASE}/qr/revoke-invitation`, {
     method: 'POST',
@@ -202,6 +202,7 @@ export async function revokeSchoolInvitation(): Promise<{ success: boolean; mess
       ...headers,
       'Content-Type': 'application/json',
     },
+    body: JSON.stringify({ token }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Failed to revoke invitation QR' }));
@@ -234,20 +235,51 @@ export async function validateSchoolInvitation(token: string): Promise<{
   return data;
 }
 
-export async function submitQRJoinRequest(payload: {
+export interface QRJoinPayload {
   token: string;
   fullName: string;
+  username?: string;
+  password?: string;
   email?: string;
   phone?: string;
+  memberCategory?: 'Student' | 'Parent' | 'Teacher' | 'Staff' | 'Administrator' | string;
   requestedRole: string;
   employeeOrStudentNumber?: string;
   notes?: string;
-}): Promise<{
+  // Student fields
+  dateOfBirth?: string;
+  classGrade?: string;
+  stream?: string;
+  admissionNumber?: string;
+  // Parent fields
+  relationship?: string;
+  childName?: string;
+  childAdmissionNumber?: string;
+  childClass?: string;
+  // Teacher fields
+  department?: string;
+  subjectsTaught?: string;
+  // Non-teaching Staff fields
+  staffCategory?: string;
+  jobTitle?: string;
+  // Administration fields
+  staffId?: string;
+  position?: string;
+}
+
+export interface QRJoinResponse {
   success: boolean;
   message: string;
   requestId: string;
   request: any;
-}> {
+  schoolName?: string;
+  memberCategory?: string;
+  requestedRole?: string;
+  status: 'PENDING_APPROVAL';
+  submittedAt: string;
+}
+
+export async function submitQRJoinRequest(payload: QRJoinPayload): Promise<QRJoinResponse> {
   const res = await fetch(`${API_BASE}/qr/submit-join-request`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

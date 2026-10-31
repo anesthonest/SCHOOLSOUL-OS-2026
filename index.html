@@ -16,6 +16,24 @@
     <meta name="description" content="Global, multi-country offline-first digital operating system and commercial ecosystem for schools featuring Modular Country Frameworks, Cross-Border Transfers, Opportunity &amp; Achievement Engine, Live Learning, and Safeguarding." />
     <meta property="og:title" content="SchoolSoul OS" />
     <meta property="og:description" content="Global, multi-country offline-first digital operating system and commercial ecosystem for schools." />
+    <script>
+      // Suppress harmless Vite HMR WebSocket disconnects in hosted sandbox/iFrame proxy environments
+      window.addEventListener('error', function (event) {
+        if (event && (
+          (event.message && (event.message.includes('WebSocket') || event.message.includes('@vite/client'))) ||
+          (event.error && String(event.error).includes('WebSocket'))
+        )) {
+          event.stopImmediatePropagation();
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function (event) {
+        if (event && (
+          (event.reason && String(event.reason.message || event.reason).includes('WebSocket'))
+        )) {
+          event.stopImmediatePropagation();
+        }
+      }, true);
+    </script>
   </head>
   <body>
     <div id="root"></div>

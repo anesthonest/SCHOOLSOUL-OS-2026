@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { logAuditEvent } from '../../services/api';
+import { UniversalPaymentSelector } from '../../components/billing/UniversalPaymentSelector';
 
 export type SubscriptionStatus =
   | 'ACTIVE'
@@ -94,6 +95,7 @@ export const UnifiedSubscriptionPage: React.FC = () => {
 
   // Global Toast
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' | 'warning' | 'error' } | null>(null);
+  const [showOnlinePaymentModal, setShowOnlinePaymentModal] = useState(false);
 
   const showToast = (message: string, type: 'success' | 'info' | 'warning' | 'error' = 'success') => {
     setToast({ message, type });
@@ -592,8 +594,16 @@ VINEXSAH TECHNOLOGIES EXECUTIVE DIRECTORATE - FULLY CERTIFIED.
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <label className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md cursor-pointer transition-all flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowOnlinePaymentModal(true)}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer text-xs"
+                >
+                  <CreditCard className="w-3.5 h-3.5" />
+                  <span>Renew via Mobile Money / Pesapal</span>
+                </button>
+                <label className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md cursor-pointer transition-all flex items-center gap-2 text-xs">
                   <Upload className="w-3.5 h-3.5" />
                   <span>Import Signed Package (.sssub)</span>
                   <input type="file" accept=".sssub,.sslic" onChange={handleImportSignedPackage} className="hidden" />
@@ -930,6 +940,39 @@ VINEXSAH TECHNOLOGIES EXECUTIVE DIRECTORATE - FULLY CERTIFIED.
               Authorized by VINEXSAH TECHNOLOGIES Commercial & Engineering Directorate. Certified for deployment across primary, secondary, and tertiary school campuses worldwide.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Online Subscription Renewal Modal */}
+      {showOnlinePaymentModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <UniversalPaymentSelector
+            item={{
+              purpose: 'SUBSCRIPTION_RENEWAL',
+              title: 'Renew SchoolSoul Unified Monthly Subscription',
+              subtitle: '100% Unlocked Feature Access (21 Vision Modules)',
+              schoolId: currentSchoolSub.schoolId,
+              schoolName: currentSchoolSub.schoolName,
+              amount: 295000,
+              currency: 'UGX',
+              billingCycle: 'Monthly',
+            }}
+            initialMethod="MTN_MOMO"
+            onSuccess={(receipt) => {
+              setShowOnlinePaymentModal(false);
+              const nextDate = new Date();
+              nextDate.setMonth(nextDate.getMonth() + 1);
+              setCurrentSchoolSub((prev) => ({
+                ...prev,
+                status: 'ACTIVE',
+                paymentStatus: 'PAID',
+                lastRenewalDate: new Date().toISOString().split('T')[0],
+                nextRenewalDate: nextDate.toISOString().split('T')[0],
+              }));
+              showToast(`Subscription renewed successfully via ${receipt.paymentMethod}!`, 'success');
+            }}
+            onCancel={() => setShowOnlinePaymentModal(false)}
+          />
         </div>
       )}
     </div>

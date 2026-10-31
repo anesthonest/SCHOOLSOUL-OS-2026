@@ -1141,30 +1141,21 @@ export function normalizeRole(roleName: string): string {
  */
 export function getDefaultHomeRouteForRole(roleName: string): string {
   const role = normalizeRole(roleName);
-  switch (role) {
-    case 'Parent':
-      return 'parent-portal';
-    case 'Student':
-      return 'v9-student-portfolio';
-    case 'Teacher':
-      return 'teacher-gradebook';
-    case 'Bursar':
-      return 'finance-hub';
-    case 'School Nurse':
-      return 'school-health-centre';
-    case 'School Owner':
-      return 'executive-cockpit';
-    case 'Deputy Headteacher':
-      return 'academics-hub';
-    case 'Headteacher':
-      return 'daily-operations';
-    case 'ICT Administrator':
-    case 'Super Administrator':
-      return 'v26-final-system-integrity';
-    case 'Administrator':
-    default:
-      return 'dashboard';
-  }
+  const normalized = role.toLowerCase();
+
+  if (normalized.includes('nurse')) return 'school-health-centre';
+  if (normalized.includes('parent') || normalized.includes('guardian')) return 'parent-portal';
+  if (normalized.includes('student') || normalized.includes('learner')) return 'v9-student-portfolio';
+  if (normalized.includes('teacher') || normalized.includes('instructor')) return 'teacher-gradebook';
+  if (normalized.includes('bursar') || normalized.includes('accountant')) return 'finance-hub';
+  if (normalized.includes('librarian') || normalized.includes('library')) return 'inventory-management';
+  if (normalized.includes('security') || normalized.includes('transport') || normalized.includes('canteen') || normalized.includes('staff')) return 'daily-operations';
+  if (normalized.includes('owner') || normalized.includes('director')) return 'executive-cockpit';
+  if (normalized.includes('deputy') || normalized.includes('dos')) return 'academics-hub';
+  if (normalized.includes('headteacher') || normalized.includes('principal')) return 'daily-operations';
+  if (normalized.includes('ict') || normalized.includes('super admin')) return 'v26-final-system-integrity';
+
+  return 'dashboard';
 }
 
 /**

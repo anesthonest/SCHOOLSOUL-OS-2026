@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import QRCode from 'qrcode';
 import { readServerDB, writeServerDB } from '../db/store';
 import { requireAuth, requireRoles } from '../middleware/authMiddleware';
+import { hashPassword } from '../utils/passwordHash';
 
 export const qrRouter = Router();
 
@@ -299,6 +300,59 @@ qrRouter.post('/verify', async (req, res) => {
     }
 
     // -------------------------------------------------------------
+    // WORKFLOW E: SECURE SCHOOL INVITATION / JOIN QR
+    // -------------------------------------------------------------
+    if (parsedPayload?.type === 'SCHOOL_INVITATION' || parsedPayload?.type === 'SCHOOL_JOIN_INVITATION' || rawInput.startsWith('INV-')) {
+      const inviteToken = parsedPayload?.token || rawInput;
+      const invitations = db.schoolInvitations || [];
+      const invitation = invitations.find(
+        (inv: any) => inv.token && inv.token.toUpperCase() === String(inviteToken).trim().toUpperCase()
+      );
+
+      if (!invitation) {
+        return res.status(404).json({
+          success: false,
+          verified: false,
+          error: 'This School Invitation QR code is unrecognized, expired, or invalid.',
+        });
+      }
+
+      if (invitation.status === 'REVOKED') {
+        return res.status(400).json({
+          success: false,
+          verified: false,
+          error: 'This invitation QR code has been revoked by the school administrator.',
+        });
+      }
+
+      const now = Date.now();
+      const expiresAtMs = new Date(invitation.expiresAt).getTime();
+      if (now > expiresAtMs) {
+        invitation.status = 'EXPIRED';
+        writeServerDB(db);
+        return res.status(400).json({
+          success: false,
+          verified: false,
+          error: 'This invitation QR code has expired (validity window ended). Please request a fresh code from your administrator.',
+        });
+      }
+
+      return res.json({
+        success: true,
+        verified: true,
+        type: 'SCHOOL_INVITATION',
+        invitation: {
+          token: invitation.token,
+          schoolId: invitation.schoolId,
+          schoolName: invitation.schoolName,
+          expiresAt: invitation.expiresAt,
+          allowedRoles: invitation.allowedRoles || ['Teacher', 'Student', 'Parent', 'Staff'],
+        },
+        message: `Verified Institutional Invitation for "${invitation.schoolName}". Submit your details for administrative approval.`,
+      });
+    }
+
+    // -------------------------------------------------------------
     // WORKFLOW B: SCHOOL MARKET PICKUP QR OR PIN
     // -------------------------------------------------------------
     if (
@@ -360,7 +414,7 @@ qrRouter.post('/verify', async (req, res) => {
     if (parsedPayload?.studentId) {
       student = db.students.find(
         (s: any) =>
-          s.studentId.toLowerCase() === parsedPayload.studentId.toLowerCase() ||
+          (s.studentId && s.studentId.toLowerCase() === String(parsedPayload.studentId).toLowerCase()) ||
           s.id === parsedPayload.studentId
       );
     } else {
@@ -368,9 +422,9 @@ qrRouter.post('/verify', async (req, res) => {
       student = db.students.find(
         (s: any) =>
           (s.qrVerificationHash && s.qrVerificationHash.toLowerCase() === rawInput.toLowerCase()) ||
-          s.studentId.toLowerCase() === rawInput.toLowerCase() ||
-          s.admissionNumber.toLowerCase() === rawInput.toLowerCase() ||
-          s.id.toLowerCase() === rawInput.toLowerCase()
+          (s.studentId && s.studentId.toLowerCase() === rawInput.toLowerCase()) ||
+          (s.admissionNumber && s.admissionNumber.toLowerCase() === rawInput.toLowerCase()) ||
+          (s.id && s.id.toLowerCase() === rawInput.toLowerCase())
       );
     }
 
@@ -445,59 +499,6 @@ qrRouter.post('/verify', async (req, res) => {
           verifiedAt: new Date().toISOString(),
         },
         message: 'Academic Credential & Report Card Signature Validated.',
-      });
-    }
-
-    // -------------------------------------------------------------
-    // WORKFLOW E: SECURE SCHOOL INVITATION / JOIN QR
-    // -------------------------------------------------------------
-    if (parsedPayload?.type === 'SCHOOL_INVITATION' || rawInput.startsWith('INV-')) {
-      const inviteToken = parsedPayload?.token || rawInput;
-      const invitations = db.schoolInvitations || [];
-      const invitation = invitations.find(
-        (inv: any) => inv.token.toUpperCase() === String(inviteToken).trim().toUpperCase()
-      );
-
-      if (!invitation) {
-        return res.status(404).json({
-          success: false,
-          verified: false,
-          error: 'This School Invitation QR code is unrecognized, expired, or invalid.',
-        });
-      }
-
-      if (invitation.status === 'REVOKED') {
-        return res.status(400).json({
-          success: false,
-          verified: false,
-          error: 'This invitation QR code has been revoked by the school administrator.',
-        });
-      }
-
-      const now = Date.now();
-      const expiresAtMs = new Date(invitation.expiresAt).getTime();
-      if (now > expiresAtMs) {
-        invitation.status = 'EXPIRED';
-        writeServerDB(db);
-        return res.status(400).json({
-          success: false,
-          verified: false,
-          error: 'This invitation QR code has expired (validity window ended). Please request a fresh code from your administrator.',
-        });
-      }
-
-      return res.json({
-        success: true,
-        verified: true,
-        type: 'SCHOOL_INVITATION',
-        invitation: {
-          token: invitation.token,
-          schoolId: invitation.schoolId,
-          schoolName: invitation.schoolName,
-          expiresAt: invitation.expiresAt,
-          allowedRoles: invitation.allowedRoles || ['Teacher', 'Student', 'Parent', 'Staff'],
-        },
-        message: `Verified Institutional Invitation for "${invitation.schoolName}". Submit your details for administrative approval.`,
       });
     }
 
@@ -798,22 +799,46 @@ qrRouter.post('/validate-invitation', async (req, res) => {
 
 /**
  * POST /api/qr/submit-join-request
- * Submits a new join request via invitation QR into the school approval queue.
+ * Submits a new school membership registration via invitation QR into the school approval queue.
+ * Role-appropriate metadata is captured for Students, Parents, Teachers, Staff, and Administrators.
+ * STRICT SECURITY: Scanning != Access. Role Selected != Role Approved.
+ * Account status is strictly locked to PENDING_APPROVAL with zero automatic elevation.
  */
 qrRouter.post('/submit-join-request', async (req, res) => {
   try {
     const {
       token,
       fullName,
+      username,
+      password,
       email,
       phone,
+      memberCategory,
       requestedRole,
       employeeOrStudentNumber,
       notes,
+      // Role-specific fields
+      dateOfBirth,
+      classGrade,
+      stream,
+      admissionNumber,
+      relationship,
+      childName,
+      childAdmissionNumber,
+      childClass,
+      department,
+      subjectsTaught,
+      staffCategory,
+      jobTitle,
+      staffId,
+      position,
     } = req.body;
 
-    if (!token || !fullName || !requestedRole) {
-      return res.status(400).json({ success: false, error: 'Token, full name, and requested role are required.' });
+    if (!token || !fullName || (!requestedRole && !memberCategory)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invitation token, full name, and requested member role are required.',
+      });
     }
 
     const db = readServerDB();
@@ -821,30 +846,125 @@ qrRouter.post('/submit-join-request', async (req, res) => {
     const inv = invitations.find((i: any) => i.token.toUpperCase() === String(token).trim().toUpperCase());
 
     if (!inv || inv.status !== 'ACTIVE' || Date.now() > new Date(inv.expiresAt).getTime()) {
-      return res.status(400).json({ success: false, error: 'Invalid or expired invitation token.' });
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid, revoked, or expired invitation token. Please scan an active school QR code.',
+      });
     }
 
     if (!db.accountRequests) db.accountRequests = [];
+    if (!db.users) db.users = [];
 
     const now = new Date().toISOString();
     const requestId = `req-qr-${Date.now()}`;
-    const cleanUsername = fullName.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(10 + Math.random() * 90);
+    const targetCategory = String(memberCategory || requestedRole).trim();
+    const targetRole = String(requestedRole || memberCategory).trim();
 
+    // Determine clean username
+    const baseUsername = username
+      ? String(username).toLowerCase().trim().replace(/[^a-z0-9_.-]/g, '')
+      : fullName.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 10) + Math.floor(100 + Math.random() * 900);
+    let finalUsername = baseUsername;
+    let counter = 1;
+    while (db.users.some((u: any) => u.username?.toLowerCase() === finalUsername.toLowerCase())) {
+      finalUsername = `${baseUsername}${counter++}`;
+    }
+
+    const userId = `usr-pending-${Date.now()}`;
+
+    // Hash password if supplied
+    let passwordHash = '';
+    if (password && String(password).trim().length >= 6) {
+      passwordHash = await hashPassword(String(password).trim());
+    } else {
+      // Default initial randomized secure hash
+      passwordHash = await hashPassword(`SchoolSoul@${Math.floor(1000 + Math.random() * 9000)}`);
+    }
+
+    // Role-specific field normalization
+    const normalizedAdmissionNum = admissionNumber || employeeOrStudentNumber || '';
+    const normalizedStaffEmpNum = staffId || employeeOrStudentNumber || '';
+
+    // Create user object strictly locked to PENDING_APPROVAL
+    const pendingUser = {
+      id: userId,
+      fullName: String(fullName).trim(),
+      username: finalUsername,
+      email: email ? String(email).trim() : '',
+      phone: phone ? String(phone).trim() : '',
+      employeeNumber: targetCategory === 'Student' || targetCategory === 'Parent' ? '' : (normalizedStaffEmpNum || `EMP-REQ-${Math.floor(1000 + Math.random() * 9000)}`),
+      role: targetRole,
+      requestedRole: targetRole,
+      memberCategory: targetCategory,
+      // SECURITY RULE: Always PENDING_APPROVAL. Zero client elevation allowed.
+      status: 'PENDING_APPROVAL',
+      approvalStatus: 'PENDING_APPROVAL',
+      verificationStatus: 'PENDING_APPROVAL',
+      schoolId: inv.schoolId,
+      schoolName: inv.schoolName,
+      passwordHash,
+      failedLoginAttempts: 0,
+      createdAt: now,
+      updatedAt: now,
+      // Metadata
+      dateOfBirth: dateOfBirth || undefined,
+      classGrade: classGrade || undefined,
+      stream: stream || undefined,
+      admissionNumber: normalizedAdmissionNum || undefined,
+      relationship: relationship || undefined,
+      childName: childName || undefined,
+      childAdmissionNumber: childAdmissionNumber || undefined,
+      childClass: childClass || undefined,
+      department: department || undefined,
+      subjectsTaught: subjectsTaught ? (Array.isArray(subjectsTaught) ? subjectsTaught : [subjectsTaught]) : undefined,
+      staffCategory: staffCategory || undefined,
+      jobTitle: jobTitle || undefined,
+      staffId: staffId || undefined,
+      position: position || undefined,
+      requiresAdminVerification: targetCategory === 'Administrator' || targetRole === 'Administrator',
+    };
+
+    db.users.push(pendingUser);
+
+    // Create Account Request Queue Entry
     const joinRequest = {
       id: requestId,
       schoolId: inv.schoolId,
       schoolName: inv.schoolName,
-      userId: `usr-pending-${Date.now()}`,
+      userId,
       fullName: String(fullName).trim(),
-      username: cleanUsername,
+      username: finalUsername,
       email: email ? String(email).trim() : '',
       phone: phone ? String(phone).trim() : '',
-      requestedRole,
+      memberCategory: targetCategory,
+      requestedRole: targetRole,
+      // Security: initial approvedRole is null; must be explicitly granted by Admin
+      approvedRole: null,
       status: 'PENDING_APPROVAL',
       requestOrigin: 'QR_INVITATION',
       invitationToken: inv.token,
-      employeeNumber: employeeOrStudentNumber || '',
-      notes: notes || 'Submitted via Verified QR Invitation',
+      employeeNumber: targetCategory === 'Student' ? normalizedAdmissionNum : normalizedStaffEmpNum,
+      notes: notes || `Registered via Official School QR Door for ${inv.schoolName}`,
+      // Student specific
+      dateOfBirth: dateOfBirth || '',
+      classGrade: classGrade || '',
+      stream: stream || '',
+      admissionNumber: normalizedAdmissionNum,
+      // Parent specific
+      relationship: relationship || '',
+      childName: childName || '',
+      childAdmissionNumber: childAdmissionNumber || '',
+      childClass: childClass || '',
+      // Teacher specific
+      department: department || '',
+      subjectsTaught: subjectsTaught || '',
+      // Staff specific
+      staffCategory: staffCategory || '',
+      jobTitle: jobTitle || '',
+      // Administration specific
+      staffId: staffId || '',
+      position: position || '',
+      requiresAdminVerification: targetCategory === 'Administrator' || targetRole === 'Administrator',
       requestedAt: now,
       createdAt: now,
       updatedAt: now,
@@ -853,16 +973,38 @@ qrRouter.post('/submit-join-request', async (req, res) => {
     db.accountRequests.unshift(joinRequest);
     inv.usedCount = (inv.usedCount || 0) + 1;
 
-    // Audit log
+    // Notifications for school administrators
+    if (!db.notifications) db.notifications = [];
+    db.notifications.unshift({
+      id: `notif-${Date.now()}`,
+      title: 'New QR Membership Request',
+      message: `${joinRequest.fullName} requested to join ${inv.schoolName} as ${targetRole} (${targetCategory}) via QR invitation.`,
+      type: 'approval',
+      priority: 'high',
+      createdAt: now,
+      read: false,
+    });
+
+    // Audit logs: MEMBER_REGISTRATION_SUBMITTED and JOIN_REQUEST_SUBMITTED
     if (!db.auditLogs) db.auditLogs = [];
     db.auditLogs.unshift({
       id: `audit-${Date.now()}`,
       timestamp: now,
       userId: joinRequest.userId,
       username: joinRequest.username,
-      userRole: requestedRole,
+      userRole: targetRole,
+      action: 'MEMBER_REGISTRATION_SUBMITTED' as any,
+      details: `New school member registration via QR invitation (${inv.token}) for ${joinRequest.fullName} as ${targetRole} (${targetCategory}). School: ${inv.schoolName}. Pending administrator approval.`,
+    });
+
+    db.auditLogs.unshift({
+      id: `audit-${Date.now() + 1}`,
+      timestamp: now,
+      userId: joinRequest.userId,
+      username: joinRequest.username,
+      userRole: targetRole,
       action: 'JOIN_REQUEST_SUBMITTED' as any,
-      details: `Submitted school join request for ${joinRequest.fullName} as ${requestedRole} via QR invitation (${inv.token}).`,
+      details: `Submitted school join request for ${joinRequest.fullName} as ${targetRole} via QR invitation (${inv.token}).`,
     });
 
     writeServerDB(db);
@@ -872,9 +1014,15 @@ qrRouter.post('/submit-join-request', async (req, res) => {
       message: `Join request submitted successfully for ${inv.schoolName}. Please wait for Headteacher/Administrator approval.`,
       requestId,
       request: joinRequest,
+      schoolName: inv.schoolName,
+      memberCategory: targetCategory,
+      requestedRole: targetRole,
+      status: 'PENDING_APPROVAL',
+      submittedAt: now,
     });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 

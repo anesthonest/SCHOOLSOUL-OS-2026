@@ -33,6 +33,7 @@ import {
   Info,
   Check,
   Globe2,
+  QrCode,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
@@ -47,6 +48,7 @@ import {
 } from '../services/api';
 import { Modal } from '../components/common/Modal';
 import { SchoolSoulMarkSVG } from '../components/common/SchoolSoulLogo';
+import { UniversalQRScannerModal } from '../components/common/UniversalQRScannerModal';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { PasswordInput } from '../components/ui/PasswordInput';
@@ -97,6 +99,8 @@ export const Login: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [pendingNotice, setPendingNotice] = useState<{ message: string; requestedRole?: string; schoolName?: string; username?: string } | null>(null);
 
   // Multi-Step Join School Registration State
   const [regStep, setRegStep] = useState<number>(1);
@@ -178,7 +182,16 @@ export const Login: React.FC = () => {
     setLoading(false);
 
     if (!res.success) {
-      setError(res.error || 'Invalid credentials. Please verify your login details.');
+      if ((res as any).status === 'PENDING_APPROVAL' || res.error?.toLowerCase().includes('pending approval')) {
+        setPendingNotice({
+          message: res.error,
+          requestedRole: (res as any).requestedRole,
+          schoolName: schoolProfile?.schoolName,
+          username: usernameOrEmail.trim(),
+        });
+      } else {
+        setError(res.error || 'Invalid credentials. Please verify your login details.');
+      }
     } else {
       showSuccess('Welcome back!', 'Session authenticated successfully.');
     }
@@ -590,6 +603,62 @@ export const Login: React.FC = () => {
           {/* TAB 1: SIGN IN                                                    */}
           {/* ================================================================= */}
           {activeTab === 'LOGIN' && (
+            pendingNotice ? (
+              <div className="p-5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/80 text-center space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 mx-auto flex items-center justify-center shadow-xs">
+                  <Clock className="w-6 h-6 animate-pulse" />
+                </div>
+
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 font-bold text-xs">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                    <span>Status: Pending Approval</span>
+                  </div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white mt-2">
+                    Access Pending Institutional Verification
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 max-w-sm mx-auto leading-relaxed">
+                    Your request has been submitted to <strong>{pendingNotice.schoolName || schoolProfile?.schoolName || 'the school'}</strong>. The Headteacher or School Administrator must review and approve your membership before you can access the school system.
+                  </p>
+                </div>
+
+                <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-amber-200 dark:border-slate-800 text-left text-xs space-y-1.5">
+                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                    <span>Account:</span>
+                    <span className="font-mono font-bold text-slate-900 dark:text-white">@{pendingNotice.username}</span>
+                  </div>
+                  {pendingNotice.requestedRole && (
+                    <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                      <span>Requested Role:</span>
+                      <span className="font-bold text-purple-700 dark:text-purple-300">{pendingNotice.requestedRole}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+                    <span>Institution:</span>
+                    <span className="font-medium text-slate-800 dark:text-slate-200">{pendingNotice.schoolName || schoolProfile?.schoolName}</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-2 text-left">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Zero-Leakage Guarantee:</strong> No student records, attendance rolls, marks, or financial accounts are displayed while pending administrative approval.
+                  </span>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="md"
+                  fullWidth
+                  onClick={() => {
+                    setPendingNotice(null);
+                    setPassword('');
+                  }}
+                >
+                  Return to Sign In
+                </Button>
+              </div>
+            ) : (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               {error && (
                 <div
@@ -643,7 +712,7 @@ export const Login: React.FC = () => {
                 </button>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-2.5">
                 <Button
                   type="submit"
                   variant="primary"
@@ -655,6 +724,26 @@ export const Login: React.FC = () => {
                 >
                   Sign In to SchoolSoul
                 </Button>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowQRScanner(true)}
+                    className="w-full min-h-[44px] py-2 px-3 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <QrCode className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <span>Scan School Join QR</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('REGISTER_SCHOOL')}
+                    className="w-full min-h-[44px] py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <UserPlus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span>Register New School</span>
+                  </button>
+                </div>
               </div>
 
               {/* Security Reassurance */}
@@ -682,6 +771,7 @@ export const Login: React.FC = () => {
                 </div>
               </div>
             </form>
+            )
           )}
 
           {/* ================================================================= */}
@@ -756,6 +846,29 @@ export const Login: React.FC = () => {
                       className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer shrink-0"
                     >
                       Create School →
+                    </button>
+                  </div>
+
+                  {/* Dedicated School Join QR Fast-Track Callout */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-500/10 via-indigo-500/10 to-blue-500/10 dark:from-purple-950/40 dark:via-indigo-950/40 dark:to-blue-950/40 border-2 border-dashed border-purple-300 dark:border-purple-800 text-center space-y-2.5">
+                    <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center mx-auto shadow-sm">
+                      <QrCode className="w-5 h-5" />
+                    </div>
+                    <div className="space-y-0.5">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                        Have a School Join QR Code?
+                      </h4>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                        Scan your school's digital door to identify your school and select your member type.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowQRScanner(true)}
+                      className="w-full min-h-[44px] py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shadow-md shadow-purple-600/20 transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <QrCode className="w-4 h-4" />
+                      <span>SCAN SCHOOL QR TO JOIN</span>
                     </button>
                   </div>
 
@@ -1191,11 +1304,8 @@ export const Login: React.FC = () => {
 
       {/* Global Footer Attribution */}
       <footer className="w-full max-w-4xl mx-auto py-4 text-center text-xs text-slate-500 dark:text-slate-400">
-        <p className="font-medium text-slate-600 dark:text-slate-300">
-          © 2026 SchoolSoul OS. All Rights Reserved.
-        </p>
-        <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-          Developed under the VINEXSAH TECHNOLOGIES project.
+        <p className="text-[11px] text-slate-400 dark:text-slate-500">
+          SchoolSoul OS — Developed by VINEXSAH TECHNOLOGIES. All rights reserved.
         </p>
       </footer>
 
@@ -1565,6 +1675,15 @@ export const Login: React.FC = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Universal School Join QR Scanner Modal */}
+      {showQRScanner && (
+        <UniversalQRScannerModal
+          isOpen={showQRScanner}
+          onClose={() => setShowQRScanner(false)}
+          workflowContext="GENERAL"
+        />
+      )}
     </div>
   );
 };
